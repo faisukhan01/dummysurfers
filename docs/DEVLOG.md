@@ -8,3 +8,5 @@
 - scale(z) = f/(f+z), fog blending, camera follow + shake. The 3D illusion works!
 
 - 15px dead zone, 300ms window, dominant-axis lock. Feels exactly right on touch.
+
+- Lane lerp with ease-out, parabolic jump + buffering, slide, squash & stretch.
