@@ -10,3 +10,5 @@
 - 15px dead zone, 300ms window, dominant-axis lock. Feels exactly right on touch.
 
 - Lane lerp with ease-out, parabolic jump + buffering, slide, squash & stretch.
+
+- Endless segments: open / urban / station / bridge / tunnel / industrial, 16 deco kinds.
