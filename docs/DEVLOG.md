@@ -12,3 +12,5 @@
 - Lane lerp with ease-out, parabolic jump + buffering, slide, squash & stretch.
 
 - Endless segments: open / urban / station / bridge / tunnel / industrial, 16 deco kinds.
+
+- Always >=1 safe lane, guaranteed reaction gaps, coins trace the safe path.
