@@ -14,3 +14,5 @@
 - Endless segments: open / urban / station / bridge / tunnel / industrial, 16 deco kinds.
 
 - Always >=1 safe lane, guaranteed reaction gaps, coins trace the safe path.
+
+- 3 kinds — parked, same-direction, approaching with horn + headlights. Multi-car consists.
