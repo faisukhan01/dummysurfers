@@ -16,3 +16,5 @@
 - Always >=1 safe lane, guaranteed reaction gaps, coins trace the safe path.
 
 - 3 kinds — parked, same-direction, approaching with horn + headlights. Multi-car consists.
+
+- White band + yellow cab look, graffiti freight cars. Trains finally look alive.
