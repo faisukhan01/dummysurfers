@@ -18,3 +18,5 @@
 - 3 kinds — parked, same-direction, approaching with horn + headlights. Multi-car consists.
 
 - White band + yellow cab look, graffiti freight cars. Trains finally look alive.
+
+- 10-frame spin, glow, bob; magnet flight arcs to the player. Rising-pitch ding!
