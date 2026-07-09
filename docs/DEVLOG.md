@@ -20,3 +20,5 @@
 - White band + yellow cab look, graffiti freight cars. Trains finally look alive.
 
 - 10-frame spin, glow, bob; magnet flight arcs to the player. Rising-pitch ding!
+
+- Magnet / x2 / shield / boost / super-jump, 3 upgrade levels each, +3s per level.
