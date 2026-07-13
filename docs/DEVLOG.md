@@ -24,3 +24,5 @@
 - Magnet / x2 / shield / boost / super-jump, 3 upgrade levels each, +3s per level.
 
 - base + (max-base)(1-e^(-dk)) with 5 phases. Smooth wall, no cheap spikes.
+
+- ALL art via Pixmap: skies, skylines, coin frames, 9-patch UI, launcher icons.
