@@ -26,3 +26,5 @@
 - base + (max-base)(1-e^(-dk)) with 5 phases. Smooth wall, no cheap spikes.
 
 - ALL art via Pixmap: skies, skylines, coin frames, 9-patch UI, launcher icons.
+
+- PCM sequencer at 132BPM (kick/hat/bass/lead) + 14 SFX. Zero audio files!
