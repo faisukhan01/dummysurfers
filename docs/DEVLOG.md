@@ -28,3 +28,5 @@
 - ALL art via Pixmap: skies, skylines, coin frames, 9-patch UI, launcher icons.
 
 - PCM sequencer at 132BPM (kick/hat/bass/lead) + 14 SFX. Zero audio files!
+
+- Intensity scales live with the run — the mix gets hotter as you fly.
