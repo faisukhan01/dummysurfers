@@ -32,3 +32,5 @@
 - Intensity scales live with the run — the mix gets hotter as you fly.
 
 - The guard + dog hunt you after stumbles. Spacing tuned so he taunts, never cheats.
+
+- Preferences + JSON, versioned deep-merge, migrations safe for older builds.
