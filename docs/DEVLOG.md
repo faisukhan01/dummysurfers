@@ -34,3 +34,5 @@
 - The guard + dog hunt you after stumbles. Spacing tuned so he taunts, never cheats.
 
 - Preferences + JSON, versioned deep-merge, migrations safe for older builds.
+
+- 3 active auto-generated missions with claimable rewards.
