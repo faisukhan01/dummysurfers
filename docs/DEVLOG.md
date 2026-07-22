@@ -38,3 +38,5 @@
 - 3 active auto-generated missions with claimable rewards.
 
 - 4 characters, 5 upgrades, 4 trails — all wired to real persistence.
+
+- 4-step first-run tutorial, swipe-gated, persisted completion.
