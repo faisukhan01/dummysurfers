@@ -40,3 +40,5 @@
 - 4 characters, 5 upgrades, 4 trails — all wired to real persistence.
 
 - 4-step first-run tutorial, swipe-gated, persisted completion.
+
+- +25 bonus, camera shake, floating text. Skimming trains feels amazing.
