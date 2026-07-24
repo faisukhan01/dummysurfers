@@ -42,3 +42,5 @@
 - 4-step first-run tutorial, swipe-gated, persisted completion.
 
 - +25 bonus, camera shake, floating text. Skimming trains feels amazing.
+
+- Sparkles, bursts, confetti, dust, boost streaks, shield break — all pooled.
