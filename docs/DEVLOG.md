@@ -44,3 +44,5 @@
 - +25 bonus, camera shake, floating text. Skimming trains feels amazing.
 
 - Sparkles, bursts, confetti, dust, boost streaks, shield break — all pooled.
+
+- Sky, sun glow, clouds, 2 skylines, ground, track bed, fog. Depth at last.
