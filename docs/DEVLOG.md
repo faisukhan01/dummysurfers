@@ -48,3 +48,5 @@
 - Sky, sun glow, clouds, 2 skylines, ground, track bed, fog. Depth at last.
 
 - Segment-specific ambience: tunnel darkness, bridge sky gaps.
+
+- Vibrator API wired to lane switches, landings, coins and crashes.
