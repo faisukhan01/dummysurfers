@@ -54,3 +54,5 @@
 - Letterboxed virtual stage — every aspect ratio gets the same fair view.
 
 - LWJGL3 module for fast iteration; same core, instant reloads.
+
+- GitHub Actions: debug APK + release APK + AAB on every push.
