@@ -56,3 +56,5 @@
 - LWJGL3 module for fast iteration; same core, instant reloads.
 
 - GitHub Actions: debug APK + release APK + AAB on every push.
+
+- :core, :android, :desktop all compile. The game is REAL.
