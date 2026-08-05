@@ -58,3 +58,5 @@
 - GitHub Actions: debug APK + release APK + AAB on every push.
 
 - :core, :android, :desktop all compile. The game is REAL.
+
+- Hue-cycling fixed (was stuck teal); emit point tightened to the feet.
