@@ -60,3 +60,5 @@
 - :core, :android, :desktop all compile. The game is REAL.
 
 - Hue-cycling fixed (was stuck teal); emit point tightened to the feet.
+
+- Panels now offset by scrollY with clamped drag; CHARACTERS scrolls.
