@@ -62,3 +62,5 @@
 - Hue-cycling fixed (was stuck teal); emit point tightened to the feet.
 
 - Panels now offset by scrollY with clamped drag; CHARACTERS scrolls.
+
+- Bird flocks in the sky, commuters waiting on platforms.
