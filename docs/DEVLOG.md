@@ -64,3 +64,5 @@
 - Panels now offset by scrollY with clamped drag; CHARACTERS scrolls.
 
 - Bird flocks in the sky, commuters waiting on platforms.
+
+- Speed lines past 88% + warm vignette during boost.
