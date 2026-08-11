@@ -66,3 +66,5 @@
 - Bird flocks in the sky, commuters waiting on platforms.
 
 - Speed lines past 88% + warm vignette during boost.
+
+- Hat/lead scaling moved to schedule time so it follows speed LIVE.
