@@ -70,3 +70,5 @@
 - Hat/lead scaling moved to schedule time so it follows speed LIVE.
 
 - Palette, liveries, UI DNA locked. Prepping the full Subway-Surfers-style repaint.
+
+- Cyan sky, cream horizon, terracotta ballast, vivid grass. Goodbye sunset.
