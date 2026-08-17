@@ -74,3 +74,5 @@
 - Cyan sky, cream horizon, terracotta ballast, vivid grass. Goodbye sunset.
 
 - Gold coin pill, white outlined score, orange pause square, segmented power meter.
+
+- Luckiest Guy display + Fugaz One body, navy outlines everywhere.
