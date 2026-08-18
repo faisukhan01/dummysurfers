@@ -76,3 +76,5 @@
 - Gold coin pill, white outlined score, orange pause square, segmented power meter.
 
 - Luckiest Guy display + Fugaz One body, navy outlines everywhere.
+
+- Radial rainbow burst + confetti + streaks on a fresh high score.
