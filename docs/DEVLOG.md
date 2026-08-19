@@ -78,3 +78,5 @@
 - Luckiest Guy display + Fugaz One body, navy outlines everywhere.
 
 - Radial rainbow burst + confetti + streaks on a fresh high score.
+
+- Panels with deep navy slots, gold values, tabbed menu with missions badge.
