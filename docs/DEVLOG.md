@@ -80,3 +80,5 @@
 - Radial rainbow burst + confetti + streaks on a fresh high score.
 
 - Panels with deep navy slots, gold values, tabbed menu with missions badge.
+
+- Committed keystore so every CI build keeps the same stable signature.
