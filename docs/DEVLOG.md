@@ -82,3 +82,5 @@
 - Panels with deep navy slots, gold values, tabbed menu with missions badge.
 
 - Committed keystore so every CI build keeps the same stable signature.
+
+- Stable /releases/latest/download asset name for scan-to-install.
