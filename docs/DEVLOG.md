@@ -84,3 +84,5 @@
 - Committed keystore so every CI build keeps the same stable signature.
 
 - Stable /releases/latest/download asset name for scan-to-install.
+
+- Sketching bigger heads, layered clothes, knee-bend run cycle from behind.
