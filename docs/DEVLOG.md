@@ -86,3 +86,5 @@
 - Stable /releases/latest/download asset name for scan-to-install.
 
 - Sketching bigger heads, layered clothes, knee-bend run cycle from behind.
+
+- x86_64 natives + crash guard for devices that refuse to start.
