@@ -8,7 +8,7 @@ import kotlin.random.Random
 enum class DecoKind {
     BUILDING, SKYSCRAPER, POLE, BILLBOARD, LAMP, TREE, PLATFORM, SHELTER,
     STATION_SIGN, BENCH, SIGNAL, GRAFFITI_WALL, BRIDGE_GIRDER, TUNNEL_ARCH,
-    TUNNEL_WALL, FENCE, BUSH
+    TUNNEL_WALL, FENCE, BUSH, PASSENGER
 }
 
 /** One decoration instance (pooled via ArrayList swap-remove). */
@@ -113,6 +113,12 @@ class WorldGenerator {
                 add(DecoKind.STATION_SIGN, side, side * (edgeX + 1.6f), z0 + segLen * 0.55f, 2.2f, 1.6f)
                 add(DecoKind.BENCH, side, side * (edgeX + 2.4f), z0 + segLen * 0.3f, 0.7f, 1.8f)
                 add(DecoKind.BENCH, side, side * (edgeX + 2.4f), z0 + segLen * 0.62f, 0.7f, 1.8f)
+                // commuters waiting on the platform — the world feels alive
+                val pax = 2 + rng.nextInt(3)
+                for (i in 0 until pax) {
+                    add(DecoKind.PASSENGER, side, side * (edgeX + 1.7f + rng.nextFloat() * 2.2f),
+                        z0 + segLen * (0.15f + rng.nextFloat() * 0.75f), 1.55f, 0.5f, rng.nextInt(4))
+                }
                 if (rng.nextFloat() < 0.7f) add(DecoKind.TREE, side, side * (edgeX + 5.5f), z0 + segLen * 0.85f, 3f, 1.8f)
             }
             SegmentKind.INDUSTRIAL -> {

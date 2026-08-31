@@ -24,7 +24,9 @@ class WorldRenderer(
     private val sr: ShapeRenderer
 ) {
     private val tmpC = Color()
+    private val birdC = Color()
     var menuDim = 0f // extra darkening when menus are open
+    var time = 0f    // set from game each frame (bird flap phase)
 
     fun render(
         distance: Float,
@@ -56,8 +58,9 @@ class WorldRenderer(
         drawTiled(TextureGen.skylineNear, distance * 5.2f, proj.horizonY - 14f, 1f, shakeX, shakeY)
         batch.end()
 
-        // ── Layer 4-6: ground, rails, sleepers ─────────────────────────
+        // ── Birds gliding over the skyline ─────────────────────────────
         sr.begin(ShapeRenderer.ShapeType.Filled)
+        drawBirds(distance)
         drawGround(distance, shakeX, shakeY)
         sr.end()
 
@@ -115,6 +118,27 @@ class WorldRenderer(
             x += w
         }
         batch.setColor(1f, 1f, 1f, 1f)
+    }
+
+    /** Small flock of birds drifting with the parallax, wings flapping. */
+    private fun drawBirds(distance: Float) {
+        val vw = proj.vw
+        birdC.set(0x2b3a3eff).also { it.a = 0.9f }
+        sr.setColor(birdC)
+        for (i in 0 until 5) {
+            val seed = i * 137
+            val speed = 14f + (seed % 7) * 3f
+            val span = vw + 160f
+            var bx = (distance * speed + seed * 97f) % span
+            if (bx < 0f) bx += span
+            bx -= 80f
+            val by = proj.horizonY + 30f + (seed % 5) * 34f + kotlin.math.sin(time * 1.3f + i) * 8f
+            val flap = kotlin.math.sin(time * 9f + i * 1.7f)
+            val w = 7f + (seed % 3) * 2f
+            // two wings as thin triangles meeting at the body
+            sr.triangle(bx, by, bx - w, by + flap * w * 0.5f, bx - w * 0.3f, by)
+            sr.triangle(bx, by, bx + w, by + flap * w * 0.5f, bx + w * 0.3f, by)
+        }
     }
 
     // ── Ground plane, rails, sleepers ──────────────────────────────────
