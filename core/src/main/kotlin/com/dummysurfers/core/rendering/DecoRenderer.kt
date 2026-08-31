@@ -41,6 +41,7 @@ object DecoRenderer {
             DecoKind.TUNNEL_ARCH -> tunnelArch(d, sr, proj, sx, sy)
             DecoKind.TUNNEL_WALL -> tunnelWall(d, sr, proj, sx, sy)
             DecoKind.FENCE -> {}
+            DecoKind.PASSENGER -> passenger(d, sr, proj, sx, sy)
         }
     }
 
@@ -311,5 +312,27 @@ object DecoRenderer {
         fogged(proj, tmpC, Color(0x50464aff.toInt()), d.z)
         val side = tmpC.cpy().mul(0.7f)
         box3D(proj, sr, d.x, 2.2f, d.h, zFront, zBack, tmpC, side, tmpC.cpy().mul(0.85f), sx, sy)
+    }
+
+    /** A commuter waiting on the platform — tiny silhouette with coat + head. */
+    private fun passenger(d: Deco, sr: ShapeRenderer, proj: Projection, sx: Float, sy: Float) {
+        val s = proj.scale(d.z)
+        val x = proj.screenX(d.x, d.z) + sx
+        val yb = proj.groundY(d.z) + sy
+        val u = proj.ppu * s
+        val coats = intArrayOf(0xb85a4aff.toInt(), 0x4a6a5aff.toInt(), 0x8a55c9ff.toInt(), 0xd9985fff.toInt())
+        // legs
+        fogged(proj, tmpC, Color(0x2e2a28ff.toInt()), d.z)
+        sr.setColor(tmpC)
+        sr.rect(x - 0.09f * u, yb - d.h * 0.42f * u, 0.08f * u, d.h * 0.42f * u)
+        sr.rect(x + 0.02f * u, yb - d.h * 0.42f * u, 0.08f * u, d.h * 0.42f * u)
+        // coat
+        fogged(proj, tmpC, Color(coats[d.variant % 4]), d.z)
+        sr.setColor(tmpC)
+        sr.rect(x - 0.14f * u, yb - d.h * 0.92f * u, 0.28f * u, d.h * 0.52f * u)
+        // head
+        fogged(proj, tmpC, Color(0xd9a07aff.toInt()), d.z)
+        sr.setColor(tmpC)
+        sr.circle(x, yb - d.h * 0.98f * u, 0.11f * u)
     }
 }

@@ -129,7 +129,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         val v = FloatArray(2)
         bridge!!.toFrame(v)
         val dy = v[1] - scrollDragStart
-        scrollY = max(0f, scrollDragValue - dy)
+        scrollY = (scrollDragValue - dy).coerceIn(0f, maxScroll())
         return true
     }
 
@@ -149,7 +149,18 @@ class UiController(val theme: UiTheme) : InputAdapter() {
 
     private fun inside(h: HitRect, x: Float, y: Float) = x >= h.x - 8 && x <= h.x + h.w + 8 && y >= h.y - 8 && y <= h.y + h.h + 8
 
-    private fun scrollable() = bridge!!.menuPanel == MenuPanel.SHOP || bridge!!.menuPanel == MenuPanel.MISSIONS
+    private fun scrollable() = bridge!!.menuPanel == MenuPanel.SHOP || bridge!!.menuPanel == MenuPanel.MISSIONS || bridge!!.menuPanel == MenuPanel.CHARACTERS
+
+    private fun maxScroll(): Float = when (bridge!!.menuPanel) {
+        MenuPanel.SHOP -> when (bridge!!.shopTab) {
+            ShopTab.CHARACTERS -> 60f
+            ShopTab.UPGRADES -> 260f
+            ShopTab.TRAILS -> 40f
+        }
+        MenuPanel.CHARACTERS -> 120f
+        MenuPanel.MISSIONS -> 60f
+        else -> 0f
+    }
 
     /** Registers + draws a button. Fires [action] on release-inside. */
     private fun btn(id: String, x: Float, y: Float, w: Float, h: Float, color: Color, label: String, font: BitmapFont? = null, labelColor: Color = Palette.UI_TEXT, enabled: Boolean = true): Boolean {
@@ -439,8 +450,10 @@ class UiController(val theme: UiTheme) : InputAdapter() {
 
     private fun shopCharacters() {
         val b = bridge!!
-        var y = vh - 300f
+        var y = vh - 300f - scrollY
         for ((ci, ch) in CharacterDef.ALL.withIndex()) {
+            if (y < 150f) break
+            if (y > vh) { y -= 200f; continue }
             val owned = b.save.ownedCharacters.contains(ch.id)
             val selected = b.save.selectedCharacter == ch.id
             theme.panel(batch, 24f, y, vw - 48f, 180f, Palette.UI_PANEL_LIGHT)
@@ -469,8 +482,10 @@ class UiController(val theme: UiTheme) : InputAdapter() {
 
     private fun shopUpgrades() {
         val b = bridge!!
-        var y = vh - 300f
+        var y = vh - 300f - scrollY
         for ((i, name) in com.dummysurfers.core.state.SaveManager.Companion.POWERUP_NAMES.withIndex()) {
+            if (y < 150f) break
+            if (y > vh) { y -= 190f; continue }
             val lvl = b.save.upgradeLevel(name)
             theme.panel(batch, 24f, y, vw - 48f, 170f, Palette.UI_PANEL_LIGHT)
             batch.setColor(1f, 1f, 1f, 1f)
@@ -500,8 +515,10 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         val b = bridge!!
         val names = arrayOf("NONE", "GOLD", "FIRE", "RAINBOW")
         val colors = arrayOf(Color(0x4a4238ff.toInt()), Palette.GOLD, Color(0xf97316ff.toInt()), Color(0x2dd4bfff.toInt()))
-        var y = vh - 300f
+        var y = vh - 300f - scrollY
         for (i in names.indices) {
+            if (y < 150f) break
+            if (y > vh) { y -= 170f; continue }
             val owned = i == 0 || b.save.trail >= i
             val active = b.save.trail == i
             theme.panel(batch, 24f, y, vw - 48f, 150f, Palette.UI_PANEL_LIGHT)
@@ -531,8 +548,10 @@ class UiController(val theme: UiTheme) : InputAdapter() {
 
     private fun drawCharacters() {
         val b = bridge!!
-        var y = vh - 300f
+        var y = vh - 300f - scrollY
         for ((ci, ch) in CharacterDef.ALL.withIndex()) {
+            if (y < 150f) break
+            if (y > vh) { y -= 220f; continue }
             val owned = b.save.ownedCharacters.contains(ch.id)
             val selected = b.save.selectedCharacter == ch.id
             theme.panel(batch, 24f, y, vw - 48f, 200f, Palette.UI_PANEL_LIGHT)
@@ -556,8 +575,10 @@ class UiController(val theme: UiTheme) : InputAdapter() {
 
     private fun drawMissions() {
         val b = bridge!!
-        var y = vh - 300f
+        var y = vh - 300f - scrollY
         b.save.missions.forEachIndexed { idx, m ->
+            if (y < 150f) return
+            if (y > vh) { y -= 220f; return@forEachIndexed }
             val done = m.progress >= m.goal
             theme.panel(batch, 24f, y, vw - 48f, 200f, Palette.UI_PANEL_LIGHT)
             theme.text(batch, theme.fontSmall, missionLabel(m.type), 44f, y + 150f, Palette.UI_TEXT)

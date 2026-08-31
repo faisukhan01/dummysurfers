@@ -68,4 +68,22 @@ object Mathz {
     fun cos01(t: Float) = cos(t * PI.toFloat())
 
     fun rnd(rng: Random, lo: Float, hi: Float) = lo + rng.nextFloat() * (hi - lo)
+
+    /** HSV → RGB helper for hue-cycling effects (rainbow trail). */
+    fun hsv(h: Float, s: Float, v: Float, a: Float, out: com.badlogic.gdx.graphics.Color): com.badlogic.gdx.graphics.Color {
+        val hh = ((h % 360f) + 360f) % 360f / 60f
+        val i = hh.toInt()
+        val f = hh - i
+        val p = v * (1f - s)
+        val q = v * (1f - s * f)
+        val t = v * (1f - s * (1f - f))
+        return when (i % 6) {
+            0 -> out.set(v, t, p, a)
+            1 -> out.set(q, v, p, a)
+            2 -> out.set(p, v, t, a)
+            3 -> out.set(p, q, v, a)
+            4 -> out.set(t, p, v, a)
+            else -> out.set(v, p, q, a)
+        }
+    }
 }
