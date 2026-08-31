@@ -71,22 +71,22 @@ class WorldRenderer(
         batch.draw(TextureGen.fog, shakeX, proj.horizonY - fogH * 0.5f + shakeY, vw, fogH)
         batch.end()
 
-        // ── Tunnel darkness overlay ────────────────────────────────────
+        // ── Tunnel darkness overlay (warm, SS-style) ────────────────────
         if (tunnelDarkness > 0.01f) {
             Gdx.gl.glEnable(GL20.GL_BLEND)
             sr.begin(ShapeRenderer.ShapeType.Filled)
-            tmpC.set(0.08f, 0.06f, 0.1f, tunnelDarkness * 0.62f)
+            tmpC.set(0.10f, 0.07f, 0.13f, tunnelDarkness * 0.6f)
             sr.setColor(tmpC)
             sr.rect(0f, 0f, vw, vh)
             sr.end()
             Gdx.gl.glDisable(GL20.GL_BLEND)
         }
 
-        // ── Menu dim (attract mode backdrop) ───────────────────────────
+        // ── Menu dim (light periwinkle wash — world stays bright) ──────
         if (menuDim > 0.01f) {
             Gdx.gl.glEnable(GL20.GL_BLEND)
             sr.begin(ShapeRenderer.ShapeType.Filled)
-            tmpC.set(0.06f, 0.04f, 0.05f, menuDim * 0.62f)
+            tmpC.set(0.12f, 0.14f, 0.34f, menuDim * 0.42f)
             sr.setColor(tmpC)
             sr.rect(0f, 0f, vw, vh)
             sr.end()
@@ -141,27 +141,50 @@ class WorldRenderer(
         }
     }
 
-    // ── Ground plane, rails, sleepers ──────────────────────────────────
+    // ── Ground plane: grass shoulders, terracotta ballast, path patches,
+    //    sleepers, SS rust+silver rails ─────────────────────────────────
     private fun drawGround(distance: Float, sx: Float, sy: Float) {
         val vw = proj.vw
         val horizon = proj.horizonY + sy
         val baseY = proj.baseY + sy
         val halfTrack = GameConfig.LANE_WIDTH * 1.5f
 
-        // side ground
-        DecoRenderer.fogged(proj, tmpC, Color(0x6a584eff.toInt()), 20f)
+        // vivid grass shoulders (SS bright green)
+        DecoRenderer.fogged(proj, tmpC, Palette.GRASS, 20f)
         sr.setColor(tmpC)
         sr.rect(0f, horizon, vw, baseY - horizon)
 
-        // track ballast (converging trapezoid)
+        // track ballast (converging trapezoid, warm terracotta)
         val farScale = proj.scale(GameConfig.VIEW_DISTANCE)
         val nearHalfPx = halfTrack * proj.ppu * proj.scale(0f)
         val farHalfPx = (halfTrack + 6f) * proj.ppu * farScale
         val cx = vw / 2f + sx
-        DecoRenderer.fogged(proj, tmpC, Color(0x584a42ff.toInt()), 40f)
+        DecoRenderer.fogged(proj, tmpC, Palette.GROUND, 40f)
         sr.setColor(tmpC)
         sr.triangle(cx - nearHalfPx, baseY, cx + nearHalfPx, baseY, cx + farHalfPx, horizon)
         sr.triangle(cx - nearHalfPx, baseY, cx + farHalfPx, horizon, cx - farHalfPx, horizon)
+
+        // SS path patches: alternating cream/orange blocks rushing past
+        run {
+            val blockLen = 4.2f
+            var z = distance % (blockLen * 2f)
+            var idx = ((distance / blockLen).toInt()).coerceAtLeast(0)
+            while (z < GameConfig.VIEW_DISTANCE) {
+                val z1 = (z + blockLen).coerceAtMost(GameConfig.VIEW_DISTANCE)
+                val col = if (idx % 2 == 0) Palette.PATH_CREAM else Palette.PATH_ORANGE
+                DecoRenderer.fogged(proj, tmpC, col, (z + z1) / 2f)
+                sr.setColor(tmpC)
+                val halfIn = (halfTrack - 0.7f) * proj.ppu * proj.scale(z)
+                val halfOut = (halfTrack - 0.7f) * proj.ppu * proj.scale(z1)
+                val y0 = proj.groundY(z) + sy
+                val y1 = proj.groundY(z1) + sy
+                if (y1 < y0) {
+                    sr.triangle(cx - halfIn, y0, cx + halfIn, y0, cx + halfOut, y1)
+                    sr.triangle(cx - halfIn, y0, cx + halfOut, y1, cx - halfOut, y1)
+                }
+                z += blockLen; idx++
+            }
+        }
 
         // sleepers rushing past (primary speed cue)
         val spacing = GameConfig.SLEEPER_SPACING
@@ -180,7 +203,7 @@ class WorldRenderer(
             z += spacing
         }
 
-        // 3 tracks x 2 rails as short segments for true convergence
+        // 3 tracks x 2 rails: rust base + silver head (SS look)
         val railOffsets = floatArrayOf(-0.88f, 0.88f)
         var z0 = 0f
         while (z0 < GameConfig.VIEW_DISTANCE) {
@@ -192,6 +215,14 @@ class WorldRenderer(
                     val x1 = proj.screenX(wx, z1) + sx
                     val y0 = proj.groundY(z0) + sy
                     val y1 = proj.groundY(z1) + sy
+                    // rust base (wider)
+                    val bw0 = 0.2f * proj.ppu * proj.scale(z0)
+                    val bw1 = 0.2f * proj.ppu * proj.scale(z1)
+                    DecoRenderer.fogged(proj, tmpC, Palette.RAIL_SIDE, z0)
+                    sr.setColor(tmpC)
+                    sr.triangle(x0 - bw0, y0, x0 + bw0, y0, x1 + bw1, y1)
+                    sr.triangle(x0 - bw0, y0, x1 + bw1, y1, x1 - bw1, y1)
+                    // silver head
                     val w0 = 0.09f * proj.ppu * proj.scale(z0)
                     val w1 = 0.09f * proj.ppu * proj.scale(z1)
                     DecoRenderer.fogged(proj, tmpC, Palette.RAIL, z0)

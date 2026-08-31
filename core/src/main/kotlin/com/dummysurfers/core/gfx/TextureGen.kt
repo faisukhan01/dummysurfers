@@ -12,38 +12,67 @@ import kotlin.math.cos
 import kotlin.math.min
 import kotlin.random.Random
 
-/** Shared palette — warm, saturated, readable at game speed. */
+/**
+ * Shared palette — Subway-Surfers-style bright warm daylight.
+ * Vivid cyan sky, terracotta ground, vibrant trains, chunky periwinkle UI.
+ * (See docs/DESIGN_BIBLE.md.)
+ */
 object Palette {
-    val SKY_TOP = Color(0x2e7d84ff.toInt())
-    val SKY_MID = Color(0xf2a75bff.toInt())
-    val SKY_LOW = Color(0xffd9a0ff.toInt())
-    val FOG = Color(0xffc98aff.toInt())
-    val GROUND = Color(0x5a4a44ff.toInt())
-    val GROUND_FAR = Color(0x7a6a60ff.toInt())
-    val SLEEPER = Color(0x4a3a32ff.toInt())
-    val RAIL = Color(0xd8d2c8ff.toInt())
+    // ── Sky & atmosphere ──
+    val SKY_TOP = Color(0x3fb8f5ff.toInt())      // vivid cyan zenith
+    val SKY_MID = Color(0x8fd8f8ff.toInt())      // light azure
+    val SKY_LOW = Color(0xffe9c2ff.toInt())      // warm cream horizon
+    val FOG = Color(0xffe4bcff.toInt())          // light warm haze
+
+    // ── Ground ──
+    val GROUND = Color(0xc97b5eff.toInt())       // terracotta ballast
+    val GROUND_FAR = Color(0xd98d6aff.toInt())   // lighter far ballast
+    val GRASS = Color(0x5fbf4aff.toInt())        // vivid trackside grass
+    val PATH_CREAM = Color(0xf2d9a7ff.toInt())   // cream path patches
+    val PATH_ORANGE = Color(0xe8a25cff.toInt())  // orange path patches
+    val SLEEPER = Color(0x6b4a36ff.toInt())      // warm brown ties
+    val RAIL = Color(0xe8e4daff.toInt())         // shiny silver rail head
+    val RAIL_SIDE = Color(0xb4553aff.toInt())    // rust-orange rail base
+
+    // ── Accents ──
     val GOLD = Color(0xffc93cff.toInt())
     val GOLD_DEEP = Color(0xe09b12ff.toInt())
-    val UI_PANEL = Color(0x241d1aff.toInt())
-    val UI_PANEL_LIGHT = Color(0x3a2f28ff.toInt())
-    val UI_ACCENT = Color(0xff8c3bff.toInt())
-    val UI_ACCENT2 = Color(0x2dd4bfff.toInt())
-    val UI_TEXT = Color(0xfff6e8ff.toInt())
-    val UI_MUTED = Color(0xcbb9a4ff.toInt())
+    val HAZARD_YELLOW = Color(0xffc93cff.toInt())
+    val HAZARD_BLACK = Color(0x2b2622ff.toInt())
+    val CONTOUR_TEAL = Color(0x37b8a8ff.toInt())
+    val CONTAINER_RED = Color(0xc4553eff.toInt())
+
+    // ── UI (Subway Surfers chunky cartoon) ──
+    val UI_PANEL = Color(0x7b84d6ff.toInt())     // periwinkle card
+    val UI_PANEL_LIGHT = Color(0x9aa3e8ff.toInt()) // lighter card
+    val UI_PANEL_DEEP = Color(0x4a529eff.toInt())  // inner slot
+    val UI_NAVY = Color(0x2a3057ff.toInt())      // currency pills / tabs
+    val UI_OUTLINE = Color(0x24316bff.toInt())   // text outline navy
+    val UI_GOLD_BTN = Color(0xffc93cff.toInt())  // primary RUN button
+    val UI_GOLD_BTN_DEEP = Color(0xd89a14ff.toInt())
+    val UI_ORANGE = Color(0xff5a3cff.toInt())    // pause button
+    val UI_GREEN = Color(0x3dbb5aff.toInt())     // secondary/confirm
+    val UI_ACCENT = Color(0xffc93cff.toInt())    // legacy alias = gold
+    val UI_ACCENT2 = Color(0x37b8a8ff.toInt())   // teal accent
+    val UI_TEXT = Color(0xffffffffff.toInt())
+    val UI_MUTED = Color(0xc9cff2ff.toInt())     // light periwinkle
     val DANGER = Color(0xef4444ff.toInt())
 
+    // body/shade/band — bright SS metro + graffiti freight
     val TRAIN_LIVERIES = arrayOf(
-        intArrayOf(0xe2493bff.toInt(), 0xb93327ff.toInt(), 0xffd9a0ff.toInt()), // red
-        intArrayOf(0x2fa08bff.toInt(), 0x1f7a6bff.toInt(), 0xf2ead0ff.toInt()), // teal
-        intArrayOf(0xf2b03cff.toInt(), 0xd88f1fff.toInt(), 0x5a2e1aff.toInt()), // amber
-        intArrayOf(0x8a55c9ff.toInt(), 0x6a3da3ff.toInt(), 0xf2e2ffff.toInt()), // violet
-        intArrayOf(0x4a6a5aff.toInt(), 0x35503fff.toInt(), 0xcfe0c8ff.toInt()), // forest
-        intArrayOf(0xd8578aff.toInt(), 0xb23a68ff.toInt(), 0xffe2f0ff.toInt())  // pink
+        intArrayOf(0x3e7bc0ff.toInt(), 0x2c5e96ff.toInt(), 0xffffffff.toInt()), // blue metro, white band
+        intArrayOf(0xf2a63bff.toInt(), 0xd8841fff.toInt(), 0xfff3d6ff.toInt()), // orange graffiti freight
+        intArrayOf(0x43b45cff.toInt(), 0x2e8a44ff.toInt(), 0xeaf7dcff.toInt()), // green metro
+        intArrayOf(0xd94a38ff.toInt(), 0xa83326ff.toInt(), 0xffe2c8ff.toInt()), // red express
+        intArrayOf(0xf7d23eff.toInt(), 0xdbae1dff.toInt(), 0x3a3f6bff.toInt()), // yellow metro, navy band
+        intArrayOf(0x8a55c9ff.toInt(), 0x6a3da3ff.toInt(), 0xf2e2ffff.toInt())  // violet graffiti
     )
+    val TRAIN_ROOF = Color(0x9aa0a8ff.toInt())
+    val TRAIN_FRONT = Color(0xf7d23eff.toInt())
 
     val BUILDING_COLORS = intArrayOf(
-        0xc96b4aff.toInt(), 0xd9985fff.toInt(), 0x7a9a8aff.toInt(), 0x9a7a6aff.toInt(),
-        0xb85a4aff.toInt(), 0x6a8a95ff.toInt(), 0xa58a5fff.toInt(), 0x8a6a7aff.toInt()
+        0xe8b27dff.toInt(), 0xd9985fff.toInt(), 0xc96b4aff.toInt(), 0xb85a4aff.toInt(),
+        0x9fc5c0ff.toInt(), 0x8fb6d9ff.toInt(), 0xe8d5a8ff.toInt(), 0xc78a6aff.toInt()
     )
 }
 
@@ -61,6 +90,7 @@ object TextureGen {
     lateinit var skylineFar: Texture
     lateinit var skylineNear: Texture
     lateinit var vignette: Texture
+    lateinit var rainbowBurst: Texture // conic rainbow for NEW BEST celebration
     lateinit var coinFrames: Array<Texture>
     lateinit var powerIcons: Array<Texture> // magnet,x2,shield,boost,superjump
     lateinit var panelNine: NinePatch
@@ -72,13 +102,15 @@ object TextureGen {
         white = solid(4, 4, Color.WHITE)
         glow = radial(128, Color(1f, 1f, 1f, 1f), 0f)
         softShadow = radial(128, Color(0f, 0f, 0f, 0.55f), 0.25f)
-        sky = verticalGradient(8, 512, Palette.SKY_TOP, Color(0x9fc0a8ff.toInt()), Palette.SKY_MID, Palette.SKY_LOW)
+        sky = verticalGradient(8, 512, Palette.SKY_TOP, Palette.SKY_MID, Palette.SKY_LOW)
         fog = verticalGradientFade(8, 256, Palette.FOG)
         cloudA = cloud(260, 90, 42L)
         cloudB = cloud(200, 70, 77L)
-        skylineFar = skyline(1024, 190, 5L, dark = 0x4d6a6f, alpha = 0.85f, dense = false)
-        skylineNear = skyline(1024, 240, 11L, dark = 0x3a545a, alpha = 0.95f, dense = true)
+        // SS-style distant city: soft blue-violet haze silhouettes
+        skylineFar = skyline(1024, 190, 5L, dark = 0xaebbe8, alpha = 0.8f, dense = false)
+        skylineNear = skyline(1024, 240, 11L, dark = 0x8b9cdd, alpha = 0.9f, dense = true)
         vignette = radial(256, Color(0f, 0f, 0f, 0.5f), 0.72f)
+        rainbowBurst = burst(512)
         coinFrames = Array(10) { coin(72, it, 10) }
         powerIcons = arrayOf(magnetIcon(), starIcon(), shieldIcon(), boltIcon(), rocketIcon())
         previews = Array(CharacterDef.ALL.size) { characterPreview(CharacterDef.ALL[it]) }
@@ -87,7 +119,7 @@ object TextureGen {
     }
 
     fun dispose() {
-        listOf(glow, softShadow, sky, fog, cloudA, cloudB, skylineFar, skylineNear, vignette, white).forEach { it.dispose() }
+        listOf(glow, softShadow, sky, fog, cloudA, cloudB, skylineFar, skylineNear, vignette, rainbowBurst, white).forEach { it.dispose() }
         coinFrames.forEach { it.dispose() }
         powerIcons.forEach { it.dispose() }
         previews.forEach { it.dispose() }
@@ -189,16 +221,18 @@ object TextureGen {
         val face = if (sx > 0.35f) Palette.GOLD else Palette.GOLD_DEEP
         p.setColor(face)
         fillEllipse(p, cx, cy, r * sx * 0.82f, r * 0.88f)
-        // embossed star (front-facing frames only)
+        // embossed filled star (front-facing frames only) — SS gold-coin look
         if (sx > 0.5f) {
             p.setColor(Palette.GOLD_DEEP)
-            val sr = r * 0.42f
-            var i = 0
-            while (i < 5) {
-                val a1 = (i * 72 - 90) * PI.toFloat() / 180f
-                val a2 = ((i + 2) * 72 - 90) * PI.toFloat() / 180f
-                p.drawLine((cx + cos(a1) * sr).toInt(), (cy + kotlin.math.sin(a1) * sr).toInt(), (cx + cos(a2) * sr).toInt(), (cy + kotlin.math.sin(a2) * sr).toInt())
-                i++
+            val sr2 = r * 0.46f
+            val pts = ArrayList<Pair<Int, Int>>()
+            for (i in 0 until 10) {
+                val ang = (i * 36 - 90) * PI.toFloat() / 180f
+                val rr = if (i % 2 == 0) sr2 else sr2 * 0.42f
+                pts.add((cx + cos(ang) * rr * sx).toInt() to (cy + kotlin.math.sin(ang) * rr).toInt())
+            }
+            for (i in 1 until pts.size - 1) {
+                p.fillTriangle(pts[0].first, pts[0].second, pts[i].first, pts[i].second, pts[i + 1].first, pts[i + 1].second)
             }
         }
         // top highlight
@@ -331,10 +365,15 @@ object TextureGen {
         p.fillRectangle(0, radius, size, size - radius * 2)
         p.fillCircle(radius, radius, radius); p.fillCircle(size - radius, radius, radius)
         p.fillCircle(radius, size - radius, radius); p.fillCircle(size - radius, size - radius, radius)
+        // chunky cartoon look: top gloss + bottom 3D lip (SS game buttons)
+        p.setColor(1f, 1f, 1f, 0.26f)
+        p.fillRectangle(radius, radius / 3, size - radius * 2, radius / 2)
+        p.fillCircle(radius + radius / 2, radius / 2 + radius / 3, radius / 3)
         if (border) {
-            // darker bottom lip for 3D game-button feel
-            p.setColor(0f, 0f, 0f, 0.28f)
+            p.setColor(0f, 0f, 0f, 0.32f)
             p.fillRectangle(radius, size - radius / 2, size - radius * 2, radius / 2)
+            p.fillCircle(radius, size - radius / 2, radius / 2)
+            p.fillCircle(size - radius, size - radius / 2, radius / 2)
         }
         val t = Texture(p); p.dispose()
         val m = radius + 2
@@ -377,4 +416,42 @@ object TextureGen {
     }
 
     private fun tex(p: Pixmap): Texture { val t = Texture(p); p.dispose(); return t }
+
+    /** SS "New High Score" backdrop: 4 conic rainbow wedges + warm core. */
+    private fun burst(size: Int): Texture {
+        val p = Pixmap(size, size, Pixmap.Format.RGBA8888)
+        val half = size / 2f
+        val wedges = intArrayOf(0xe23c3cff.toInt(), 0xf28c1aff.toInt(), 0xffd23eff.toInt(), 0x4fbf4fff.toInt())
+        for (y in 0 until size) {
+            for (x in 0 until size) {
+                val dx = (x - half) / half
+                val dy = (y - half) / half
+                val d = kotlin.math.sqrt(dx * dx + dy * dy)
+                if (d > 1f) continue
+                var ang = kotlin.math.atan2(dy, dx) / (2f * PI.toFloat()) + 1.0f
+                ang = (ang % 1f + 1f) % 1f
+                val seg = (ang * 4f)
+                val i = seg.toInt() % 4
+                val f = seg - seg.toInt()
+                val a = wedges[i]
+                val b = wedges[(i + 1) % 4]
+                val blend = f * f * (3f - 2f * f)
+                fun ch(v: Int, shift: Int): Float =
+                    (((v shr shift) and 0xff) / 255f) * (1f - blend) + (((b shr shift) and 0xff) / 255f) * blend
+                val core = (d * d * d).coerceIn(0f, 1f)
+                p.setColor(ch(a, 16), ch(a, 8), ch(a, 0), 1f)
+                p.drawPixel(x, y)
+                if (core > 0f && x % 2 == 0 && y % 2 == 0) {
+                    // lighten center toward warm white
+                    p.setColor(
+                        (ch(a, 16) + (1f - ch(a, 16)) * core * 0.85f),
+                        (ch(a, 8) + (1f - ch(a, 8)) * core * 0.85f),
+                        (ch(a, 0) + (1f - ch(a, 0)) * core * 0.85f), 1f
+                    )
+                    p.drawPixel(x, y)
+                }
+            }
+        }
+        val t = Texture(p); p.dispose(); return t
+    }
 }
