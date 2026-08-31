@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Fredoka } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
@@ -13,25 +13,33 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Chunky rounded comic font for the Subway-Surfers-style dashboard (v1.2.0).
+const fredoka = Fredoka({
+  weight: ["600", "700"],
+  subsets: ["latin"],
+  variable: "--font-fredoka",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Dummy Surfers by FSK — Kotlin + LibGDX Endless Runner",
-  description: "Premium Android endless runner built with Kotlin + LibGDX. Procedural art & audio, CI builds APK/AAB on GitHub push.",
+  description: "Premium Android endless runner built with Kotlin + LibGDX — v1.2.0 Subway Surfers redesign: daylight palette, SS HUD, chunky comic fonts. Procedural art & audio, CI builds APK/AAB on GitHub push.",
   keywords: ["Dummy Surfers", "FSK", "Kotlin", "LibGDX", "endless runner", "Android game"],
   authors: [{ name: "FSK" }],
   icons: {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
   },
   openGraph: {
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
+    title: "Dummy Surfers by FSK — v1.2.0 Subway Surfers Redesign",
+    description: "Bright daylight SS-style dashboard: cyan sky, periwinkle panels, gold chunky buttons. Kotlin + LibGDX endless runner.",
     url: "https://chat.z.ai",
     siteName: "Z.ai",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
+    title: "Dummy Surfers by FSK — v1.2.0 Subway Surfers Redesign",
+    description: "Bright daylight SS-style dashboard for the Kotlin + LibGDX endless runner.",
   },
 };
 
@@ -43,7 +51,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} ${fredoka.variable} antialiased bg-background text-foreground`}
       >
         {children}
         <Toaster />

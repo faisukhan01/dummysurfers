@@ -72,3 +72,47 @@ Stage Summary:
 - Game: 3 bugs fixed (rainbow trail, audio intensity, shop scroll), 2 juice features added (top-speed streaks+vignette, birds+passengers). All Gradle modules green.
 - Dashboard: v2 shipped and browser-verified with zero errors.
 - Next round suggestions: gameplay tuning session (coin magnet feel, difficulty wall at ~2500m), add tunnel ambience sound layer, billboard brand text via font renderer, optional: seedable daily-run mode; keep an eye on agent-browser daemon health (Playwright fallback proven).
+
+---
+Task ID: 5-b
+Agent: frontend-styling-expert
+Task: Subway Surfers visual redesign of the Next.js project dashboard
+
+Work Log:
+- Read worklog + dummy-surfers/docs/DESIGN_BIBLE.md; verified stats against code before updating numbers: 5,318 Kotlin LOC across 23 files (→ "~5,300"), 6 TRAIN_LIVERIES in TextureGen.kt, DecoKind enum now 18 kinds (PASSENGER added in v1.1), 2.0 MB debug APK confirmed on disk.
+- Rewrote src/app/page.tsx (v1.2.0 "SS Redesign"): bright daylight theme on sky→cream gradient; periwinkle #7B84D6 sticker cards (3px white borders, 0 6px 0 navy shadows), deep slots #4A529E, navy #2A3057 pills/footer/tab chips, gold #FFC93C values/buttons, orange #FF5A3C + green #3DBB5A accents. No dark/monochrome aesthetic left.
+- Hero: cyan #3FB8F5 → azure #8FD8F8 → cream #FFE9C2 gradient, sun disc w/ halo, 3 floating fluffy CSS clouds, graffiti "DUMMY SURFERS" title as per-letter tilted spans (gold fill, 2px navy stroke + navy drop shadow, whole-word tilt), terracotta #C97B5E ground strip with grass edge + sleeper pattern + silver CSS rails hosting the runner/coin/train parade; CTA row: chunky gold "🔨 BUILD THE APK" (#ship) + green secondary (#features) with 0 5px 0 darker bottom edge + press translate-y.
+- NEW section #ss-redesign: 8 hex palette swatch chips from the brief, pure-CSS SS HUD mock (gold coin pill ★12,480 top-left, white navy-outlined score 184,320 + ×2 chip top-center, orange pause square top-right, segmented green power meter bottom, sky+rails backdrop), v1.1 sunset → v1.2 daylight before/after cards, chunky navy link-button to Subway Surfers Play Store page.
+- Restyled: stats strip → 6 periwinkle cards (35/35 · ~5,300 LOC · 2.0 MB · 100% procedural · 6 liveries · 18 deco kinds); build matrix → gold slot name chips + green "✓ SUCCESSFUL" pills; feature grid → gold icon chips + white outlined titles; spec grid → 35 periwinkle tiles w/ gold active state (hover/tap labels kept working); build console → navy header + deep-slot body (lines kept); shipping guide → navy cards w/ gold number chips + slot code block; changelog → v1.2.0 entry added on top with orange "LATEST" chip (daylight palette, SS HUD, Luckiest Guy/Fugaz One fonts, SS trains w/ white band + yellow cab + graffiti, rainbow new-best celebration, periwinkle UI + tabs menu), v1.1/v1.0 history preserved; navy sticky footer w/ gold top border + env(safe-area-inset-bottom). min-h-screen flex + mt-auto retained; all anchor IDs kept, #ss-redesign added to nav with version chip "v1.2.0 — SS REDESIGN".
+- layout.tsx: added Fredoka via next/font/google (weights 600/700 → --font-fredoka), exposed on body; page uses .ss-font utility with ui-rounded/Comic Sans fallback stack; metadata description/OG updated to reflect SS redesign, title unchanged ("Dummy Surfers by FSK — Kotlin + LibGDX Endless Runner").
+- Verification via direct Playwright 1.x Node script (agent-browser daemon known-broken): 30/30 checks pass — sections present (#ss-redesign/#status/#features/#spec/#console/#ship/#changelog), version chip visible, 35 spec tiles, 8 palette chips, tile hover label "§9 — Power-ups ✓ implemented" works, Fredoka computed on <main>, zero console errors, zero page errors, mobile scrollWidth = 390 (no horizontal overflow), footer bottom = viewport bottom on both sizes; extra VLM review of hero + mobile full-page screenshots found no clipping/overlap and confirmed the bright cartoon look.
+
+Stage Summary:
+- Dashboard v1.2.0 "Subway Surfers Redesign" shipped and verified: 0 console/page errors, responsive 390px→1440px, dev server left running on :3000 (untouched).
+- Evidence: /tmp/ss-qa/desktop-1280x720-hero.png, /tmp/ss-qa/desktop-1280x720-full.png, /tmp/ss-qa/desktop-ss-redesign.png, /tmp/ss-qa/mobile-390x844-hero.png, /tmp/ss-qa/mobile-390x844-full.png, /tmp/ss-qa/mobile-ss-redesign.png, /tmp/ss-qa/mobile-console.png, /tmp/ss-qa/results.json (30 checks, 0 failures).
+- Files changed: src/app/page.tsx (full restyle, same content/anchors), src/app/layout.tsx (Fredoka variable + metadata copy only). dummy-surfers/ untouched, no API routes added, no new deps.
+- Note: stats corrected from brief per actual code: ~5,300 LOC (not ~4,200) and 18 deco kinds (not 16).
+
+---
+Task ID: 5
+Agent: Z.ai Code (orchestrator)
+Task: TOTAL visual redesign of the Kotlin/LibGDX game to match Subway Surfers (user rejected old look as "ugly"); research-driven, per user demand for a SS clone look.
+
+Work Log:
+- RESEARCH: Play Store page blocks scrapers → pulled 6 real SS screenshots via image-search (gameplay HUD, home screen, profile panels, new-high-score) and studied them visually. Extracted the design DNA: bright cyan/cream sky, terracotta ground, rust rails, vibrant trains w/ white band, yellow/black hazard barriers, gold coin pill top-left, big white score w/ navy outline, orange pause button, periwinkle panels w/ deep slots, giant gold RUN button, navy tab bar, radial rainbow burst on new best.
+- Wrote docs/DESIGN_BIBLE.md in dummy-surfers (palette hexes, train liveries, UI DNA, effects) — source of truth for all future art work.
+- FONTS: downloaded Luckiest Guy (display) + Fugaz One (body) + Fredoka VF + Baloo2 into android/assets/fonts (desktop shares assets). Replaced Press Start 2P pixel font entirely in UiTheme — navy-outlined chunky comic text like SS.
+- Palette (TextureGen.kt): full rewrite — SKY_TOP 0x3FB8F5, cream horizon, terracotta GROUND, GRASS, PATH_CREAM/ORANGE, RAIL_SIDE rust, HAZARD yellow/black, periwinkle UI (UI_PANEL/UI_PANEL_LIGHT/UI_PANEL_DEEP/UI_NAVY/UI_OUTLINE/UI_GOLD_BTN/UI_ORANGE/UI_GREEN), 6 SS train liveries (blue metro w/ white band, orange freight, green, red, yellow navy-band, violet) + TRAIN_ROOF grey + TRAIN_FRONT yellow cab, warm building colors.
+- TextureGen: sky gradient cyan→cream (killed green mid stop), blue-violet skyline haze, coin gets FILLED star emboss, 9-patches get gloss band + chunkier bottom lip, NEW rainbowBurst texture (conic red/orange/yellow/green wedges + warm core) for NEW BEST celebration.
+- WorldRenderer: grass shoulders, terracotta ballast, alternating cream/orange path patches rushing past, rust rail base + silver head, warm tunnel shade, light periwinkle menu wash (world stays bright).
+- EntityRenderer: trains — grey SS roof, signature white band, yellow cab on lead car, navy windows w/ cyan reflections, graffiti = fat outlined blobs; low barriers yellow/black chevrons; blockade red container; boost vignette tinted warm orange in game file.
+- UiController: full SS layout — MENU: bounce logo (gold/white), orange BY FSK tag, character preview center, HIGH SCORE card w/ star + deep slot, giant gold RUN, navy bottom tab bar w/ red "!" missions badge; HUD: gold coin pill TL, fontHuge score TC + x2 gold chip, orange pause w/ real white bars, segmented 5-slot power meter bottom-center (SS board meter); GAME OVER: rainbow burst bg on new best, "NEW HIGH SCORE!", deep-slot score card, gold RUN AGAIN; PAUSE: periwinkle + deep slot + green RESUME; all shop/missions/settings lists restyled (gold BUY/UPGRADE/CLAIM, green SELECT/EQUIP, navy tabs w/ gold active, gold level pips, navy toast).
+- BUGFIXES along the way: train() tmpC aliasing (yellow cab overwrote livery base → reordered color math); menu tabs missing hits.add (unclickable); progressBar now self begin/end (latent crash risk in missions panel); pause panel height (HOME button overflowed panel bottom).
+- BUILD: :core ✅ :android assembleDebug ✅ (android-debug.apk regenerated, 2.0 MB) :desktop ✅ — all green after redesign.
+- Dashboard (Task 5-b, frontend-styling-expert subagent): full v1.2.0 SS restyle of page.tsx + Fredoka font via layout.tsx — hero sky/sun/clouds/rails + graffiti title, SS palette chips, pure-CSS HUD mock, before/after cards, periwinkle cards, navy footer; Playwright verified 30/30 checks, 0 console/page errors, no mobile overflow, sticky footer OK. Stats corrected to ~5,318 LOC / 18 deco kinds.
+- QA note: agent-browser daemon remains broken (CDP timeouts even after kill+restart); Playwright is the reliable path.
+
+Stage Summary:
+- The game now wears Subway Surfers' complete visual identity (world + entities + UI + fonts + celebration) while staying 100% procedural/original. All Gradle modules green; APK rebuilt.
+- Design Bible at dummy-surfers/docs/DESIGN_BIBLE.md governs future art additions.
+- Next-round ideas: hoverboard-style 2nd-chance power-up, character shop portraits w/ SS big-head proportions, mission-complete popup cards, daily word-hunt style side event, more World Tour city themes (palette swap per zone).
