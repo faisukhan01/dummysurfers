@@ -294,8 +294,8 @@ class AudioManager {
                     val bar = (step / 16) % 4
                     // kick on quarters
                     if (st % 4 == 0) active.add(Voice(kickBuf, 0, 0.9f))
-                    // hats on 8ths, open on offbeat of bar 2/4
-                    if (st % 2 == 0) active.add(Voice(if (st == 6 && bar % 2 == 1) hatO else hatC, 0, 1f))
+                    // hats on 8ths, open on offbeat of bar 2/4 (intensity scales at schedule time)
+                    if (st % 2 == 0) active.add(Voice(if (st == 6 && bar % 2 == 1) hatO else hatC, 0, 0.55f + 0.55f * intensity))
                     // bass 8ths
                     if (st % 2 == 0) {
                         val semi = bassLine[(st / 2 + bar * 2) % bassLine.size]
@@ -309,7 +309,7 @@ class AudioManager {
                         if (semi != -99) {
                             val f = 220f * pw(2f, semi / 12f)
                             val l = leadCache.getOrPut(f) { lead(f, stepDur * 1.6f) }
-                            active.add(Voice(l, 0, 1f))
+                            active.add(Voice(l, 0, 0.35f + 0.75f * intensity))
                         }
                     }
                     if (active.size > 40) active.removeAt(0)

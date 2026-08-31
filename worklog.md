@@ -50,3 +50,25 @@ Work Log:
 
 Stage Summary:
 - / route = project dashboard (verified). Kotlin game at dummy-surfers/ builds: core ✅ android-debug.apk ✅ desktop ✅. CI workflow + README ready for the user's GitHub push.
+
+---
+Task ID: 3 (cron review round 2)
+Agent: Z.ai Code (orchestrator, 15-min webDevReview)
+Task: QA + game juice improvements + dashboard v2
+
+Work Log:
+- QA: Gradle builds green (core+android+desktop re-verified after changes), dev.log clean, worklog reviewed.
+- Game fixes (dummy-surfers):
+  - G1 BUGFIX: rainbow trail was rendering static teal → now hue-cycles via new Mathz.hsv(); emit position tightened to feet.
+  - G2 JUICE: speed lines now also trigger at >88% max speed (spec 2.2), boost draws screen-edge vignette blur (spec 9) — TextureGen.vignette finally used.
+  - G3 BUGFIX: music hat/lead intensity was baked at buffer-creation → now scaled at schedule time so music follows speed live.
+  - G4 BUGFIX: shop/characters/upgrades/trails/missions panels now offset content by scrollY with bounds-skipping + clamped drag (maxScroll per panel); CHARACTERS panel made scrollable.
+  - G5 WORLD LIFE: new DecoKind.PASSENGER (commuters on platforms, 4 coat variants, spawned 2-4 per station); bird flock in WorldRenderer sky (5 birds, sine flapping wings, parallax drift).
+- Builds: :android:assembleDebug → BUILD SUCCESSFUL (APK regenerated); :core + :desktop → BUILD SUCCESSFUL.
+- Dashboard v2 (src/app/page.tsx): sticky anchor nav; stats strip (35/35, ~4,000 LOC, 2.0 MB APK, 100% procedural); interactive 35-tile spec-coverage grid with hover labels; styled build-console terminal card; changelog section (v1.1 entries); card hover-lift polish; spinning coin in runner strip; version bumped to v1.1.0.
+- Verification: agent-browser daemon went unresponsive (CDP channel closed) mid-QA → switched to direct Playwright 1.62.1 script: desktop+mobile screenshots captured, all 6 sections present, spec tile hover works ("§9 — Power-ups ✓ implemented"), ZERO console/page errors. QA script removed after use.
+
+Stage Summary:
+- Game: 3 bugs fixed (rainbow trail, audio intensity, shop scroll), 2 juice features added (top-speed streaks+vignette, birds+passengers). All Gradle modules green.
+- Dashboard: v2 shipped and browser-verified with zero errors.
+- Next round suggestions: gameplay tuning session (coin magnet feel, difficulty wall at ~2500m), add tunnel ambience sound layer, billboard brand text via font renderer, optional: seedable daily-run mode; keep an eye on agent-browser daemon health (Playwright fallback proven).

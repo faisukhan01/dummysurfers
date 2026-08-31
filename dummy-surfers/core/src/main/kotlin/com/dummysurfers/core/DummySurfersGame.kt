@@ -35,6 +35,7 @@ import com.dummysurfers.core.systems.Difficulty
 import com.dummysurfers.core.systems.Spawner
 import com.dummysurfers.core.ui.UiController
 import com.dummysurfers.core.ui.UiTheme
+import com.dummysurfers.core.utils.Mathz
 import com.dummysurfers.core.world.WorldGenerator
 import kotlin.math.abs
 import kotlin.math.max
@@ -69,6 +70,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     })
 
     private val rng = Random(System.nanoTime())
+    private val tmpColor = Color()
     private var state: GameState = GameState.MENU
     private var menuPanel = MenuPanel.NONE
     private var shopTab = ShopTab.CHARACTERS
@@ -260,22 +262,24 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             handleCoins(dt)
         }
 
-        // boost FX
-        if (activePowerups[3] > 0f) {
-            particles.streak(proj.vw, proj.vh, 3)
+        // boost FX + top-speed juice (spec 2.2: speed lines at very high speeds)
+        val topSpeed = Difficulty.speed(distance) > GameConfig.MAX_SPEED * 0.88f
+        if (activePowerups[3] > 0f || topSpeed) {
+            particles.streak(proj.vw, proj.vh, if (activePowerups[3] > 0f) 3 else 2)
             proj.zoom = proj.zoom + (0.93f - proj.zoom) * min(1f, dt * 5f)
         } else {
             proj.zoom = proj.zoom + (1f - proj.zoom) * min(1f, dt * 4f)
         }
 
-        // trail cosmetics
+        // trail cosmetics (gold / fire / rainbow hue-cycle)
         if (save.trail > 0 && player.state != PlayerState.SLIDING) {
             val col = when (save.trail) {
                 1 -> Color(0xffc93cff.toInt())
                 2 -> Color(0xf97316ff.toInt())
-                else -> Color(0x2dd4bfff.toInt())
+                else -> Mathz.hsv(time * 140f, 0.85f, 1f, 1f, tmpColor)
             }
-            particles.burst(proj.screenX(player.x, 0f), proj.groundY(0f) - player.jumpY * proj.ppu + 20f, 1, col, 40f, 5f, grav = -60f, life = 0.4f)
+            val emitX = proj.screenX(player.x, 0f) + rng.nextFloat() * 14f - 7f
+            particles.burst(emitX, proj.groundY(0f) - player.jumpY * proj.ppu + 16f, 1, col, 40f, 5f, grav = -60f, life = 0.4f)
         }
 
         // camera
@@ -568,7 +572,6 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         gl.glViewport(vpX, vpY, vpW, vpH)
         gl.glEnable(GL20.GL_BLEND)
         gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA)
-
         // tunnel darkness factor
         var tunnelDark = 0f
         for (r in world.tunnelRanges) {
@@ -579,9 +582,19 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         }
 
         worldRenderer.menuDim = if (state == GameState.MENU || state == GameState.GAME_OVER) 0.55f else 0f
+        worldRenderer.time = time
         worldRenderer.render(distance, Difficulty.speed(distance), shakeX, shakeY, tunnelDark)
         entityRenderer.render(world, spawner, player, chaser, character, shakeX, shakeY, particles,
             invulnBlink = player.invulnTimer > 0f, shieldOn = activePowerups[2] > 0f, boostOn = activePowerups[3] > 0f)
+
+        // boost screen-edge blur (spec 9: BOOST — screen edge blur)
+        if (activePowerups[3] > 0f) {
+            batch.begin()
+            batch.setColor(1f, 1f, 1f, 0.6f)
+            batch.draw(TextureGen.vignette, 0f, 0f, proj.vw, proj.vh)
+            batch.setColor(1f, 1f, 1f, 1f)
+            batch.end()
+        }
 
         // UI overlays
         ui.flushFrame()
