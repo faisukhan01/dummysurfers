@@ -1,0 +1,721 @@
+     1→package com.dummysurfers.core
+     2→
+     3→import com.badlogic.gdx.Gdx
+     4→import com.badlogic.gdx.Input
+     5→import com.badlogic.gdx.InputMultiplexer
+     6→import com.badlogic.gdx.graphics.Color
+     7→import com.badlogic.gdx.graphics.GL20
+     8→import com.badlogic.gdx.graphics.OrthographicCamera
+     9→import com.badlogic.gdx.graphics.g2d.SpriteBatch
+    10→import com.badlogic.gdx.graphics.glutils.ShapeRenderer
+    11→import com.dummysurfers.core.audio.AudioManager
+    12→import com.dummysurfers.core.camera.Projection
+    13→import com.dummysurfers.core.config.GameConfig
+    14→import com.dummysurfers.core.entities.Chaser
+    15→import com.dummysurfers.core.entities.CharacterDef
+    16→import com.dummysurfers.core.entities.Obstacle
+    17→import com.dummysurfers.core.entities.ObstacleKind
+    18→import com.dummysurfers.core.entities.Player
+    19→import com.dummysurfers.core.entities.Train
+    20→import com.dummysurfers.core.gfx.Palette
+    21→import com.dummysurfers.core.gfx.TextureGen
+    22→import com.dummysurfers.core.input.SwipeDetector
+    23→import com.dummysurfers.core.particles.Particles
+    24→import com.dummysurfers.core.rendering.EntityRenderer
+    25→import com.dummysurfers.core.rendering.WorldRenderer
+    26→import com.dummysurfers.core.state.GameEvent
+    27→import com.dummysurfers.core.state.GameState
+    28→import com.dummysurfers.core.state.MenuPanel
+    29→import com.dummysurfers.core.state.MissionType
+    30→import com.dummysurfers.core.state.PowerUpType
+    31→import com.dummysurfers.core.state.SaveManager
+    32→import com.dummysurfers.core.state.PlayerState
+    33→import com.dummysurfers.core.state.ShopTab
+    34→import com.dummysurfers.core.systems.Difficulty
+    35→import com.dummysurfers.core.systems.Spawner
+    36→import com.dummysurfers.core.ui.UiController
+    37→import com.dummysurfers.core.ui.UiTheme
+    38→import com.dummysurfers.core.utils.Mathz
+    39→import com.dummysurfers.core.world.WorldGenerator
+    40→import kotlin.math.abs
+    41→import kotlin.math.max
+    42→import kotlin.math.min
+    43→import kotlin.math.sin
+    44→import kotlin.random.Random
+    45→
+    46→/**
+    47→ * DUMMY SURFERS BY FSK — main game orchestrator.
+    48→ * Owns the loop, state machine, gameplay systems and bridges them to UI/audio.
+    49→ */
+    50→class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
+    51→
+    52→    lateinit var batch: SpriteBatch; private set
+    53→    lateinit var sr: ShapeRenderer; private set
+    54→    private val camera = OrthographicCamera()
+    55→    private val proj = Projection()
+    56→    private lateinit var worldRenderer: WorldRenderer
+    57→    private lateinit var entityRenderer: EntityRenderer
+    58→    private val theme = UiTheme()
+    59→    private lateinit var ui: UiController
+    60→    private val audio = AudioManager()
+    61→
+    62→    private val save = SaveManager()
+    63→    private val world = WorldGenerator()
+    64→    private val spawner = Spawner()
+    65→    private val player = Player()
+    66→    private val chaser = Chaser()
+    67→    private val particles = Particles(340)
+    68→    private val swipe = SwipeDetector(object : SwipeDetector.Listener {
+    69→        override fun onSwipe(dir: SwipeDetector.Direction) = handleSwipe(dir)
+    70→    })
+    71→
+    72→    private val rng = Random(System.nanoTime())
+    73→    private val tmpColor = Color()
+    74→    private var state: GameState = GameState.MENU
+    75→    private var menuPanel = MenuPanel.NONE
+    76→    private var shopTab = ShopTab.CHARACTERS
+    77→    private var tutorialStep: Int? = null
+    78→
+    79→    // ── Run state ──────────────────────────────────────────────────────
+    80→    private var score = 0
+    81→    private var runCoins = 0
+    82→    private var distance = 0f
+    83→    private var jumps = 0
+    84→    private var slides = 0
+    85→    private var powerupsUsed = 0
+    86→    private var nearMisses = 0
+    87→    private val activePowerups = FloatArray(5)
+    88→    private val powerupTotal = FloatArray(5)
+    89→    private var displayScore = 0
+    90→    private var newBest = false
+    91→    private var coinStreak = 0
+    92→    private var coinStreakTimer = 0f
+    93→    private var multiplier = 1
+    94→
+    95→    // ── FX state ───────────────────────────────────────────────────────
+    96→    private var shake = 0f
+    97→    private var shakeX = 0f
+    98→    private var shakeY = 0f
+    99→    private var time = 0f
+   100→    private var dyingTimer = 0f
+   101→    private var menuDim = 0.55f
+   102→    private var lastStepParity = 0
+   103→
+   104→    // letterbox
+   105→    private var vpX = 0; private var vpY = 0; private var vpW = 0; private var vpH = 0
+   106→    private var screenW = 0; private var screenH = 0
+   107→    private var viewScale = 1f
+   108→
+   109→    private lateinit var character: CharacterDef
+   110→
+   111→    override fun create() {
+   112→        batch = SpriteBatch()
+   113→        sr = ShapeRenderer()
+   114→        camera.setToOrtho(false, GameConfig.VIRTUAL_WIDTH, GameConfig.VIRTUAL_HEIGHT)
+   115→        proj.setViewport(GameConfig.VIRTUAL_WIDTH, GameConfig.VIRTUAL_HEIGHT)
+   116→        TextureGen.generate()
+   117→        theme.create()
+   118→        worldRenderer = WorldRenderer(proj, batch, sr)
+   119→        entityRenderer = EntityRenderer(proj, batch, sr, theme.fontLarge, theme.fontSmall)
+   120→        ui = UiController(theme)
+   121→        ui.bridge = bridge
+   122→        audio.start()
+   123→        audio.setMusic(save.musicOn)
+   124→        audio.setSfx(save.sfxOn)
+   125→        character = CharacterDef.byId(save.selectedCharacter)
+   126→        world.reset()
+   127→        spawner.reset()
+   128→        Gdx.input.inputProcessor = InputMultiplexer(ui, swipe)
+   129→        resize(Gdx.graphics.width, Gdx.graphics.height)
+   130→    }
+   131→
+   132→    override fun resize(width: Int, height: Int) {
+   133→        screenW = width; screenH = height
+   134→        viewScale = min(width / GameConfig.VIRTUAL_WIDTH, height / GameConfig.VIRTUAL_HEIGHT)
+   135→        vpW = (GameConfig.VIRTUAL_WIDTH * viewScale).toInt()
+   136→        vpH = (GameConfig.VIRTUAL_HEIGHT * viewScale).toInt()
+   137→        vpX = (width - vpW) / 2
+   138→        vpY = (height - vpH) / 2
+   139→        camera.setToOrtho(false, GameConfig.VIRTUAL_WIDTH, GameConfig.VIRTUAL_HEIGHT)
+   140→        batch.projectionMatrix = camera.combined
+   141→        sr.projectionMatrix = camera.combined
+   142→    }
+   143→
+   144→    // ── Main loop ──────────────────────────────────────────────────────
+   145→    override fun render() {
+   146→        val rawDt = Gdx.graphics.deltaTime.coerceIn(0.001f, 0.05f)
+   147→        val dt = rawDt * if (state == GameState.DYING) 0.4f else 1f
+   148→        time += rawDt
+   149→
+   150→        update(dt)
+   151→        draw(rawDt)
+   152→    }
+   153→
+   154→    private fun update(dt: Float) {
+   155→        swipe.pollKeyboard()
+   156→        ui.update(dt)
+   157→        particles.update(dt)
+   158→
+   159→        // shake decay
+   160→        shake = max(0f, shake - dt * 40f)
+   161→        val so = proj.shakeOffset(shake, rng)
+   162→        shakeX = so.first; shakeY = so.second
+   163→
+   164→        when (state) {
+   165→            GameState.MENU -> updateAttract(dt)
+   166→            GameState.TUTORIAL -> updateRun(dt, tutorial = true)
+   167→            GameState.PLAYING -> updateRun(dt, tutorial = false)
+   168→            GameState.DYING -> updateDying(dt)
+   169→            else -> {}
+   170→        }
+   171→
+   172→        // audio intensity follows speed
+   173→        audio.setIntensity(if (state == GameState.PLAYING) Difficulty.speedPct(distance) else 0.25f)
+   174→    }
+   175→
+   176→    private fun updateAttract(dt: Float) {
+   177→        val speed = 6f
+   178→        world.update(dt * speed)
+   179→        player.runPhase += dt * speed * 1.55f
+   180→        chaser.active = false
+   181→        proj.update(0f, dt)
+   182→        proj.zoom = 1f
+   183→        menuDim = 0.55f
+   184→    }
+   185→
+   186→    private fun updateRun(dt: Float, tutorial: Boolean) {
+   187→        menuDim = 0f
+   188→        val speed = if (tutorial) 5f else Difficulty.speed(distance) * (if (activePowerups[3] > 0f) GameConfig.BOOST_SPEED_MULT else 1f)
+   189→
+   190→        // world + spawner scroll
+   191→        val scroll = speed * dt
+   192→        distance += scroll
+   193→        world.update(scroll)
+   194→        spawner.addDistance(scroll)
+   195→        spawner.speedHint = speed
+   196→        spawner.update(dt, speed, scroll, player.lane, attractMode = tutorial)
+   197→
+   198→        // player physics
+   199→        val grounded = player.update(dt, speed)
+   200→        if (grounded) {
+   201→            audio.play(GameEvent.LAND)
+   202→            particles.burst(proj.screenX(player.x, 0f), proj.groundY(0f), 5, Color(0xcbb9a4ff.toInt()), 130f, 4f, grav = 500f, life = 0.35f)
+   203→        }
+   204→
+   205→        // footsteps synced to run cycle
+   206→        if (player.stepParity != lastStepParity && player.state == PlayerState.RUNNING) {
+   207→            lastStepParity = player.stepParity
+   208→            audio.play(GameEvent.FOOTSTEP)
+   209→            if (rng.nextFloat() < 0.5f) {
+   210→                particles.burst(proj.screenX(player.x, 0f) + rng.nextFloat() * 16f - 8f, proj.groundY(0f), 2, Color(0xbfae9aff.toInt()), 90f, 3f, grav = 420f, life = 0.3f)
+   211→            }
+   212→        }
+   213→
+   214→        // score & multiplier
+   215→        if (!tutorial) {
+   216→            score += (scroll * GameConfig.DISTANCE_SCORE_PER_METER).toInt() * multiplier
+   217→            multiplier = Difficulty.multiplier(distance)
+   218→        }
+   219→
+   220→        // power-up timers
+   221→        for (i in 0 until 5) {
+   222→            if (activePowerups[i] > 0f) {
+   223→                activePowerups[i] -= dt
+   224→                if (activePowerups[i] <= 0f) activePowerups[i] = 0f
+   225→            }
+   226→        }
+   227→
+   228→        // chaser behavior
+   229→        chaser.update(dt, speed)
+   230→
+   231→        // magnet flight
+   232→        if (activePowerups[0] > 0f) {
+   233→            for (c in spawner.coins) {
+   234→                if (!c.collected && c.z < GameConfig.MAGNET_RANGE_Z && c.z > -1f) c.magnet = true
+   235→            }
+   236→        }
+   237→        for (c in spawner.coins) {
+   238→            if (c.magnet && !c.collected) {
+   239→                c.x += (player.x - c.x) * min(1f, dt * 9f)
+   240→                c.y += (0.9f - c.y) * min(1f, dt * 9f)
+   241→                c.z -= 14f * dt
+   242→            }
+   243→        }
+   244→
+   245→        // trains: horn + approach rumble
+   246→        for (t in spawner.trains) {
+   247→            if (t.kind == 2 && !t.hornDone && t.z < GameConfig.TRAIN_HORN_DISTANCE) {
+   248→                t.hornDone = true
+   249→                audio.play(GameEvent.HORN)
+   250→            }
+   251→            if (t.kind == 1 && t.z < 30f && t.z > 2f && rng.nextFloat() < 0.06f) {
+   252→                shake = max(shake, 1.2f) // subtle rumble
+   253→            }
+   254→        }
+   255→
+   256→        // collisions & pickups
+   257→        if (!tutorial) {
+   258→            handleCollisions()
+   259→            handleCoins(dt)
+   260→            handlePowerups()
+   261→        } else {
+   262→            handleCoins(dt)
+   263→        }
+   264→
+   265→        // boost FX + top-speed juice (spec 2.2: speed lines at very high speeds)
+   266→        val topSpeed = Difficulty.speed(distance) > GameConfig.MAX_SPEED * 0.88f
+   267→        if (activePowerups[3] > 0f || topSpeed) {
+   268→            particles.streak(proj.vw, proj.vh, if (activePowerups[3] > 0f) 3 else 2)
+   269→            proj.zoom = proj.zoom + (0.93f - proj.zoom) * min(1f, dt * 5f)
+   270→        } else {
+   271→            proj.zoom = proj.zoom + (1f - proj.zoom) * min(1f, dt * 4f)
+   272→        }
+   273→
+   274→        // trail cosmetics (gold / fire / rainbow hue-cycle)
+   275→        if (save.trail > 0 && player.state != PlayerState.SLIDING) {
+   276→            val col = when (save.trail) {
+   277→                1 -> Color(0xffc93cff.toInt())
+   278→                2 -> Color(0xf97316ff.toInt())
+   279→                else -> Mathz.hsv(time * 140f, 0.85f, 1f, 1f, tmpColor)
+   280→            }
+   281→            val emitX = proj.screenX(player.x, 0f) + rng.nextFloat() * 14f - 7f
+   282→            particles.burst(emitX, proj.groundY(0f) - player.jumpY * proj.ppu + 16f, 1, col, 40f, 5f, grav = -60f, life = 0.4f)
+   283→        }
+   284→
+   285→        // camera
+   286→        proj.update(player.x * GameConfig.CAMERA_FOLLOW, dt)
+   287→        entityRenderer.chaserX = player.x
+   288→
+   289→        coinStreakTimer -= dt
+   290→        if (coinStreakTimer <= 0f) coinStreak = 0
+   291→    }
+   292→
+   293→    private fun updateDying(dt: Float) {
+   294→        world.update(dt * 4f)
+   295→        player.update(dt, 0f)
+   296→        dyingTimer += dt
+   297→        if (dyingTimer >= 1.0f) {
+   298→            finalizeRun()
+   299→        }
+   300→    }
+   301→
+   302→    // ── Gameplay interactions ──────────────────────────────────────────
+   303→    private fun handleSwipe(dir: SwipeDetector.Direction) {
+   304→        when (state) {
+   305→            GameState.TUTORIAL -> {
+   306→                val step = tutorialStep ?: return
+   307→                val expected = when (step) {
+   308→                    0 -> SwipeDetector.Direction.LEFT
+   309→                    1 -> SwipeDetector.Direction.RIGHT
+   310→                    2 -> SwipeDetector.Direction.UP
+   311→                    else -> SwipeDetector.Direction.DOWN
+   312→                }
+   313→                if (dir == expected) {
+   314→                    // perform the action then advance
+   315→                    performSwipe(dir)
+   316→                    tutorialStep = if (step >= 3) null else step + 1
+   317→                    if (tutorialStep == null) {
+   318→                        save.markTutorialDone()
+   319→                        startRun()
+   320→                    } else {
+   321→                        audio.play(GameEvent.TUTORIAL_STEP)
+   322→                    }
+   323→                } else {
+   324→                    performSwipe(dir) // still allow moving during tutorial
+   325→                }
+   326→            }
+   327→            GameState.PLAYING -> performSwipe(dir)
+   328→            else -> {}
+   329→        }
+   330→    }
+   331→
+   332→    private fun performSwipe(dir: SwipeDetector.Direction) {
+   333→        when (dir) {
+   334→            SwipeDetector.Direction.LEFT -> { player.switchLane(-1); audio.play(GameEvent.LANE) }
+   335→            SwipeDetector.Direction.RIGHT -> { player.switchLane(1); audio.play(GameEvent.LANE) }
+   336→            SwipeDetector.Direction.UP -> {
+   337→                if (player.startJump(activePowerups[4] > 0f)) {
+   338→                    jumps++
+   339→                    audio.play(GameEvent.JUMP)
+   340→                }
+   341→            }
+   342→            SwipeDetector.Direction.DOWN -> {
+   343→                player.startSlide()
+   344→                slides++
+   345→                audio.play(GameEvent.SLIDE)
+   346→            }
+   347→        }
+   348→    }
+   349→
+   350→    private fun playerOverlaps(boxX: Float, boxHalfW: Float, zNear: Float, zFar: Float, yLo: Float, yHi: Float): Boolean {
+   351→        val px = player.x
+   352→        if (abs(px - boxX) > GameConfig.PLAYER_HALF_WIDTH + boxHalfW) return false
+   353→        if (player.jumpY > yHi || player.jumpY + player.height < yLo) return false
+   354→        return 0.5f >= zNear && -0.5f <= zFar
+   355→    }
+   356→
+   357→    private fun handleCollisions() {
+   358→        if (player.state == PlayerState.DEAD || player.invulnTimer > 0f) return
+   359→
+   360→        // trains
+   361→        for (t in spawner.trains) {
+   362→            val zFar = t.z
+   363→            val zNear = t.z - t.totalLength
+   364→            if (zNear > 0.5f || zFar < -0.5f) continue
+   365→            for (lane in t.lanes) {
+   366→                val laneX = lane * GameConfig.LANE_WIDTH
+   367→                if (playerOverlaps(laneX, GameConfig.TRAIN_WIDTH / 2f, zNear, zFar, 0f, GameConfig.TRAIN_HEIGHT)) {
+   368→                    onHit(laneX)
+   369→                    return
+   370→                }
+   371→            }
+   372→            // near-miss: train front just passed the player
+   373→            if (!t.passedNear && zFar < 0.6f && zFar > 0.0f) {
+   374→                t.passedNear = true
+   375→                val minDist = t.lanes.minOf { abs(it * GameConfig.LANE_WIDTH - player.x) }
+   376→                if (minDist < GameConfig.NEAR_MISS_DISTANCE + GameConfig.TRAIN_WIDTH / 2f && minDist > GameConfig.PLAYER_HALF_WIDTH + GameConfig.TRAIN_WIDTH / 2f - 0.12f) {
+   377→                    registerNearMiss()
+   378→                }
+   379→            }
+   380→        }
+   381→
+   382→        // obstacles
+   383→        for (o in spawner.obstacles) {
+   384→            if (o.z > 0.85f || o.z < -0.35f) continue
+   385→            if (o.passed && o.z < -0.35f) continue
+   386→            val affects = o.kind == ObstacleKind.GATE || o.kind == ObstacleKind.FENCE_FULL || o.lane == player.lane ||
+   387→                    abs(o.lane * GameConfig.LANE_WIDTH - player.x) < 1.0f
+   388→            if (!affects) {
+   389→                if (!o.passed && o.z < 0.6f) { o.passed = true }
+   390→                continue
+   391→            }
+   392→            val boxX = o.lane * GameConfig.LANE_WIDTH
+   393→            val hit = when (o.kind) {
+   394→                ObstacleKind.LOW_BARRIER -> playerOverlaps(boxX, 1.0f, o.z - 0.35f, o.z + 0.35f, 0f, 0.95f)
+   395→                ObstacleKind.FENCE_FULL -> playerOverlaps(player.x, 1.0f, o.z - 0.35f, o.z + 0.35f, 0f, 0.95f)
+   396→                ObstacleKind.HIGH_BARRIER -> playerOverlaps(boxX, 1.1f, o.z - 0.35f, o.z + 0.35f, 1.2f, 2.3f)
+   397→                ObstacleKind.GATE -> playerOverlaps(player.x, 1.0f, o.z - 0.4f, o.z + 0.4f, 1.2f, 2.3f)
+   398→                ObstacleKind.BLOCKADE -> playerOverlaps(boxX, 1.0f, o.z - 0.4f, o.z + 0.4f, 0f, 2.4f)
+   399→            }
+   400→            if (hit) { onHit(boxX); return }
+   401→            if (!o.passed && o.z < 0.6f) {
+   402→                o.passed = true
+   403→                val lateral = abs(boxX - player.x)
+   404→                if (lateral < GameConfig.NEAR_MISS_DISTANCE + 1.0f && lateral > 0.9f) registerNearMiss()
+   405→            }
+   406→        }
+   407→    }
+   408→
+   409→    private fun registerNearMiss() {
+   410→        nearMisses++
+   411→        val pts = GameConfig.NEAR_MISS_SCORE * multiplier
+   412→        score += pts
+   413→        shake = max(shake, GameConfig.NEAR_MISS_SHAKE * 0.6f)
+   414→        audio.play(GameEvent.NEAR_MISS)
+   415→        particles.text(proj.vw / 2f, proj.vh * 0.6f, "+$pts", Color(0x8ff2e2ff.toInt()), 22f)
+   416→        if (rng.nextFloat() < 0.65f) chaser.trigger(GameConfig.CHASER_NEARMISS_TIME)
+   417→    }
+   418→
+   419→    private fun onHit(hitX: Float) {
+   420→        if (activePowerups[2] > 0f) {
+   421→            // shield absorbs one hit
+   422→            activePowerups[2] = 0f
+   423→            player.invulnTimer = GameConfig.SHIELD_INVULN
+   424→            audio.play(GameEvent.SHIELD_BREAK)
+   425→            vibrate(60)
+   426→            particles.burst(proj.screenX(player.x, 0f), proj.groundY(0f) - player.jumpY * proj.ppu + 120f, 16, Color(0x2dd4bfff.toInt()), 320f, 6f, shape = 1)
+   427→            return
+   428→        }
+   429→        player.state = PlayerState.DEAD
+   430→        player.deadTimer = 0f
+   431→        state = GameState.DYING
+   432→        dyingTimer = 0f
+   433→        shake = GameConfig.CRASH_SHAKE
+   434→        audio.play(GameEvent.CRASH)
+   435→        vibrate(120)
+   436→        particles.burst(proj.screenX(player.x, 0f), proj.groundY(0f) - player.jumpY * proj.ppu + 120f, 26, Color(0xef4444ff.toInt()), 420f, 7f, shape = 1)
+   437→        particles.burst(proj.screenX(player.x, 0f), proj.groundY(0f) - player.jumpY * proj.ppu + 120f, 14, Color(0xf2a75bff.toInt()), 300f, 5f)
+   438→    }
+   439→
+   440→    private fun handleCoins(dt: Float) {
+   441→        for (c in spawner.coins) {
+   442→            if (c.collected) continue
+   443→            if (c.z < -0.8f || c.z > 1.0f) continue
+   444→            val dx = abs(c.x - player.x)
+   445→            val reachY = player.jumpY + 1.6f
+   446→            if (dx < 0.8f && c.y <= reachY) {
+   447→                c.collected = true
+   448→                runCoins++
+   449→                val pts = GameConfig.COIN_VALUE * multiplier * (if (activePowerups[1] > 0f) 2 else 1)
+   450→                score += pts
+   451→                coinStreak++
+   452→                coinStreakTimer = 0.8f
+   453→                audio.play(GameEvent.COIN, coinStreak.toFloat())
+   454→                particles.burst(proj.screenX(c.x, c.z), proj.groundY(c.z) - c.y * proj.ppu * proj.scale(c.z), 7, Palette.GOLD, 240f, 5f, shape = 1, life = 0.45f)
+   455→                particles.text(proj.screenX(c.x, c.z), proj.groundY(c.z) - c.y * proj.ppu * proj.scale(c.z) + 20f, "+${GameConfig.COIN_VALUE * multiplier}", Palette.GOLD, 16f)
+   456→            }
+   457→        }
+   458→    }
+   459→
+   460→    private fun handlePowerups() {
+   461→        for (p in spawner.powerups) {
+   462→            if (p.taken) continue
+   463→            if (p.z < -0.8f || p.z > 1.2f) continue
+   464→            val px = p.lane * GameConfig.LANE_WIDTH
+   465→            if (abs(px - player.x) < 0.9f && player.jumpY + 1.75f > 0.9f && player.jumpY < 2.4f) {
+   466→                p.taken = true
+   467→                val idx = p.type
+   468→                val dur = GameConfig.POWERUP_DURATIONS[idx] + save.upgradeLevel(SaveManager.POWERUP_NAMES[idx]) * 3f
+   469→                activePowerups[idx] = dur
+   470→                powerupTotal[idx] = dur
+   471→                powerupsUsed++
+   472→                score += GameConfig.POWERUP_SCORE * multiplier
+   473→                audio.play(GameEvent.POWERUP)
+   474→                vibrate(40)
+   475→                val sx = proj.screenX(px, p.z)
+   476→                val sy = proj.groundY(p.z) - 1.35f * proj.ppu * proj.scale(p.z)
+   477→                particles.burst(sx, sy, 20, powerColor(idx), 340f, 6f, life = 0.7f)
+   478→                particles.text(sx, sy + 30f, GameConfig.POWERUP_LABELS[idx], powerColor(idx), 22f)
+   479→            }
+   480→        }
+   481→    }
+   482→
+   483→    private fun powerColor(i: Int): Color = when (i) {
+   484→        0 -> Color(0xef4444ff.toInt())
+   485→        1 -> Color(0xf59e0bff.toInt())
+   486→        2 -> Color(0x2dd4bfff.toInt())
+   487→        3 -> Color(0xa3e635ff.toInt())
+   488→        else -> Color(0xf97316ff.toInt())
+   489→    }
+   490→
+   491→    // ── Run lifecycle ──────────────────────────────────────────────────
+   492→    private fun startRunInternal() {
+   493→        score = 0; displayScore = 0; runCoins = 0; distance = 0f
+   494→        jumps = 0; slides = 0; powerupsUsed = 0; nearMisses = 0
+   495→        newBest = false; coinStreak = 0; multiplier = 1
+   496→        for (i in 0 until 5) { activePowerups[i] = 0f; powerupTotal[i] = 0f }
+   497→        player.reset()
+   498→        chaser.active = false
+   499→        particles.clear()
+   500→        world.reset()
+   501→        spawner.reset()
+   502→        shake = 0f
+   503→        proj.zoom = 1f
+   504→        chaser.trigger(GameConfig.CHASER_START_TIME)
+   505→    }
+   506→
+   507→    fun startRun() {
+   508→        startRunInternal()
+   509→        state = if (save.tutorialDone) GameState.PLAYING else GameState.TUTORIAL
+   510→        if (state == GameState.TUTORIAL) {
+   511→            tutorialStep = 0
+   512→            spawner.reset()
+   513→        }
+   514→        audio.play(GameEvent.CLICK)
+   515→    }
+   516→
+   517→    fun restartRun() {
+   518→        startRunInternal()
+   519→        tutorialStep = null
+   520→        state = GameState.PLAYING
+   521→        audio.play(GameEvent.CLICK)
+   522→    }
+   523→
+   524→    fun pauseGame() { if (state == GameState.PLAYING) state = GameState.PAUSED }
+   525→    fun resumeGame() { if (state == GameState.PAUSED) state = GameState.PLAYING }
+   526→
+   527→    fun toMenu() {
+   528→        state = GameState.MENU
+   529→        menuPanel = MenuPanel.NONE
+   530→        tutorialStep = null
+   531→        player.reset()
+   532→        world.reset()
+   533→        spawner.reset()
+   534→        audio.play(GameEvent.CLICK)
+   535→    }
+   536→
+   537→    private fun finalizeRun() {
+   538→        newBest = save.submitRun(score, runCoins, distance.toInt(), jumps, slides, powerupsUsed, nearMisses)
+   539→        displayScore = 0
+   540→        state = GameState.GAME_OVER
+   541→        if (newBest) {
+   542→            audio.play(GameEvent.NEW_BEST)
+   543→            particles.confetti(proj.vw / 2f, proj.vh * 0.75f, 60)
+   544→            vibrate(160)
+   545→        } else {
+   546→            audio.play(GameEvent.GAME_OVER)
+   547→        }
+   548→    }
+   549→
+   550→    private fun vibrate(ms: Int) {
+   551→        if (save.vibrationOn) Gdx.input.vibrate(ms)
+   552→    }
+   553→
+   554→    override fun pause() {
+   555→        if (state == GameState.PLAYING || state == GameState.TUTORIAL) state = GameState.PAUSED
+   556→    }
+   557→
+   558→    override fun dispose() {
+   559→        audio.dispose()
+   560→        theme.dispose()
+   561→        TextureGen.dispose()
+   562→        batch.dispose()
+   563→        sr.dispose()
+   564→    }
+   565→
+   566→    // ── Drawing ────────────────────────────────────────────────────────
+   567→    private fun draw(rawDt: Float) {
+   568→        val gl = Gdx.gl
+   569→        gl.glClearColor(0.09f, 0.06f, 0.05f, 1f)
+   570→        gl.glViewport(0, 0, screenW, screenH)
+   571→        gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
+   572→        gl.glViewport(vpX, vpY, vpW, vpH)
+   573→        gl.glEnable(GL20.GL_BLEND)
+   574→        gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA)
+   575→        // tunnel darkness factor
+   576→        var tunnelDark = 0f
+   577→        for (r in world.tunnelRanges) {
+   578→            if (0f > r[0] - 4f && 0f < r[1] + 4f) {
+   579→                val t = min(1f, min(0f - r[0], r[1] - 0f) / 5f + 0.5f)
+   580→                tunnelDark = max(tunnelDark, t.coerceIn(0f, 1f))
+   581→            }
+   582→        }
+   583→
+   584→        worldRenderer.menuDim = if (state == GameState.MENU || state == GameState.GAME_OVER) 0.55f else 0f
+   585→        worldRenderer.time = time
+   586→        worldRenderer.render(distance, Difficulty.speed(distance), shakeX, shakeY, tunnelDark)
+   587→        entityRenderer.render(world, spawner, player, chaser, character, shakeX, shakeY, particles,
+   588→            invulnBlink = player.invulnTimer > 0f, shieldOn = activePowerups[2] > 0f, boostOn = activePowerups[3] > 0f)
+   589→
+   590→        // boost screen-edge blur (spec 9: BOOST — screen edge blur)
+   591→        if (activePowerups[3] > 0f) {
+   592→            batch.begin()
+   593→            batch.setColor(1f, 1f, 1f, 0.6f)
+   594→            batch.draw(TextureGen.vignette, 0f, 0f, proj.vw, proj.vh)
+   595→            batch.setColor(1f, 1f, 1f, 1f)
+   596→            batch.end()
+   597→        }
+   598→
+   599→        // UI overlays
+   600→        ui.flushFrame()
+   601→        batch.begin()
+   602→        when (state) {
+   603→            GameState.MENU -> {
+   604→                if (menuPanel == MenuPanel.NONE) ui.drawMenu(time) else ui.drawPanel(time)
+   605→                ui.drawToast(rawDt)
+   606→            }
+   607→            GameState.TUTORIAL -> ui.drawTutorial(time)
+   608→            GameState.PLAYING -> ui.drawHud(time)
+   609→            GameState.PAUSED -> { ui.drawHud(time); ui.drawPause() }
+   610→            GameState.GAME_OVER -> { ui.drawGameOver(); ui.drawToast(rawDt) }
+   611→            else -> {}
+   612→        }
+   613→        batch.end()
+   614→        gl.glDisable(GL20.GL_BLEND)
+   615→    }
+   616→
+   617→    // ── UI bridge ──────────────────────────────────────────────────────
+   618→    private val bridge = object : UiController.Bridge {
+   619→        override val batch: SpriteBatch get() = this@DummySurfersGame.batch
+   620→        override val sr: ShapeRenderer get() = this@DummySurfersGame.sr
+   621→        override val state: GameState get() = this@DummySurfersGame.state
+   622→        override val menuPanel: MenuPanel get() = this@DummySurfersGame.menuPanel
+   623→        override val shopTab: ShopTab get() = this@DummySurfersGame.shopTab
+   624→        override var shopTabSet: ShopTab
+   625→            get() = this@DummySurfersGame.shopTab
+   626→            set(value) { this@DummySurfersGame.shopTab = value }
+   627→        override var tutorialStep: Int?
+   628→            get() = this@DummySurfersGame.tutorialStep
+   629→            set(value) { this@DummySurfersGame.tutorialStep = value }
+   630→        override val score: Int get() = this@DummySurfersGame.score
+   631→        override val displayScore: Int
+   632→            get() {
+   633→                // count-up animation toward final score
+   634→                val g = this@DummySurfersGame
+   635→                if (g.displayScore < g.score) {
+   636→                    val step = max(1, ((g.score - g.displayScore) * 0.14f).toInt())
+   637→                    g.displayScore = min(g.score, g.displayScore + step)
+   638→                }
+   639→                return g.displayScore
+   640→            }
+   641→        override val runCoins: Int get() = this@DummySurfersGame.runCoins
+   642→        override val distance: Float get() = this@DummySurfersGame.distance
+   643→        override val multiplier: Int get() = this@DummySurfersGame.multiplier
+   644→        override val powerupRemaining: FloatArray get() = activePowerups
+   645→        override val powerupTotal: FloatArray get() = this@DummySurfersGame.powerupTotal
+   646→        override val newBest: Boolean get() = this@DummySurfersGame.newBest
+   647→        override val save: SaveManager get() = this@DummySurfersGame.save
+   648→        override val toFrame: (FloatArray) -> Unit
+   649→            get() = { out ->
+   650→                out[0] = (Gdx.input.x - vpX) / viewScale
+   651→                out[1] = GameConfig.VIRTUAL_HEIGHT - (Gdx.input.y - vpY) / viewScale
+   652→            }
+   653→
+   654→        override fun startRun() = this@DummySurfersGame.startRun()
+   655→        override fun pauseGame() = this@DummySurfersGame.pauseGame()
+   656→        override fun resumeGame() = this@DummySurfersGame.resumeGame()
+   657→        override fun restartRun() = this@DummySurfersGame.restartRun()
+   658→        override fun toMenu() = this@DummySurfersGame.toMenu()
+   659→        override fun openPanel(p: MenuPanel) { this@DummySurfersGame.menuPanel = p; audio.play(GameEvent.CLICK) }
+   660→        override fun closePanel() { this@DummySurfersGame.menuPanel = MenuPanel.NONE; audio.play(GameEvent.CLICK) }
+   661→        override fun selectCharacter(id: String) {
+   662→            save.selectCharacter(id)
+   663→            character = CharacterDef.byId(id)
+   664→            audio.play(GameEvent.CLICK)
+   665→        }
+   666→        override fun buyCharacter(id: String) {
+   667→            val ch = CharacterDef.byId(id)
+   668→            if (save.ownCharacter(id, ch.cost)) {
+   669→                save.selectCharacter(id)
+   670→                character = ch
+   671→                ui.toast("UNLOCKED ${ch.name}!")
+   672→                audio.play(GameEvent.POWERUP)
+   673→            } else {
+   674→                ui.toast("NOT ENOUGH COINS")
+   675→                audio.play(GameEvent.GAME_OVER)
+   676→            }
+   677→        }
+   678→        override fun buyUpgrade(name: String) {
+   679→            val idx = SaveManager.POWERUP_NAMES.indexOf(name)
+   680→            val lvl = save.upgradeLevel(name)
+   681→            if (lvl >= 3) return
+   682→            if (save.buyUpgrade(name, GameConfig.UPGRADE_COSTS[idx][lvl])) {
+   683→                ui.toast("UPGRADED!")
+   684→                audio.play(GameEvent.POWERUP)
+   685→            } else {
+   686→                ui.toast("NOT ENOUGH COINS")
+   687→                audio.play(GameEvent.GAME_OVER)
+   688→            }
+   689→        }
+   690→        override fun buyTrail(index: Int) {
+   691→            val owned = index == 0 || save.trail >= index
+   692→            if (owned) {
+   693→                save.buyTrail(index, 0)
+   694→                audio.play(GameEvent.CLICK)
+   695→            } else if (save.buyTrail(index, GameConfig.TRAIL_COSTS[index])) {
+   696→                ui.toast("TRAIL EQUIPPED!")
+   697→                audio.play(GameEvent.POWERUP)
+   698→            } else {
+   699→                ui.toast("NOT ENOUGH COINS")
+   700→                audio.play(GameEvent.GAME_OVER)
+   701→            }
+   702→        }
+   703→        override fun claimMission(index: Int) {
+   704→            if (save.claimMission(index)) {
+   705→                ui.toast("+${save.missions.getOrNull(index)?.reward ?: 0} COINS")
+   706→                audio.play(GameEvent.NEW_BEST)
+   707→            }
+   708→        }
+   709→        override fun setMusic(on: Boolean) { save.setMusic(on); audio.setMusic(on) }
+   710→        override fun setSfx(on: Boolean) { save.setSfx(on); audio.setSfx(on) }
+   711→        override fun setVibration(on: Boolean) { save.setVibration(on) }
+   712→        override fun resetProgress() {
+   713→            save.reset()
+   714→            character = CharacterDef.byId(save.selectedCharacter)
+   715→            this@DummySurfersGame.menuPanel = MenuPanel.NONE
+   716→            ui.toast("PROGRESS RESET")
+   717→        }
+   718→        override fun click() = audio.play(GameEvent.CLICK)
+   719→    }
+   720→}
+   721→
