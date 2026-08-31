@@ -587,10 +587,10 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         entityRenderer.render(world, spawner, player, chaser, character, shakeX, shakeY, particles,
             invulnBlink = player.invulnTimer > 0f, shieldOn = activePowerups[2] > 0f, boostOn = activePowerups[3] > 0f)
 
-        // boost screen-edge blur (spec 9: BOOST — screen edge blur)
+        // boost screen-edge speed glow (spec 9: BOOST — screen edge blur, SS-warm)
         if (activePowerups[3] > 0f) {
             batch.begin()
-            batch.setColor(1f, 1f, 1f, 0.6f)
+            batch.setColor(1f, 0.62f, 0.25f, 0.5f)
             batch.draw(TextureGen.vignette, 0f, 0f, proj.vw, proj.vh)
             batch.setColor(1f, 1f, 1f, 1f)
             batch.end()

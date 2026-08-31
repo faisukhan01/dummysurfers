@@ -22,27 +22,31 @@ class UiTheme {
     private val layout = GlyphLayout()
 
     fun create() {
-        val gen = FreeTypeFontGenerator(com.badlogic.gdx.Gdx.files.internal("fonts/PressStart2P-Regular.ttf"))
+        // SS-style fonts: chunky comic display (Luckiest Guy) + rounded sport
+        // body (Fugaz One), navy outline + soft shadow (see docs/DESIGN_BIBLE.md)
+        val display = FreeTypeFontGenerator(com.badlogic.gdx.Gdx.files.internal("fonts/LuckiestGuy-Regular.ttf"))
+        val body = FreeTypeFontGenerator(com.badlogic.gdx.Gdx.files.internal("fonts/FugazOne-Regular.ttf"))
         fun param(size: Int, border: Int = 0, shadow: Int = 3): FreeTypeFontGenerator.FreeTypeFontParameter {
             val p = FreeTypeFontGenerator.FreeTypeFontParameter()
             p.size = size
             p.color = Color.WHITE
             p.borderWidth = border.toFloat()
-            p.borderColor = Color(0x1d1410ff.toInt())
+            p.borderColor = Palette.UI_OUTLINE
             p.shadowOffsetX = shadow
             p.shadowOffsetY = shadow
-            p.shadowColor = Color(0x1d141088.toInt())
+            p.shadowColor = Color(0x24316b88.toInt())
             p.minFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear
             p.magFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear
             p.characters = FreeTypeFontGenerator.DEFAULT_CHARS + "←→↑↓×★•|/+-–—…!?,.%&()'\"«»"
             return p
         }
-        fontHuge = gen.generateFont(param(48, border = 4, shadow = 4))
-        fontLarge = gen.generateFont(param(32, border = 2))
-        fontMed = gen.generateFont(param(24, border = 2))
-        fontSmall = gen.generateFont(param(16))
-        fontTiny = gen.generateFont(param(8, shadow = 2))
-        gen.dispose()
+        fontHuge = display.generateFont(param(52, border = 5, shadow = 4))
+        fontLarge = display.generateFont(param(34, border = 3))
+        fontMed = display.generateFont(param(24, border = 3))
+        fontSmall = body.generateFont(param(18, border = 2, shadow = 2))
+        fontTiny = body.generateFont(param(14, shadow = 2))
+        display.dispose()
+        body.dispose()
     }
 
     fun dispose() {
@@ -88,12 +92,14 @@ class UiTheme {
     }
 
     fun progressBar(sr: ShapeRenderer, x: Float, y: Float, w: Float, h: Float, t: Float, color: Color) {
-        sr.setColor(0f, 0f, 0f, 0.55f)
-        sr.rect(x - 1f, y - 1f, w + 2f, h + 2f)
-        sr.setColor(0.25f, 0.2f, 0.16f, 1f)
+        sr.begin(ShapeRenderer.ShapeType.Filled)
+        sr.setColor(1f, 1f, 1f, 0.95f)
+        sr.rect(x - 2f, y - 2f, w + 4f, h + 4f)
+        sr.setColor(Palette.UI_PANEL_DEEP)
         sr.rect(x, y, w, h)
         sr.setColor(color)
         sr.rect(x, y, w * t.coerceIn(0f, 1f), h)
+        sr.end()
     }
 
     fun coinIcon(batch: SpriteBatch, x: Float, y: Float, size: Float) {
