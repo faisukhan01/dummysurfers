@@ -25,14 +25,16 @@ object Palette {
     val FOG = Color(0xffe4bcff.toInt())          // light warm haze
 
     // ── Ground ──
-    val GROUND = Color(0xc97b5eff.toInt())       // terracotta ballast
-    val GROUND_FAR = Color(0xd98d6aff.toInt())   // lighter far ballast
+    // v3.0 SS palette: neutral warm-gray ballast (was terracotta — read "dirt
+    // desert", nothing like SS's urban gravel), darker ties, steel rails
+    val GROUND = Color(0xb3a898ff.toInt())       // warm gray ballast
+    val GROUND_FAR = Color(0xc2b7a6ff.toInt())   // lighter far ballast
     val GRASS = Color(0x5fbf4aff.toInt())        // vivid trackside grass
-    val PATH_CREAM = Color(0xf2d9a7ff.toInt())   // cream path patches
-    val PATH_ORANGE = Color(0xe8a25cff.toInt())  // orange path patches
-    val SLEEPER = Color(0x6b4a36ff.toInt())      // warm brown ties
-    val RAIL = Color(0xe8e4daff.toInt())         // shiny silver rail head
-    val RAIL_SIDE = Color(0xb4553aff.toInt())    // rust-orange rail base
+    val PATH_CREAM = Color(0xe0d2b4ff.toInt())   // concrete slab A
+    val PATH_ORANGE = Color(0xcbba9cff.toInt())  // concrete slab B
+    val SLEEPER = Color(0x59422fff.toInt())      // dark brown ties
+    val RAIL = Color(0xece8deff.toInt())         // shiny silver rail head
+    val RAIL_SIDE = Color(0x6e675eff.toInt())    // dark steel rail base
 
     // ── Accents ──
     val GOLD = Color(0xffc93cff.toInt())
