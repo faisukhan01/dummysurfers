@@ -2,6 +2,7 @@ package com.dummysurfers.core.state
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Preferences
+import com.dummysurfers.core.entities.CharacterDef
 
 /**
  * Mission definition + progress for one active mission slot.
@@ -216,6 +217,15 @@ class SaveManager {
 
     fun selectCharacter(id: String) {
         if (ownedCharacters.contains(id)) { selectedCharacter = id; persist() }
+    }
+
+    /** Desktop visual-QA only (DS_CHAR=<id>): grant + select without coins so
+     *  QA batches can capture BLAZE/VOLT/NOVA accessories on camera. */
+    fun qaForceCharacter(id: String) {
+        if (CharacterDef.ALL.none { it.id == id }) return
+        if (!ownedCharacters.contains(id)) ownedCharacters.add(id)
+        selectedCharacter = id
+        persist()
     }
 
     fun upgradeLevel(name: String) = upgrades[name] ?: 0

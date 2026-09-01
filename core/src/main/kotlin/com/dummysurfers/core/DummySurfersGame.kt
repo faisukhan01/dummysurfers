@@ -199,6 +199,12 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         val menuFirst = System.getenv("DS_MENU_FIRST") == "1"
         if (!devInit) {
             devInit = true
+            // v4.7: DS_CHAR=<id> force-selects a runner (grant included) so QA
+            // batches can capture BLAZE/VOLT/NOVA + their accessories on camera
+            System.getenv("DS_CHAR")?.let {
+                save.qaForceCharacter(it.trim().lowercase())
+                character = CharacterDef.byId(save.selectedCharacter)
+            }
             // v4.6: DS_DIE (and DS_CATCH/DS_CHASE) now auto-start too — they only
             // act while PLAYING, so a bare `DS_DIE=1` batch used to shoot 10 idle
             // menu frames and verify nothing (worklog Task 16 note)
