@@ -36,6 +36,7 @@ class WorldGenerator {
     private var rng = Random(1)
 
     val tunnelRanges = ArrayList<FloatArray>() // [zStart, zEnd]
+    private var forcedTunnels = 0
 
     fun reset(seed: Int = (System.nanoTime() and 0xffffff).toInt()) {
         rng = Random(seed)
@@ -43,6 +44,7 @@ class WorldGenerator {
         decos.clear()
         nextZ = -14f
         tunnelRanges.clear()
+        forcedTunnels = 0
         // prime the world ahead
         while (nextZ < GameConfig.VIEW_DISTANCE * 1.6f) spawnSegment()
     }
@@ -80,8 +82,14 @@ class WorldGenerator {
 
     private fun spawnSegment() {
         val z0 = nextZ
+        // v4.6 QA hook: DS_TUNNEL=1 forces the first two post-30f segments into
+        // tunnels — software-rendered QA runs only reach ~150m, too deep for
+        // the natural ~1-in-7 roll to place one on camera
         val kind = when {
             z0 < 30f -> SegmentKind.OPEN
+            System.getenv("DS_TUNNEL") == "1" && forcedTunnels < 2 && z0 < 30f + GameConfig.SEGMENT_LENGTH * 7f -> {
+                forcedTunnels++; SegmentKind.TUNNEL
+            }
             else -> {
                 val roll = rng.nextFloat()
                 when {
