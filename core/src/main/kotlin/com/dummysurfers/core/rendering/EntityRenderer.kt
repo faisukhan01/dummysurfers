@@ -339,7 +339,8 @@ class EntityRenderer(
 
     // ── Coins & power-ups (SpriteBatch) ────────────────────────────────
     private fun coin(c: Coin, sx: Float, sy: Float) {
-        if (c.z > GameConfig.VIEW_DISTANCE || c.z < -5f) return
+        // v3.0 FIX: cull behind the runner (was -5f → giant gold blobs)
+        if (c.z > GameConfig.VIEW_DISTANCE || c.z < -2f) return
         val s = proj.scale(c.z)
         val x = proj.screenX(c.x, c.z) + sx
         val y = proj.groundY(c.z) + sy - c.y * proj.ppu * s
@@ -355,7 +356,10 @@ class EntityRenderer(
     }
 
     private fun powerup(p: PowerUpPickup, sx: Float, sy: Float) {
-        if (p.z > GameConfig.VIEW_DISTANCE || p.z < -5f) return
+        // v3.0 FIX: was z < -5f — behind the camera plane the perspective scale
+        // explodes (9/(9+z)) and an uncollected pickup rendered as a GIANT white
+        // slab sweeping across the whole screen. Cull once it passes the runner.
+        if (p.z > GameConfig.VIEW_DISTANCE || p.z < -1.5f) return
         val s = proj.scale(p.z)
         val x = proj.screenX(p.lane * GameConfig.LANE_WIDTH.toFloat(), p.z) + sx
         p.phase += 0.016f
