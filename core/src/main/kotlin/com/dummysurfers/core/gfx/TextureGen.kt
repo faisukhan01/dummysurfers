@@ -100,6 +100,7 @@ object TextureGen {
     lateinit var coinFrames: Array<Texture>
     lateinit var powerIcons: Array<Texture> // magnet,x2,shield,boost,superjump
     lateinit var navIcons: Array<Texture>   // v4.5 menu tab glyphs: person,bag,tasks,gear
+    lateinit var trophy: Texture           // v4.7 gold trophy on the MISSION COMPLETE banner
     lateinit var panelNine: NinePatch
     lateinit var buttonNine: NinePatch
     lateinit var white: Texture
@@ -148,6 +149,7 @@ object TextureGen {
         coinFrames = Array(10) { coin(72, it, 10) }
         powerIcons = arrayOf(magnetIcon(), starIcon(), shieldIcon(), boltIcon(), springIcon(), rocketIcon())
         navIcons = arrayOf(navPerson(), navBag(), navTasks(), navGear())
+        trophy = navTrophy()
         previews = Array(CharacterDef.ALL.size) { characterPreview(CharacterDef.ALL[it]) }
         panelNine = roundedNine(64, 18, Color(1f, 1f, 1f, 1f), border = false)
         buttonNine = roundedNine(64, 18, Color(1f, 1f, 1f, 1f), border = true)
@@ -176,6 +178,7 @@ object TextureGen {
         coinFrames.forEach { it.dispose() }
         powerIcons.forEach { it.dispose() }
         navIcons.forEach { it.dispose() }
+        trophy.dispose()
         previews.forEach { it.dispose() }
         trainSides.forEach { it.dispose() }
         trainFronts.forEach { it.dispose() }
@@ -517,6 +520,36 @@ object TextureGen {
         p.fillRectangle((s * 0.34f).toInt(), (s * 0.34f).toInt(), (s * 0.32f).toInt(), (s * 0.06f).toInt())
         p.fillRectangle((s * 0.34f).toInt(), (s * 0.48f).toInt(), (s * 0.32f).toInt(), (s * 0.06f).toInt())
         p.fillRectangle((s * 0.34f).toInt(), (s * 0.62f).toInt(), (s * 0.2f).toInt(), (s * 0.06f).toInt())
+        return tex(p)
+    }
+
+    // v4.7 gold trophy — cup bowl + handles + stem + base, flat gold on alpha
+    private fun navTrophy(): Texture {
+        val s = 96
+        val p = iconBase(s)
+        val gold = Color(0xffc93aff.toInt())
+        val goldDim = Color(0xd9a12bff.toInt())
+        // handles: rings left/right (outer gold circle, punched transparent center)
+        p.setColor(gold)
+        p.fillCircle((s * 0.185f).toInt(), (s * 0.36f).toInt(), (s * 0.115f).toInt())
+        p.fillCircle((s * 0.815f).toInt(), (s * 0.36f).toInt(), (s * 0.115f).toInt())
+        p.setBlending(Pixmap.Blending.None); p.setColor(0f, 0f, 0f, 0f)
+        p.fillCircle((s * 0.185f).toInt(), (s * 0.36f).toInt(), (s * 0.055f).toInt())
+        p.fillCircle((s * 0.815f).toInt(), (s * 0.36f).toInt(), (s * 0.055f).toInt())
+        p.setBlending(Pixmap.Blending.SourceOver)
+        // bowl: wide ellipse + lower lip
+        p.setColor(gold)
+        fillEllipse(p, s * 0.5f, s * 0.34f, s * 0.27f, s * 0.21f)
+        p.fillRectangle((s * 0.23f).toInt(), (s * 0.34f).toInt(), (s * 0.54f).toInt(), (s * 0.1f).toInt())
+        // shine sliver on the bowl
+        p.setColor(Color(1f, 1f, 1f, 0.5f))
+        fillEllipse(p, s * 0.4f, s * 0.27f, s * 0.05f, s * 0.07f)
+        // stem + base
+        p.setColor(goldDim)
+        p.fillRectangle((s * 0.44f).toInt(), (s * 0.52f).toInt(), (s * 0.12f).toInt(), (s * 0.14f).toInt())
+        p.fillRectangle((s * 0.32f).toInt(), (s * 0.66f).toInt(), (s * 0.36f).toInt(), (s * 0.09f).toInt())
+        p.setColor(gold)
+        p.fillRectangle((s * 0.32f).toInt(), (s * 0.66f).toInt(), (s * 0.36f).toInt(), (s * 0.035f).toInt())
         return tex(p)
     }
 

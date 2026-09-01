@@ -415,6 +415,10 @@ class UiController(val theme: UiTheme) : InputAdapter() {
             val bw = 470f; val bx = vw / 2f - bw / 2f; val by = vh - 320f + yOff
             batch.setColor(1f, 1f, 1f, alpha)
             theme.button(batch, bx, by, bw, 110f, Palette.UI_GOLD_BTN, false)
+            // v4.7 trophy glyph bobbing on the banner's left edge — the gold
+            // slab alone read as a plain toast, not an award
+            val tBob = sin(time * 5.2f) * 3f
+            batch.draw(TextureGen.trophy, bx + 20f, by + 16f + tBob, 78f, 78f)
             theme.text(batch, theme.fontMed, "MISSION COMPLETE!", 0f, by + 76f, Color.WHITE, Align.center, vw)
             theme.text(batch, theme.fontTiny, "CLAIM $missionPopReward COINS IN MISSIONS", 0f, by + 38f, Color(0xfff3d0ff.toInt()), Align.center, vw)
             batch.setColor(1f, 1f, 1f, 1f)
