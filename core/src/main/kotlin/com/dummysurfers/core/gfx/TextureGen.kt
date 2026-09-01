@@ -753,15 +753,33 @@ object TextureGen {
         p.fillRectangle((cx - 17f).toInt(), (headCY + 1f).toInt(), 34, 7)
         p.setColor(OUT); p.fillRectangle((cx - 17f).toInt(), (headCY + 1f).toInt(), 34, 2)
         p.setColor(mul(ch.cap, 1.12f)); p.fillCircle(cx.toInt(), (headCY - 110f).toInt(), 8)
+        // backwards-cap brim peeking out at BOTH sides of the dome (SS Jake
+        // DNA — from the front the brim hides behind the head, only the tips
+        // show at the edges)
+        p.setColor(mul(ch.cap, 0.8f))
+        p.fillCircle((cx - (headR - 30f)).toInt(), (headCY - 58f).toInt(), 11)
+        p.fillCircle((cx + (headR - 30f)).toInt(), (headCY - 58f).toInt(), 11)
         if (ch.capPanel != 0) {
-            // proper OVAL panel — widest mid-height (old cone/V shape read as
-            // a white arrow on the cap)
-            p.setColor(ch.capPanel)
-            for (i in 0..24) {
-                val t = i / 24f
+            // v4.4: badge-shaped panel — flat squashed oval (48×26) with a
+            // darker outline hugging the dome (the old 60×48 pure-white oval
+            // read as an egg balanced on the cap in the menu portrait)
+            val pcx = cx; val pcy = headCY - 96f
+            val rx = 24f; val ry = 13f
+            // outline pass (2px larger, darker cap tone)
+            p.setColor(mul(ch.cap, 0.62f))
+            for (i in 0..28) {
+                val t = i / 28f
                 val k = t * 2f - 1f
-                val w = (30f * kotlin.math.sqrt(1f - k * k)).toInt().coerceAtLeast(2)
-                p.fillRectangle((cx - w).toInt(), (headCY - 90f + i * 1.4f).toInt(), w * 2, 2)
+                val w = ((rx + 2.5f) * kotlin.math.sqrt(1f - k * k)).toInt().coerceAtLeast(2)
+                p.fillRectangle((pcx - w).toInt(), (pcy - ry - 2.5f + i * (ry + 2.5f) / 14f).toInt(), w * 2, 2)
+            }
+            // panel pass
+            p.setColor(ch.capPanel)
+            for (i in 0..28) {
+                val t = i / 28f
+                val k = t * 2f - 1f
+                val w = (rx * kotlin.math.sqrt(1f - k * k)).toInt().coerceAtLeast(2)
+                p.fillRectangle((pcx - w).toInt(), (pcy - ry + i * ry / 14f).toInt(), w * 2, 2)
             }
         }
         p.setColor(1f, 1f, 1f, 0.22f); p.fillCircle((cx - 28f).toInt(), (headCY - 76f).toInt(), 11)

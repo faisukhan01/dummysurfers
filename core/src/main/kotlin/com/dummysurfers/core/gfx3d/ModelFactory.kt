@@ -143,10 +143,11 @@ class ModelFactory {
         }
     }
 
-    /** Soft dark ellipse under characters/props (v4.2: lighter — 35% near-black
-     *  read as a tar puddle under the runner). */
+    /** Soft dark ellipse under characters/props (v4.4: lighter + tighter — the
+     *  0.22 blob still read as a tar hole under the runner in QA; SS shadows
+     *  are faint, tight halos). */
     fun shadowBlob(r: Float): Model = models.getOrPut("shadow$r") {
-        build(matBlend(0x27303cff.toInt(), 0.22f)) {
+        build(matBlend(0x39424fff.toInt(), 0.15f)) {
             setUVRange(0f, 0f, 1f, 1f)
             cylinder(r * 2f, 0.02f, r * 2f, 14)
         }
