@@ -92,6 +92,13 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     private var slides = 0
     private var powerupsUsed = 0
     private var nearMisses = 0
+
+    // v3.0 stumble system: glancing hits wound instead of killing; while the
+    // danger window is open the guard sprints at grab range and a 2nd hit =
+    // the SS guard-grab caught animation.
+    private var dangerTimer = 0f
+    private var stumbleSlowTimer = 0f
+    private var guardCatch = false
     private val activePowerups = FloatArray(5)
     private val powerupTotal = FloatArray(5)
     private var displayScore = 0
@@ -280,7 +287,8 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
 
     private fun updateRun(dt: Float, tutorial: Boolean) {
         menuDim = 0f
-        val speed = if (tutorial) 5f else Difficulty.speed(distance) * (if (activePowerups[3] > 0f) GameConfig.BOOST_SPEED_MULT else 1f)
+        val speed = if (tutorial) 5f else Difficulty.speed(distance) * (if (activePowerups[3] > 0f) GameConfig.BOOST_SPEED_MULT else 1f) *
+                (if (stumbleSlowTimer > 0f) GameConfig.STUMBLE_SLOW_MULT else 1f)
 
         // world + spawner scroll
         val scroll = speed * dt
@@ -322,6 +330,10 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
 
         // hoverboard ride timer
         if (boardTimer > 0f) boardTimer = max(0f, boardTimer - dt)
+
+        // stumble decay
+        if (stumbleSlowTimer > 0f) stumbleSlowTimer = max(0f, stumbleSlowTimer - dt)
+        if (dangerTimer > 0f) dangerTimer = max(0f, dangerTimer - dt)
 
         // chaser behavior
         chaser.update(dt, speed)
@@ -389,10 +401,12 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     }
 
     private fun updateDying(dt: Float) {
-        world.update(dt * 4f)
+        world.update(dt * if (guardCatch) 1.2f else 4f)
         player.update(dt, 0f)
+        // the grab sequence: guard rushes in while the world holds its breath
+        if (guardCatch) chaser.update(dt, 0f)
         dyingTimer += dt
-        if (dyingTimer >= 1.0f) {
+        if (dyingTimer >= if (guardCatch) 1.45f else 1.0f) {
             finalizeRun()
         }
     }
@@ -485,7 +499,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             for (lane in t.lanes) {
                 val laneX = lane * GameConfig.LANE_WIDTH
                 if (playerOverlaps(laneX, GameConfig.TRAIN_WIDTH / 2f, zNear, zFar, 0f, GameConfig.TRAIN_HEIGHT)) {
-                    onHit(laneX)
+                    onHit(laneX, glancing = false) // trains always catch you
                     return
                 }
             }
@@ -517,7 +531,11 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
                 ObstacleKind.GATE -> playerOverlaps(player.x, 1.0f, o.z - 0.4f, o.z + 0.4f, 1.2f, 2.3f)
                 ObstacleKind.BLOCKADE -> playerOverlaps(boxX, 1.0f, o.z - 0.4f, o.z + 0.4f, 0f, 2.4f)
             }
-            if (hit) { onHit(boxX); return }
+            if (hit) {
+                // barriers clip = stumble-able; blockades are solid caught hits
+                onHit(boxX, glancing = o.kind != ObstacleKind.BLOCKADE)
+                return
+            }
             if (!o.passed && o.z < 0.6f) {
                 o.passed = true
                 val lateral = abs(boxX - player.x)
@@ -536,7 +554,13 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         if (rng.nextFloat() < 0.65f) chaser.trigger(GameConfig.CHASER_NEARMISS_TIME)
     }
 
-    private fun onHit(hitX: Float) {
+/**
+     * v3.0: two-tier hit response, exactly like SS.
+     * [glancing] = barrier clip → STUMBLE (flail, speed loss, guard closes in,
+     * danger window opens). A second hit inside the danger window — or any
+     * direct train/blockade hit → the guard-grab CAUGHT sequence.
+     */
+    private fun onHit(hitX: Float, glancing: Boolean) {
         if (activePowerups[2] > 0f) {
             // shield absorbs one hit
             activePowerups[2] = 0f
@@ -556,12 +580,35 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             particles.burst(proj.screenX(player.x, 0f), proj.groundY(0f) - player.jumpY * proj.ppu + 60f, 24, Color(0x37b8a8ff.toInt()), 380f, 7f, shape = 1)
             return
         }
+        // ── STUMBLE: first glancing hit wounds instead of killing ──
+        if (glancing && dangerTimer <= 0f) {
+            dangerTimer = GameConfig.DANGER_TIME
+            stumbleSlowTimer = GameConfig.STUMBLE_SLOW_TIME
+            player.invulnTimer = GameConfig.STUMBLE_INVULN
+            chaser.triggerClose(GameConfig.CHASER_STUMBLE_TIME)
+            audio.play(GameEvent.STUMBLE)
+            audio.play(GameEvent.WHISTLE)
+            vibrate(70)
+            shake = max(shake, 7f)
+            val sy = proj.groundY(0f) - player.jumpY * proj.ppu + 130f
+            particles.text(proj.vw / 2f, proj.vh * 0.58f, "STUMBLE!", Color(0xff6b5eff.toInt()), 26f)
+            particles.burst(proj.screenX(player.x, 0f), sy, 14, Color(0xf2a75bff.toInt()), 260f, 5f)
+            return
+        }
+        val caughtByGuard = glancing && dangerTimer > 0f
         player.state = PlayerState.DEAD
         player.deadTimer = 0f
         state = GameState.DYING
         dyingTimer = 0f
+        guardCatch = caughtByGuard
+        if (caughtByGuard) {
+            chaser.beginCatch()
+            audio.play(GameEvent.WHISTLE)
+            audio.play(GameEvent.CAUGHT)
+        } else {
+            audio.play(GameEvent.CRASH)
+        }
         shake = GameConfig.CRASH_SHAKE
-        audio.play(GameEvent.CRASH)
         vibrate(120)
         particles.burst(proj.screenX(player.x, 0f), proj.groundY(0f) - player.jumpY * proj.ppu + 120f, 26, Color(0xef4444ff.toInt()), 420f, 7f, shape = 1)
         particles.burst(proj.screenX(player.x, 0f), proj.groundY(0f) - player.jumpY * proj.ppu + 120f, 14, Color(0xf2a75bff.toInt()), 300f, 5f)
@@ -623,10 +670,11 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         score = 0; displayScore = 0; runCoins = 0; distance = 0f
         jumps = 0; slides = 0; powerupsUsed = 0; nearMisses = 0
         newBest = false; coinStreak = 0; multiplier = 1
+        dangerTimer = 0f; stumbleSlowTimer = 0f; guardCatch = false
         for (i in 0 until 5) { activePowerups[i] = 0f; powerupTotal[i] = 0f }
         boardTimer = 0f; boardTotal = 0f; lastTapNanos = 0L
         player.reset()
-        chaser.active = false
+        chaser.reset()
         particles.clear()
         world.reset()
         spawner.reset()

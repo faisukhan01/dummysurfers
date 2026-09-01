@@ -80,6 +80,9 @@ class AudioManager {
             GameEvent.SHIELD_BREAK -> glass()
             GameEvent.LAND -> noiseSweep(0.05f, 500f, 180f, 0.16f)
             GameEvent.TUTORIAL_STEP -> arp(floatArrayOf(659f, 880f), 0.2f, 0.3f, "sine")
+            GameEvent.STUMBLE -> noiseSweep(0.22f, 700f, 120f, 0.5f)             // heavy scrape-thud
+            GameEvent.WHISTLE -> whistle()                                        // guard referee whistle
+            GameEvent.CAUGHT -> arp(floatArrayOf(440f, 349f, 293f, 233f), 0.8f, 0.4f, "square") // grab sting
         }
         sfxQueue.offer(buf)
     }
@@ -191,6 +194,22 @@ class AudioManager {
             val vib = 1f + 0.01f * sin(2f * PI.toFloat() * 6f * i / sampleRate)
             val s = sawAt(233f * vib, i) * 0.5f + sawAt(311f * vib, i) * 0.5f
             out[i] = s * attackRelease(i, n, 0.03f, 0.35f) * 0.3f
+        }
+        return out
+    }
+
+    /** v3.0: guard's referee whistle — two shrill trills with a warble. */
+    private fun whistle(): FloatArray {
+        val dur = 0.5f
+        val n = (dur * sampleRate).toInt()
+        val out = FloatArray(n)
+        for (i in 0 until n) {
+            val t = i / sampleRate
+            // warble around 2100Hz, gap between two trills
+            val trill = if (t < 0.21f || t > 0.27f) 1f else 0f
+            val warble = 1f + 0.045f * sin(2f * PI.toFloat() * 38f * t)
+            val s = sin(2f * PI.toFloat() * 2100f * warble * t) + 0.35f * sin(2f * PI.toFloat() * 2800f * warble * t)
+            out[i] = s * trill * attackRelease(i, n, 0.01f, 0.12f) * 0.24f
         }
         return out
     }

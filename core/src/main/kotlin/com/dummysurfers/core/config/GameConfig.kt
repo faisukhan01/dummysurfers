@@ -87,6 +87,15 @@ object GameConfig {
     const val CHASER_NEARMISS_TIME = 2.8f
     const val CHASER_Z = -2.2f          // just behind the runner — nearer z renders
     const val CHASER_VISUAL_SCALE = 0.7f // bigger with proximity; shrink to SS size
+    const val CHASER_Z_CLOSE = -1.35f   // v3.0: in-grab-range distance after a stumble
+    const val CHASER_DOG_OFFSET_X = 0.62f // v3.0: dog runs beside the guard
+
+    // ── Stumble (v3.0) — SS's second-chance tension loop ───────────────
+    const val STUMBLE_INVULN = 1.25f      // blink time after a glancing hit
+    const val STUMBLE_SLOW_TIME = 1.1f    // speed-penalty duration
+    const val STUMBLE_SLOW_MULT = 0.52f   // speed multiplier while stumbling
+    const val DANGER_TIME = 5.5f          // window in which a 2nd hit = caught
+    const val CHASER_STUMBLE_TIME = 6.0f  // guard stays in grab range this long
 
     // ── Economy ────────────────────────────────────────────────────────
     val UPGRADE_COSTS = arrayOf(intArrayOf(300, 700, 1500), intArrayOf(300, 700, 1500), intArrayOf(250, 600, 1300), intArrayOf(250, 600, 1300), intArrayOf(350, 800, 1600))

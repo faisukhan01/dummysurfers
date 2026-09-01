@@ -25,5 +25,5 @@ enum class PlayerState { RUNNING, LANE_SWITCH, JUMPING, SLIDING, LANDING, DEAD }
 /** Events emitted by gameplay that systems can react to (audio, haptics, particles). */
 enum class GameEvent {
     COIN, JUMP, SLIDE, LANE, CRASH, POWERUP, HORN, CLICK, NEAR_MISS, NEW_BEST, GAME_OVER,
-    FOOTSTEP, SHIELD_BREAK, LAND, TUTORIAL_STEP
+    FOOTSTEP, SHIELD_BREAK, LAND, TUTORIAL_STEP, STUMBLE, WHISTLE, CAUGHT
 }
