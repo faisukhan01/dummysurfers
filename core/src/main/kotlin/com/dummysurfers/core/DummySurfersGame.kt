@@ -839,6 +839,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         override val boardTimer: Float get() = this@DummySurfersGame.boardTimer
         override val boardTotal: Float get() = this@DummySurfersGame.boardTotal
         override val newBest: Boolean get() = this@DummySurfersGame.newBest
+        override val guardCatch: Boolean get() = this@DummySurfersGame.guardCatch
         override val save: SaveManager get() = this@DummySurfersGame.save
         override val toFrame: (FloatArray) -> Unit
             get() = { out ->

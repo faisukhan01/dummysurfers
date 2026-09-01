@@ -52,6 +52,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         val boardTimer: Float            // hoverboard ride time left (0 = not riding)
         val boardTotal: Float            // hoverboard ride duration
         val newBest: Boolean
+        val guardCatch: Boolean
         val save: com.dummysurfers.core.state.SaveManager
         val toFrame: (FloatArray) -> Unit // converts screen touch to virtual coords
 
@@ -489,6 +490,8 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         theme.panel(batch, vw / 2 - 320f, 220f, 640f, 820f, Palette.UI_PANEL)
         if (b.newBest) {
             theme.text(batch, theme.fontLarge, "NEW HIGH SCORE!", 0f, 962f, Palette.GOLD, Align.center, vw)
+        } else if (b.guardCatch) {
+            theme.text(batch, theme.fontLarge, "CAUGHT BY THE GUARD!", 0f, 966f, Palette.DANGER, Align.center, vw)
         } else {
             theme.text(batch, theme.fontLarge, "RUN OVER", 0f, 970f, Color.WHITE, Align.center, vw)
         }
