@@ -511,14 +511,15 @@ object TextureGen {
         p.setColor(ch.skin); p.fillCircle(cx.toInt(), (headCY + 39f).toInt(), 12)
         p.setColor(0xffffffff.toInt()); p.fillRectangle((cx - 8f).toInt(), (headCY + 26f).toInt(), 16, 5)
 
-        // CAP — dome + brim band + top button
-        circ(cx, headCY - 24f, headR - 2, ch.cap)
-        bare((cx - headR + 2f).toInt(), (headCY - 24f).toInt(), (headR * 2 - 4f).toInt(), 20, ch.cap)
-        p.setColor(OUT); p.fillRectangle((cx - headR - 1f).toInt(), (headCY - 6f).toInt(), (headR * 2 + 2f).toInt(), 6)
-        p.setColor(mul(ch.cap, 0.82f)); p.fillRectangle((cx - headR).toInt(), (headCY - 4f).toInt(), (headR * 2).toInt(), 10)
-        p.setColor(mul(ch.cap, 1.12f)); p.fillCircle(cx.toInt(), (headCY - 74f).toInt(), 7)
+        // CAP — dome + brim band + top button (drawn to keep the FACE visible:
+        // dome sits high, brim above the eyes — fixes faceless-navy-blob bug)
+        circ(cx, headCY - 34f, headR - 10, ch.cap)
+        bare((cx - headR + 2f).toInt(), (headCY - 14f).toInt(), (headR * 2 - 4f).toInt(), 14, ch.cap)
+        p.setColor(OUT); p.fillRectangle((cx - headR - 1f).toInt(), (headCY - 2f).toInt(), (headR * 2 + 2f).toInt(), 5)
+        p.setColor(mul(ch.cap, 0.82f)); p.fillRectangle((cx - headR).toInt(), (headCY + 1f).toInt(), (headR * 2).toInt(), 7)
+        p.setColor(mul(ch.cap, 1.12f)); p.fillCircle(cx.toInt(), (headCY - 80f).toInt(), 7)
         // cap gloss
-        p.setColor(1f, 1f, 1f, 0.22f); p.fillCircle((cx - 26f).toInt(), (headCY - 42f).toInt(), 12)
+        p.setColor(1f, 1f, 1f, 0.22f); p.fillCircle((cx - 26f).toInt(), (headCY - 50f).toInt(), 12)
 
         return tex(p)
     }
