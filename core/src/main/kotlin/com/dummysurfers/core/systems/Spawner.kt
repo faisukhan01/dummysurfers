@@ -325,6 +325,19 @@ class Spawner {
         return target
     }
 
+    // v4.6 LIVERY VARIETY: the spawner rolled rng.nextInt(6) while the palette
+    // grew to 8 liveries in v4.2 — the teal harbor line and the graphite night
+    // express were coded, textured, and NEVER seen in a run. Also anti-repeat:
+    // two consists back-to-back in the same paint read as one endless train.
+    private var lastLivery = -1
+    private fun nextLivery(): Int {
+        val n = com.dummysurfers.core.gfx.Palette.TRAIN_LIVERIES.size
+        var l = rng.nextInt(n)
+        if (l == lastLivery) l = (l + 1 + rng.nextInt(n - 1)) % n
+        lastLivery = l
+        return l
+    }
+
     private fun spawnTrain(lanes: IntArray, cars: Int, kind: Int, speed: Float): Train {
         val t = trainPool.removeLastOrNull() ?: Train()
         // v4.5 hard clearance: a train's BODY extends BACKWARD from its front (z),
@@ -335,7 +348,7 @@ class Spawner {
         var z = frontier
         val tail = z - cars * GameConfig.TRAIN_CAR_LENGTH
         if (tail < GameConfig.TRAIN_SPAWN_CLEARANCE) z += GameConfig.TRAIN_SPAWN_CLEARANCE - tail
-        t.reset(lanes, z, cars, kind, speed, rng.nextInt(6))
+        t.reset(lanes, z, cars, kind, speed, nextLivery())
         trains.add(t)
         lastAction = 'd'; lastActionZ = frontier
         return t
