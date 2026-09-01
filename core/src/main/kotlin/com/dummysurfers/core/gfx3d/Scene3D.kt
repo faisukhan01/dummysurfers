@@ -175,7 +175,7 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
                 var cz = zNear + GameConfig.TRAIN_CAR_LENGTH * 0.5f
                 for (car in 0 until t.cars) {
                     if (cz > zFar + 1f) break
-                    if (cz > -5.5f) {
+                    if (cz > -2.6f) {
                         val inst = poolGet(carPool, ci++, "car") { ModelInstance(factory.trainCar(t.livery)) }
                         inst.transform.setToTranslation(lx, 0f, -cz)
                         frame.add(inst)
@@ -197,7 +197,7 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
         // ── obstacles ──────────────────────────────────────────────────
         var oi = 0
         for (o in spawnerSystems.obstacles) {
-            if (o.z < -1.2f || o.z > 80f) continue
+            if (o.z < 0.6f || o.z > 80f) continue
             val inst = poolGet(obstaclePool, oi++, "obs") { ModelInstance(obstacleModel(o.kind)) }
             val lx = o.lane * GameConfig.LANE_WIDTH
             inst.transform.setToTranslation(lx, 0f, -o.z)
@@ -208,7 +208,9 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
         var kn = 0
         val spin = time * 3.2f
         for (c in spawnerSystems.coins) {
-            if (c.collected || c.z < -3f || c.z > 85f) continue
+            // v4.1: cull coins BEFORE they reach the camera — near-passing
+            // coins projected into giant sky blobs (shot-verified bug)
+            if (c.collected || c.z < 2.2f || c.z > 85f) continue
             val inst = poolGet(coinPool, kn++, "coin") { ModelInstance(factory.coin()) }
             val wob = sin(time * 2.4f + c.phase) * 0.08f
             m.setToTranslation(c.x, c.y + wob, -c.z)
@@ -221,7 +223,7 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
         // ── power-up pickups ───────────────────────────────────────────
         var pi = 0
         for (p in spawnerSystems.powerups) {
-            if (p.taken || p.z < -3f || p.z > 85f) continue
+            if (p.taken || p.z < 2.2f || p.z > 85f) continue
             val lx = p.lane * GameConfig.LANE_WIDTH
             val y = 1.25f + sin(time * 2.2f + p.phase) * 0.12f
             val glowInst = poolGet(powerPool, pi++, "pow") { ModelInstance(factory.glowBillboard(1.5f, TextureGen.glow)) }
@@ -249,7 +251,9 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
         // ── characters ─────────────────────────────────────────────────
         val h = getHuman(character)
         if (!blinkHide) {
-            m.setToTranslation(player.x, player.supportY, 0f)
+            // v4.1 CRITICAL FIX: mesh must lift with jumpY (was supportY-only →
+            // the runner never visually left the ground on jumps/falls)
+            m.setToTranslation(player.x, player.supportY + player.jumpY, 0f)
             h.animate(m, player.state, player.runPhase, player.stateTime, player.lean,
                 player.stateTime / player.curJumpDuration, stumbleOn, time, time, guardCatchFlag(chaser))
             for (p in h.rig.parts) frame.add(p.instance)
@@ -445,12 +449,15 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
     }
 
     private val hazeC = Color()
+    /** Soft symmetric haze hugging the horizon line (v4.1 — the old one-side
+     *  fade put a hard cream line across mid-screen). */
     private fun drawHaze(menuDim: Float) {
         val vw = proj.vw; val vh = proj.vh
-        val fogH = vh * 0.14f
+        val fogH = vh * 0.17f
         batch.begin()
+        batch.setColor(1f, 1f, 1f, 0.9f)
+        batch.draw(TextureGen.hazeBand, 0f, proj.horizonY - fogH * 0.5f, vw, fogH)
         batch.setColor(1f, 1f, 1f, 1f)
-        batch.draw(TextureGen.fog, 0f, proj.horizonY - fogH * 0.45f, vw, fogH)
         batch.end()
         if (menuDim > 0.01f) {
             hazeC.set(0.12f, 0.14f, 0.34f, menuDim * 0.42f)
