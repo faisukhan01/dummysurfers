@@ -54,6 +54,10 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         val boardTotal: Float            // hoverboard ride duration
         val newBest: Boolean
         val guardCatch: Boolean
+        // v4.6 post-run gift: double the run's coins once (SS end-screen doubler)
+        val giftAvailable: Boolean
+        val giftBonus: Int
+        fun claimGift()
         val save: com.dummysurfers.core.state.SaveManager
         val toFrame: (FloatArray) -> Unit // converts screen touch to virtual coords
 
@@ -225,9 +229,12 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         // selected character preview front & center on the tracks (big SS-style hero)
         // v4.3: portrait rebuilt at 360px w/ head in the lower 2/3 + its own
         // in-texture ground shadow — drawn 372px, no external shadow blob
+        // v4.6: lifted + resized (300px @ y682) — the old 348px @ y640 planted
+        // the shoes 28px BEHIND the high-score card (drawn later = on top),
+        // cropping the runner at the ankles right above the RUN button
         val selIdx = CharacterDef.ALL.indexOfFirst { it.id == b.save.selectedCharacter }.coerceAtLeast(0)
         val heroBob = sin(time * 1.7f) * 7f
-        drawMiniCharacter(selIdx, vw / 2f - 174f, 640f + heroBob, 348f)
+        drawMiniCharacter(selIdx, vw / 2f - 150f, 682f + heroBob, 300f)
 
         // HIGH SCORE card (periwinkle + deep slot + gold star)
         val hcW = 460f
@@ -545,10 +552,19 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         // best
         theme.text(batch, theme.fontSmall, "BEST ${b.save.best}", 0f, 528f, if (b.newBest) Palette.GOLD else Palette.UI_MUTED, Align.center, vw)
 
-        if (btn("retry", vw / 2 - 190f, 366f, 380f, 112f, Palette.UI_GOLD_BTN, "RUN AGAIN", theme.fontLarge)) {
+        if (btn("retry", vw / 2 - 190f, 424f, 380f, 112f, Palette.UI_GOLD_BTN, "RUN AGAIN", theme.fontLarge)) {
             b.restartRun()
         }
-        if (btn("gohome", vw / 2 - 190f, 250f, 380f, 90f, Palette.UI_NAVY, "HOME")) {
+        // v4.6 post-run GIFT: double this run's coins, once per run (SS doubler)
+        if (b.giftAvailable && b.runCoins > 0) {
+            if (btn("gift", vw / 2 - 190f, 340f, 380f, 72f, Palette.UI_GREEN, "DOUBLE COINS x2", theme.fontMed)) {
+                b.claimGift()
+            }
+        } else if (b.giftBonus > 0) {
+            theme.panel(batch, vw / 2 - 190f, 340f, 380f, 72f, Palette.UI_PANEL_DEEP)
+            theme.text(batch, theme.fontMed, "GIFTED +${b.giftBonus}", vw / 2 - 190f, 386f, Palette.GOLD, Align.center, 380f)
+        }
+        if (btn("gohome", vw / 2 - 190f, 248f, 380f, 80f, Palette.UI_NAVY, "HOME")) {
             b.toMenu()
         }
     }
