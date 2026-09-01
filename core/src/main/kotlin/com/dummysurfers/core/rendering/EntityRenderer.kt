@@ -468,17 +468,20 @@ class EntityRenderer(
         else -> Color(0xf97316ff.toInt())
     }
 
-    // ── Player (procedural runner, seen from behind) ───────────────────
+    // ── Player — SS-style chibi runner, seen from behind ───────────────
+    private val pc1 = Color()
+    private val pc2 = Color()
+    private val pc3 = Color()
+
     private fun player(p: Player, ch: CharacterDef, sx: Float, sy: Float, blink: Boolean, shieldOn: Boolean, boostOn: Boolean, boardOn: Boolean) {
-        val s = 1f
         val x = proj.screenX(p.x, 0f) + sx
         val groundY = proj.groundY(0f) + sy
-        val u = proj.ppu // pixels per unit at z=0
+        val u = proj.ppu
 
-        // shadow
+        // soft blob shadow
         val shadowScale = Mathz.clamp01(1f - p.jumpY / 5f)
-        sr.setColor(0f, 0f, 0f, 0.35f * shadowScale)
-        sr.ellipse(x - u * 0.42f * shadowScale, groundY - 4f, u * 0.84f * shadowScale, u * 0.16f * shadowScale + 2f)
+        sr.setColor(0f, 0f, 0f, 0.32f * shadowScale)
+        sr.ellipse(x - u * 0.44f * shadowScale, groundY - 4f, u * 0.88f * shadowScale, u * 0.15f * shadowScale + 2f)
 
         if (blink && (p.invulnTimer > 0f) && ((p.invulnTimer * 10f).toInt() % 2 == 0)) return
 
@@ -494,87 +497,149 @@ class EntityRenderer(
         // hoverboard under the feet — SS 2nd-chance machine
         if (boardOn) {
             val boardY = by - u * 0.05f
-            // teal thruster glow
             sr.setColor(0.22f, 0.72f, 0.66f, 0.30f)
             sr.ellipse(cx, boardY - u * 0.055f, u * 0.46f, u * 0.085f)
-            // navy deck with rounded nose/tail
             sr.setColor(0.16f, 0.19f, 0.34f, 1f)
             sr.rect(cx - u * 0.36f, boardY, u * 0.72f, u * 0.075f)
             sr.circle(cx - u * 0.36f, boardY + u * 0.037f, u * 0.037f)
             sr.circle(cx + u * 0.36f, boardY + u * 0.037f, u * 0.037f)
-            // gold racing stripe
             sr.setColor(Palette.GOLD)
             sr.rect(cx - u * 0.36f, boardY + u * 0.026f, u * 0.72f, u * 0.022f)
         }
 
         if (isSlide) {
-            drawSlidePose(p, ch, cx, by, u)
+            drawRoll(p, ch, cx, by, u, squash)
             return
         }
 
-        sr.setColor(Color.WHITE)
-        val rotate = if (isDead) p.deathSpin else p.lean * 0.5f
-        // all shapes around a pivot at feet; use manual rotation via cos/sin offsets
-        val rotRad = rotate * PI.toFloat() / 180f
-        fun rot(px: Float, py: Float, ox: Float, oy: Float): Pair<Float, Float> {
-            val dx = px - ox; val dy = py - oy
-            return (ox + dx * cos(rotRad) - dy * sin(rotRad)) to (oy + dx * sin(rotRad) + dy * cos(rotRad))
-        }
+        val OUT = Palette.UI_OUTLINE
+        val g = 0.020f * u
+        val hoodie = pc1.set(ch.hoodie)
+        val hoodieDark = pc2.set(ch.hoodie).mul(0.86f)
+        val pants = pc3.set(ch.pants)
+        val shoes = Color(ch.shoes)
+        val skin = Color(ch.skin)
+        val hair = Color(ch.hair)
+        val cap = Color(ch.cap)
+        val capDark = Color(ch.cap).mul(0.82f)
+        val pack = Color(ch.backpack)
+        val packDark = Color(ch.backpack).mul(0.8f)
+
+        val H = bodyH * squash
+        val headR = 0.30f * u
+        val headCY = H - headR * 1.02f
+        val shoulderY = H * 0.52f
+        val hipY = H * 0.30f
+
+        // transform: lean / death spin around the feet
+        val rotDeg = if (isDead) p.deathSpin else p.lean * 0.5f
+        sr.identity()
+        sr.translate(cx, by, 0f)
+        if (rotDeg != 0f) sr.rotate(0f, 0f, 1f, rotDeg)
 
         val swing = if (isJump) 0f else sin(p.runPhase)
         val swing2 = if (isJump) 0f else sin(p.runPhase + PI.toFloat())
-        val hipY = by + bodyH * 0.42f * squash
-        val shoulderY = by + bodyH * 0.78f * squash
-        val headY = by + bodyH * 0.92f * squash
 
-        // legs (runner shorts + sneakers)
-        val legColor = tmpC.set(Color(ch.pants))
-        sr.setColor(legColor)
-        val footLY = by + max(0f, swing) * bodyH * 0.12f
-        val footRY = by + max(0f, swing2) * bodyH * 0.12f
-        // left leg
-        sr.rect(cx - u * 0.16f, footLY, u * 0.13f, hipY - footLY)
-        sr.rect(cx + u * 0.04f, footRY, u * 0.13f, hipY - footRY)
-        // sneakers (accent color)
-        sr.setColor(Color(ch.shoes))
-        sr.rect(cx - u * 0.19f, footLY - u * 0.05f, u * 0.19f, u * 0.08f)
-        sr.rect(cx + u * 0.02f, footRY - u * 0.05f, u * 0.19f, u * 0.08f)
+        // leg kinematics: hip → knee → foot with knee bend
+        val legW = 0.115f * u
+        val thighL = H * 0.19f
+        val shinL = H * 0.19f
+        fun leg(side: Float, phase: Float) {
+            val hipX = side * 0.115f * u
+            val a: Float
+            val bend: Float
+            if (isJump) { a = 1.25f; bend = 2.1f } else { a = phase * 0.95f; bend = Mathz.clamp01(-phase) * 1.5f }
+            val kx = hipX + sin(a) * thighL; val ky = hipY - cos(a) * thighL
+            val a2 = a - bend
+            val fx = kx + sin(a2) * shinL; val fy = ky - cos(a2) * shinL
+            // thigh + shin (outline underlay then fill)
+            sr.setColor(OUT); sr.rectLine(hipX, hipY, kx, ky, legW + 0.05f * u); sr.rectLine(kx, ky, fx, fy, legW * 0.85f + 0.05f * u)
+            sr.setColor(pants); sr.rectLine(hipX, hipY, kx, ky, legW); sr.rectLine(kx, ky, fx, fy, legW * 0.85f)
+            // chunky sneaker with white sole + heel tab
+            sr.setColor(OUT); sr.ellipse(fx + 0.04f * u, fy - 0.015f * u, 0.145f * u, 0.085f * u)
+            sr.setColor(shoes); sr.ellipse(fx + 0.04f * u, fy - 0.005f * u, 0.125f * u, 0.065f * u)
+            sr.setColor(0xf7f7f7ff.toInt()); sr.ellipse(fx + 0.04f * u, fy - 0.038f * u, 0.115f * u, 0.032f * u)
+        }
+        leg(-1f, swing)
+        leg(1f, swing2)
 
-        // backpack (seen from behind)
-        sr.setColor(Color(ch.backpack))
-        val bw = u * 0.42f
-        sr.rect(cx - bw / 2, hipY - u * 0.02f, bw, shoulderY - hipY + u * 0.1f)
-        sr.setColor(Color(ch.accent))
-        sr.rect(cx - bw / 2 + u * 0.06f, shoulderY - u * 0.16f, bw - u * 0.12f, u * 0.1f)
+        // arms: shoulder → elbow → hand, opposite phase to same-side leg
+        val armW = 0.105f * u
+        val upArm = H * 0.16f
+        val loArm = H * 0.15f
+        fun arm(side: Float, phase: Float) {
+            val shX = side * 0.24f * u; val shY = shoulderY + 0.02f * u
+            val a = if (isJump) -2.35f else -phase * 0.9f
+            val ex = shX + sin(a) * upArm; val ey = shY - cos(a) * upArm
+            val a2 = a + side * 0.6f
+            val hx = ex + sin(a2) * loArm; val hy = ey - cos(a2) * loArm
+            sr.setColor(OUT); sr.rectLine(shX, shY, ex, ey, armW + 0.05f * u); sr.rectLine(ex, ey, hx, hy, armW * 0.85f + 0.05f * u)
+            sr.setColor(hoodieDark); sr.rectLine(shX, shY, ex, ey, armW); sr.rectLine(ex, ey, hx, hy, armW * 0.85f)
+            // cuff + hand
+            sr.setColor(OUT); sr.circle(hx, hy, 0.062f * u)
+            sr.setColor(skin); sr.circle(hx, hy, 0.05f * u)
+        }
+        arm(1f, swing)
+        arm(-1f, swing2)
 
-        // torso hoodie
-        sr.setColor(Color(ch.hoodie))
-        sr.rect(cx - u * 0.26f, hipY, u * 0.52f, shoulderY - hipY + u * 0.04f)
-        // hood bump
-        sr.circle(cx, shoulderY + u * 0.02f, u * 0.1f)
+        // ── OUTLINE PASS (torso + backpack + hood + head) ──
+        sr.setColor(OUT)
+        sr.rect(-0.27f * u - g, hipY - 0.05f * u - g, 0.54f * u + 2 * g, shoulderY - hipY + 0.14f * u + 2 * g)
+        sr.circle(0f, shoulderY + 0.02f * u, 0.24f * u + g)
+        sr.rect(-0.205f * u - g, hipY - 0.08f * u - g, 0.41f * u + 2 * g, shoulderY - hipY + 0.20f * u + 2 * g)
+        sr.circle(-0.10f * u, shoulderY + 0.05f * u, 0.095f * u + g)
+        sr.circle(0.10f * u, shoulderY + 0.05f * u, 0.095f * u + g)
+        sr.circle(0f, headCY, headR + g)
 
-        // arms pumping
-        val armColor = tmpC.set(Color(ch.hoodie)).mul(0.85f)
-        sr.setColor(armColor)
-        val armSwing = if (isJump) -0.3f else swing * 0.5f
-        val armSwing2 = if (isJump) -0.3f else swing2 * 0.5f
-        sr.rect(cx - u * 0.38f, shoulderY - u * 0.1f + armSwing * u * 0.16f, u * 0.11f, bodyH * 0.26f)
-        sr.rect(cx + u * 0.27f, shoulderY - u * 0.1f + armSwing2 * u * 0.16f, u * 0.11f, bodyH * 0.26f)
-        // hands
-        sr.setColor(Color(ch.skin))
-        sr.circle(cx - u * 0.325f, shoulderY - u * 0.12f + armSwing * u * 0.16f, u * 0.055f)
-        sr.circle(cx + u * 0.325f, shoulderY - u * 0.12f + armSwing2 * u * 0.16f, u * 0.055f)
+        // ── FILL PASS ──
+        // torso hoodie (rounded shoulders)
+        sr.setColor(hoodie)
+        sr.rect(-0.27f * u, hipY - 0.05f * u, 0.54f * u, shoulderY - hipY + 0.14f * u)
+        sr.circle(0f, shoulderY + 0.02f * u, 0.24f * u)
+        // hem band
+        sr.setColor(hoodieDark)
+        sr.rect(-0.27f * u, hipY - 0.05f * u, 0.54f * u, 0.05f * u)
+        // backpack on the back
+        sr.setColor(pack)
+        sr.rect(-0.205f * u, hipY - 0.08f * u, 0.41f * u, shoulderY - hipY + 0.20f * u)
+        // pack top flap + zipper line + side pockets
+        sr.setColor(packDark)
+        sr.rect(-0.205f * u, shoulderY + 0.02f * u, 0.41f * u, 0.05f * u)
+        sr.rect(-0.012f * u, hipY, 0.024f * u, shoulderY - hipY + 0.06f * u)
+        sr.setColor(Palette.GOLD)
+        sr.circle(0f, shoulderY + 0.09f * u, 0.018f * u)
+        // straps over the shoulders
+        sr.setColor(packDark)
+        sr.rect(-0.155f * u, shoulderY - 0.02f * u, 0.07f * u, 0.10f * u)
+        sr.rect(0.085f * u, shoulderY - 0.02f * u, 0.07f * u, 0.10f * u)
+        // hood bunch at the neck
+        sr.setColor(hoodieDark)
+        sr.circle(-0.10f * u, shoulderY + 0.05f * u, 0.095f * u)
+        sr.circle(0.10f * u, shoulderY + 0.05f * u, 0.095f * u)
+        // head: hair base + fringe tips
+        sr.setColor(hair)
+        sr.circle(0f, headCY, headR)
+        sr.circle(-0.14f * u, headCY - headR * 0.42f, 0.07f * u)
+        sr.circle(0.14f * u, headCY - headR * 0.42f, 0.07f * u)
+        // ears
+        sr.setColor(OUT); sr.circle(-headR * 0.96f, headCY - 0.01f * u, 0.085f * u); sr.circle(headR * 0.96f, headCY - 0.01f * u, 0.085f * u)
+        sr.setColor(skin); sr.circle(-headR * 0.96f, headCY - 0.01f * u, 0.07f * u); sr.circle(headR * 0.96f, headCY - 0.01f * u, 0.07f * u)
+        // backwards cap: dome + brim band across the back + adjuster strap
+        sr.setColor(cap)
+        sr.circle(0f, headCY + headR * 0.38f, headR * 0.90f)
+        sr.rect(-headR * 0.93f, headCY + headR * 0.18f, headR * 1.86f, headR * 0.42f)
+        sr.setColor(capDark)
+        sr.rect(-headR * 0.95f, headCY + headR * 0.06f, headR * 1.9f, headR * 0.14f) // brim edge
+        sr.rect(-headR * 0.34f, headCY - headR * 0.12f, headR * 0.68f, headR * 0.17f) // adjuster strap
+        sr.setColor(OUT)
+        sr.circle(0f, headCY - headR * 0.035f, 0.028f * u) // snap hole
+        // cap gloss
+        sr.setColor(1f, 1f, 1f, 0.20f)
+        sr.circle(-headR * 0.32f, headCY + headR * 0.62f, 0.055f * u)
 
-        // head + backward cap
-        sr.setColor(Color(ch.skin))
-        sr.circle(cx, headY, u * 0.17f)
-        sr.setColor(Color(ch.cap))
-        sr.circle(cx, headY + u * 0.06f, u * 0.17f)
-        sr.rect(cx - u * 0.17f, headY + u * 0.03f, u * 0.34f, u * 0.07f)
-        sr.setColor(Color(ch.accent))
-        sr.rect(cx - u * 0.06f, headY + u * 0.16f, u * 0.12f, u * 0.05f)
+        sr.identity()
 
-        // shield bubble (double circle = rim + glass)
+        // shield bubble (rim + glass)
         if (shieldOn) {
             sr.setColor(0.5f, 1f, 0.95f, 0.6f)
             sr.circle(cx, by + bodyH * 0.5f, bodyH * 0.62f)
@@ -583,27 +648,46 @@ class EntityRenderer(
         }
     }
 
-    private fun drawSlidePose(p: Player, ch: CharacterDef, cx: Float, by: Float, u: Float) {
-        // low crouch: body horizontal, legs forward
-        val bodyY = by + u * 0.28f
-        sr.setColor(Color(ch.pants))
-        sr.rect(cx - u * 0.1f, by, u * 0.42f, u * 0.16f)
-        sr.setColor(Color(ch.shoes))
-        sr.rect(cx + u * 0.26f, by - u * 0.02f, u * 0.14f, u * 0.1f)
-        sr.setColor(Color(ch.backpack))
-        sr.rect(cx - u * 0.42f, bodyY - u * 0.12f, u * 0.26f, u * 0.3f)
-        sr.setColor(Color(ch.hoodie))
-        sr.rect(cx - u * 0.2f, bodyY - u * 0.16f, u * 0.42f, u * 0.32f)
-        sr.setColor(Color(ch.skin))
-        sr.circle(cx + u * 0.3f, bodyY - u * 0.02f, u * 0.14f)
-        sr.setColor(Color(ch.cap))
-        sr.circle(cx + u * 0.36f, bodyY + u * 0.05f, u * 0.13f)
+    /** SLIDE = curled somersault roll (SS-style), backpack facing the camera. */
+    private fun drawRoll(p: Player, ch: CharacterDef, cx: Float, by: Float, u: Float, squash: Float) {
+        val r = 0.30f * u * squash
+        val cy = by + r * 1.02f
+        val spin = -(p.runPhase * 57.3f) % 360f
+        val OUT = Palette.UI_OUTLINE
+        val g = 0.020f * u
+
+        sr.identity()
+        sr.translate(cx, cy, 0f)
+        sr.rotate(0f, 0f, 1f, spin)
+
+        // ball silhouette + hoodie ball
+        sr.setColor(OUT); sr.circle(0f, 0f, r + g)
+        sr.setColor(pc1.set(ch.hoodie)); sr.circle(0f, 0f, r)
+        // backpack panel facing the camera (rounded)
+        sr.setColor(OUT)
+        sr.rect(-r * 0.52f - g, -r * 0.52f - g, r * 1.04f + 2 * g, r * 0.86f + 2 * g)
+        sr.circle(-r * 0.52f, 0f, r * 0.26f + g); sr.circle(r * 0.52f, 0f, r * 0.26f + g)
+        sr.setColor(pc2.set(ch.backpack))
+        sr.rect(-r * 0.52f, -r * 0.52f, r * 1.04f, r * 0.86f)
+        sr.circle(-r * 0.52f, 0f, r * 0.26f); sr.circle(r * 0.52f, 0f, r * 0.26f)
+        sr.setColor(Color(ch.backpack).mul(0.8f))
+        sr.rect(-r * 0.52f, -r * 0.12f, r * 1.04f, r * 0.14f) // flap
+        sr.setColor(Palette.GOLD); sr.circle(0f, r * 0.30f, r * 0.07f) // buckle
+        // tucked sneakers
+        sr.setColor(OUT); sr.circle(r * 0.60f, -r * 0.52f, r * 0.26f + g); sr.circle(-r * 0.60f, -r * 0.52f, r * 0.26f + g)
+        sr.setColor(Color(ch.shoes)); sr.circle(r * 0.60f, -r * 0.52f, r * 0.22f); sr.circle(-r * 0.60f, -r * 0.52f, r * 0.22f)
+        // cap dome on the top of the roll
+        sr.setColor(OUT); sr.circle(0f, r * 0.66f, r * 0.40f + g)
+        sr.setColor(Color(ch.cap)); sr.circle(0f, r * 0.66f, r * 0.36f)
+        sr.setColor(Color(ch.cap).mul(0.82f)); sr.rect(-r * 0.42f, r * 0.44f, r * 0.84f, r * 0.12f)
+
+        sr.identity()
     }
 
-    // ── Chaser (security guard) ────────────────────────────────────────
+    // ── Chaser (security guard) — chibi, seen from behind ──────────────
     private fun chaser(c: Chaser, sx: Float, sy: Float) {
         val z = GameConfig.CHASER_Z
-        val s = proj.scale(z) // >1 (behind player = closer to camera)
+        val s = proj.scale(z)
         val x = proj.screenX(playerCharOffsetX(), z) + sx
         val groundY = proj.groundY(z) + sy
         val u = proj.ppu * s
@@ -611,39 +695,90 @@ class EntityRenderer(
         sr.setColor(0f, 0f, 0f, 0.3f)
         sr.ellipse(x - u * 0.45f, groundY - 5f, u * 0.9f, u * 0.15f)
 
-        val bodyH = u * GameConfig.PLAYER_HEIGHT
+        val OUT = Palette.UI_OUTLINE
+        val g = 0.020f * u
+        val uniform = Color(0x36486aff.toInt())
+        val uniformDark = Color(0x2a3752ff.toInt())
+        val pants = Color(0x2b3440ff.toInt())
+
+        val H = u * GameConfig.PLAYER_HEIGHT
+        val headR = 0.27f * u
+        val headCY = H - headR * 1.02f
+        val shoulderY = H * 0.52f
+        val hipY = H * 0.30f
+
+        sr.identity()
+        sr.translate(x, groundY, 0f)
+
         val swing = sin(c.runPhase)
         val swing2 = sin(c.runPhase + PI.toFloat())
-        val hipY = groundY + bodyH * 0.42f
-        val shoulderY = groundY + bodyH * 0.78f
-        val headY = groundY + bodyH * 0.94f
 
-        // legs
-        sr.setColor(Color(0x2b3440ff.toInt()))
-        sr.rect(x - u * 0.16f, groundY + max(0f, swing) * bodyH * 0.1f, u * 0.14f, hipY - groundY)
-        sr.rect(x + u * 0.03f, groundY + max(0f, swing2) * bodyH * 0.1f, u * 0.14f, hipY - groundY)
-        // torso navy uniform
-        sr.setColor(Color(0x36486aff.toInt()))
-        sr.rect(x - u * 0.28f, hipY, u * 0.56f, shoulderY - hipY + u * 0.04f)
+        val legW = 0.11f * u
+        val thighL = H * 0.19f
+        val shinL = H * 0.19f
+        fun leg(side: Float, phase: Float) {
+            val hipX = side * 0.115f * u
+            val a = phase * 0.95f
+            val bend = Mathz.clamp01(-phase) * 1.4f
+            val kx = hipX + sin(a) * thighL; val ky = hipY - cos(a) * thighL
+            val a2 = a - bend
+            val fx = kx + sin(a2) * shinL; val fy = ky - cos(a2) * shinL
+            sr.setColor(OUT); sr.rectLine(hipX, hipY, kx, ky, legW + 0.05f * u); sr.rectLine(kx, ky, fx, fy, legW * 0.85f + 0.05f * u)
+            sr.setColor(pants); sr.rectLine(hipX, hipY, kx, ky, legW); sr.rectLine(kx, ky, fx, fy, legW * 0.85f)
+            sr.setColor(OUT); sr.ellipse(fx + 0.04f * u, fy - 0.015f * u, 0.14f * u, 0.085f * u)
+            sr.setColor(0x1d2530ff.toInt()); sr.ellipse(fx + 0.04f * u, fy - 0.005f * u, 0.12f * u, 0.065f * u)
+        }
+        leg(-1f, swing)
+        leg(1f, swing2)
+
+        val armW = 0.105f * u
+        val upArm = H * 0.16f
+        val loArm = H * 0.15f
+        fun arm(side: Float, phase: Float) {
+            val shX = side * 0.24f * u; val shY = shoulderY + 0.02f * u
+            val a = -phase * 0.9f
+            val ex = shX + sin(a) * upArm; val ey = shY - cos(a) * upArm
+            val a2 = a + side * 0.6f
+            val hx = ex + sin(a2) * loArm; val hy = ey - cos(a2) * loArm
+            sr.setColor(OUT); sr.rectLine(shX, shY, ex, ey, armW + 0.05f * u); sr.rectLine(ex, ey, hx, hy, armW * 0.85f + 0.05f * u)
+            sr.setColor(uniformDark); sr.rectLine(shX, shY, ex, ey, armW); sr.rectLine(ex, ey, hx, hy, armW * 0.85f)
+            sr.setColor(OUT); sr.circle(hx, hy, 0.06f * u)
+            sr.setColor(Color(0xd9975fff.toInt())); sr.circle(hx, hy, 0.048f * u)
+        }
+        arm(1f, swing)
+        arm(-1f, swing2)
+
+        // torso + head outline
+        sr.setColor(OUT)
+        sr.rect(-0.27f * u - g, hipY - 0.05f * u - g, 0.54f * u + 2 * g, shoulderY - hipY + 0.14f * u + 2 * g)
+        sr.circle(0f, shoulderY + 0.02f * u, 0.24f * u + g)
+        sr.circle(0f, headCY, headR + g)
+        // uniform
+        sr.setColor(uniform)
+        sr.rect(-0.27f * u, hipY - 0.05f * u, 0.54f * u, shoulderY - hipY + 0.14f * u)
+        sr.circle(0f, shoulderY + 0.02f * u, 0.24f * u)
         // belt
-        sr.setColor(Color(0x1d2530ff.toInt()))
-        sr.rect(x - u * 0.28f, hipY + u * 0.04f, u * 0.56f, u * 0.07f)
-        // arms — one wields baton
-        sr.setColor(Color(0x36486aff.toInt()))
-        sr.rect(x - u * 0.4f, shoulderY - u * 0.1f + swing * u * 0.14f, u * 0.11f, bodyH * 0.26f)
-        sr.rect(x + u * 0.29f, shoulderY - u * 0.1f + swing2 * u * 0.14f, u * 0.11f, bodyH * 0.26f)
-        // baton
-        sr.setColor(Color(0x2b2118ff.toInt()))
-        sr.rect(x + u * 0.38f, shoulderY + swing2 * u * 0.14f + u * 0.1f, u * 0.05f, u * 0.34f)
-        // head + cap
+        sr.setColor(0x1d2530ff.toInt())
+        sr.rect(-0.27f * u, hipY + 0.02f * u, 0.54f * u, 0.05f * u)
+        sr.setColor(Palette.GOLD); sr.rect(0.02f * u, hipY + 0.03f * u, 0.05f * u, 0.03f * u) // buckle
+        // head + skin
         sr.setColor(Color(0xd9975fff.toInt()))
-        sr.circle(x, headY, u * 0.16f)
-        sr.setColor(Color(0x22304aff.toInt()))
-        sr.circle(x, headY + u * 0.05f, u * 0.16f)
-        sr.rect(x - u * 0.2f, headY + u * 0.02f, u * 0.4f, u * 0.06f)
-        // angry brow (visible from behind? show side badge instead)
+        sr.circle(0f, headCY, headR)
+        // police cap: dome + brim + gold badge
+        sr.setColor(0x22304aff.toInt())
+        sr.circle(0f, headCY + headR * 0.38f, headR * 0.90f)
+        sr.rect(-headR * 0.95f, headCY + headR * 0.16f, headR * 1.9f, headR * 0.24f)
+        sr.setColor(0x1a2436ff.toInt())
+        sr.rect(-headR * 0.97f, headCY + headR * 0.04f, headR * 1.94f, headR * 0.14f)
         sr.setColor(Palette.GOLD)
-        sr.circle(x + u * 0.18f, shoulderY + u * 0.18f, u * 0.035f)
+        sr.circle(0f, headCY + headR * 0.50f, 0.045f * u)
+
+        // waving baton in the trailing hand
+        val bx = 0.34f * u + swing2 * 0.06f * u
+        sr.setColor(OUT); sr.rectLine(bx, shoulderY + 0.05f * u, bx + 0.06f * u, shoulderY + 0.38f * u, 0.075f * u)
+        sr.setColor(0x2b2118ff.toInt()); sr.rectLine(bx, shoulderY + 0.05f * u, bx + 0.06f * u, shoulderY + 0.38f * u, 0.055f * u)
+
+        sr.identity()
     }
 
     private fun playerCharOffsetX(): Float {
