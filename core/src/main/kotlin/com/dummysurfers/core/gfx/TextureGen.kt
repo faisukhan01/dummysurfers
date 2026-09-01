@@ -112,6 +112,12 @@ object TextureGen {
     lateinit var facades: Array<Texture>      // building facades w/ baked windows
     lateinit var glassTex: Texture            // glass tower facade
 
+    // v4 true-3D world tiles (ModelBatch materials)
+    lateinit var trackTex: Texture            // ballast + sleepers + 6 steel rails (tiles along z)
+    lateinit var dirtTex: Texture             // side apron gravel/dirt
+    lateinit var wallTex: Texture             // graffiti brick wall
+    lateinit var tunnelTex: Texture           // grimy tunnel tile
+
     fun generate() {
         white = solid(4, 4, Color.WHITE)
         glow = radial(128, Color(1f, 1f, 1f, 1f), 0f)
@@ -143,6 +149,10 @@ object TextureGen {
             facade(0x9fc5c0, 0x8fb6d9, 37L), facade(0xe8d5a8, 0xc78a6a, 53L)
         )
         glassTex = glassTower()
+        trackTex = trackTile()
+        dirtTex = dirtTile()
+        wallTex = wallTile()
+        tunnelTex = tunnelTile()
     }
 
     fun dispose() {
@@ -155,6 +165,128 @@ object TextureGen {
         trainFronts.forEach { it.dispose() }
         trainRears.forEach { it.dispose() }
         facades.forEach { it.dispose() }
+        trackTex.dispose(); dirtTex.dispose(); wallTex.dispose(); tunnelTex.dispose()
+    }
+
+    /** Ballast + wooden sleepers + steel rails — one tile = 7.5u wide × 3.5u deep. */
+    private fun trackTile(): Texture {
+        val s = 256
+        val p = Pixmap(s, s, Pixmap.Format.RGBA8888)
+        // ballast base
+        p.setColor(0x8f8578ff.toInt()); p.fill()
+        val rnd = java.util.Random(9L)
+        for (i in 0 until 900) {
+            val g = (0.75f + rnd.nextFloat() * 0.5f)
+            p.setColor((0.56f * g).coerceAtMost(1f), (0.52f * g).coerceAtMost(1f), (0.47f * g).coerceAtMost(1f), 1f)
+            p.fillRectangle(rnd.nextInt(s), rnd.nextInt(s), 2 + rnd.nextInt(3), 2 + rnd.nextInt(2))
+        }
+        // dark ties across every lane (3 lanes → centers at 1/6, 3/6, 5/6)
+        val tieH = 34
+        var ty = 60
+        while (ty < s) {
+            for (lane in 0 until 3) {
+                val cx = s / 6 + lane * s / 3
+                p.setColor(0x4a3a2aff.toInt()); p.fillRectangle(cx - 96, ty, 76, tieH)
+                p.setColor(0x5c4834ff.toInt()); p.fillRectangle(cx - 96, ty, 76, 6)
+                p.setColor(0x3a2d20ff.toInt()); p.fillRectangle(cx - 96, ty + tieH - 5, 76, 5)
+            }
+            ty += 128
+        }
+        // steel rails (2 per lane) with shine
+        for (lane in 0 until 3) {
+            val cx = s / 6 + lane * s / 3
+            for (off in intArrayOf(-52, 52)) {
+                val rx = cx + off - 5
+                p.setColor(0x6a6f76ff.toInt()); p.fillRectangle(rx, 0, 10, s)
+                p.setColor(0xd9dde2ff.toInt()); p.fillRectangle(rx + 2, 0, 3, s)
+                p.setColor(0x9aa0a8ff.toInt()); p.fillRectangle(rx + 7, 0, 3, s)
+            }
+        }
+        val t = Texture(p); p.dispose()
+        t.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat)
+        t.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+        return t
+    }
+
+    /** Gravel/dirt side apron. */
+    private fun dirtTile(): Texture {
+        val s = 128
+        val p = Pixmap(s, s, Pixmap.Format.RGBA8888)
+        p.setColor(0x9b8a72ff.toInt()); p.fill()
+        val rnd = java.util.Random(31L)
+        for (i in 0 until 420) {
+            val g = 0.7f + rnd.nextFloat() * 0.6f
+            p.setColor((0.61f * g).coerceAtMost(1f), (0.54f * g).coerceAtMost(1f), (0.42f * g).coerceAtMost(1f), 1f)
+            p.fillRectangle(rnd.nextInt(s), rnd.nextInt(s), 2 + rnd.nextInt(3), 2 + rnd.nextInt(2))
+        }
+        val t = Texture(p); p.dispose()
+        t.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat)
+        t.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+        return t
+    }
+
+    /** Brick wall with painted graffiti tags. */
+    private fun wallTile(): Texture {
+        val w = 256; val h = 256
+        val p = Pixmap(w, h, Pixmap.Format.RGBA8888)
+        p.setColor(0xb08a62ff.toInt()); p.fill()
+        // brick courses
+        var y = 0
+        var row = 0
+        while (y < h) {
+            val bh = 16
+            var x = if (row % 2 == 0) 0 else -12
+            while (x < w) {
+                val g = 0.86f + java.util.Random((x * 31 + y * 17).toLong()).nextFloat() * 0.28f
+                p.setColor((0.69f * g).coerceAtMost(1f), (0.54f * g).coerceAtMost(1f), (0.38f * g).coerceAtMost(1f), 1f)
+                p.fillRectangle(x, y, 24, bh - 3)
+                x += 26
+            }
+            y += bh; row++
+        }
+        // graffiti blobs + drips
+        val rnd = java.util.Random(77L)
+        val tags = intArrayOf(0x37b8a8ff.toInt(), 0xf28c1aff.toInt(), 0xd94a38ff.toInt(), 0x8a55c9ff.toInt(), 0x3e7bc0ff.toInt())
+        for (i in 0 until 7) {
+            val cx = rnd.nextInt(w); val cy = rnd.nextInt(h)
+            val rw = 24 + rnd.nextInt(46); val rh = 12 + rnd.nextInt(26)
+            p.setColor(tags[i % tags.size])
+            p.fillRectangle(cx - rw / 2, cy - rh / 2, rw, rh)
+            p.setColor(0xffffffff.toInt())
+            p.fillRectangle(cx - rw / 2 + 4, cy - rh / 2 + 4, rw / 3, 4)
+            // drip
+            p.fillRectangle(cx + rnd.nextInt(rw) - rw / 2, cy + rh / 2, 3, 8 + rnd.nextInt(14))
+        }
+        // grime top/bottom
+        p.setColor(0x00000030); p.fillRectangle(0, 0, w, 10)
+        p.setColor(0x00000022); p.fillRectangle(0, h - 8, w, 8)
+        val t = Texture(p); p.dispose()
+        t.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat)
+        t.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+        return t
+    }
+
+    /** Grimy tunnel tiles with occasional lamp glow band. */
+    private fun tunnelTile(): Texture {
+        val s = 256
+        val p = Pixmap(s, s, Pixmap.Format.RGBA8888)
+        p.setColor(0x4c4a48ff.toInt()); p.fill()
+        for (y in 0 until s step 32) {
+            for (x in 0 until s step 32) {
+                val g = 0.82f + java.util.Random((x * 13 + y * 7).toLong()).nextFloat() * 0.36f
+                p.setColor((0.30f * g).coerceAtMost(1f), (0.29f * g).coerceAtMost(1f), (0.28f * g).coerceAtMost(1f), 1f)
+                p.fillRectangle(x + 1, y + 1, 30, 30)
+            }
+        }
+        val rnd = java.util.Random(19L)
+        for (i in 0 until 60) {
+            p.setColor(0x00000030)
+            p.fillRectangle(rnd.nextInt(s), rnd.nextInt(s), 4 + rnd.nextInt(10), 3 + rnd.nextInt(6))
+        }
+        val t = Texture(p); p.dispose()
+        t.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat)
+        t.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+        return t
     }
 
     private fun solid(w: Int, h: Int, c: Color): Texture {
