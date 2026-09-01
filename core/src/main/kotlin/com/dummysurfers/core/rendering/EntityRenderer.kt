@@ -81,7 +81,8 @@ class EntityRenderer(
         invulnBlink: Boolean,
         shieldOn: Boolean,
         boostOn: Boolean,
-        boardOn: Boolean
+        boardOn: Boolean,
+        stumbleOn: Boolean = false
     ) {
         itemCount = 0
         for (d in world.decos) {
@@ -122,7 +123,7 @@ class EntityRenderer(
                 2 -> obstacle(it.obstacle!!, shakeX, shakeY)
                 3 -> coin(it.coin!!, shakeX, shakeY)
                 4 -> powerup(it.powerup!!, shakeX, shakeY)
-                5 -> this.player(player, character, shakeX, shakeY, invulnBlink, shieldOn, boostOn, boardOn)
+                5 -> this.player(player, character, shakeX, shakeY, invulnBlink, shieldOn, boostOn, boardOn, stumbleOn)
                 6 -> this.chaser(chaser, shakeX, shakeY)
             }
         }
@@ -387,7 +388,7 @@ class EntityRenderer(
     private val pc3 = Color()
     private val pc4 = Color()
 
-    private fun player(p: Player, ch: CharacterDef, sx: Float, sy: Float, blink: Boolean, shieldOn: Boolean, boostOn: Boolean, boardOn: Boolean) {
+    private fun player(p: Player, ch: CharacterDef, sx: Float, sy: Float, blink: Boolean, shieldOn: Boolean, boostOn: Boolean, boardOn: Boolean, stumbleOn: Boolean) {
         val x = proj.screenX(p.x, 0f) + sx
         val groundY = proj.groundY(0f) + sy
         // SS chibis read BIG on screen (~30% of height) — visual-only scale
@@ -446,8 +447,10 @@ class EntityRenderer(
         val shoulderY = H * 0.52f
         val hipY = H * 0.30f
 
+        // v3.0 stumble flail: arms windmill overhead, body wobbles side to side
+        val flail = if (stumbleOn && !isDead) (p.invulnTimer / GameConfig.STUMBLE_INVULN).coerceIn(0f, 1f) else 0f
         // transform: lean / death spin around the feet
-        val rotDeg = if (isDead) p.deathSpin else p.lean * 0.5f
+        val rotDeg = if (isDead) p.deathSpin else p.lean * 0.5f + sin(p.runPhase * 2.1f) * 5.5f * flail
         sr.identity()
         sr.translate(cx, by, 0f)
         if (rotDeg != 0f) sr.rotate(0f, 0f, 1f, rotDeg)
@@ -485,7 +488,12 @@ class EntityRenderer(
         fun arm(side: Float, phase: Float) {
             val shX = side * 0.24f * u; val shY = shoulderY + 0.02f * u
             // softer swing keeps the arms pumping at the sides (SS runners don't T-pose)
-            val a = if (isJump) -2.35f else -phase * 0.62f
+            // stumble: arms thrown UP overhead windmilling
+            val a = when {
+                flail > 0f -> -2.9f + side * 0.35f + sin(p.runPhase * 3.2f + (if (side > 0) 0f else PI.toFloat())) * 0.85f * flail
+                isJump -> -2.35f
+                else -> -phase * 0.62f
+            }
             val ex = shX + sin(a) * upArm; val ey = shY - cos(a) * upArm
             val a2 = a + side * 0.9f
             val hx = ex + sin(a2) * loArm; val hy = ey - cos(a2) * loArm
@@ -600,22 +608,31 @@ class EntityRenderer(
         sr.identity()
     }
 
-    // ── Chaser (security guard) — chibi, seen from behind ──────────────
+    // ── Chaser (security guard + dog) — chibi, seen from behind ─────────
+    // v3.0: z/scale react to state (trail → grab range after a stumble),
+    // rush-in catch sequence, and the dog sprinting at his side.
     private fun chaser(c: Chaser, sx: Float, sy: Float) {
-        val z = GameConfig.CHASER_Z
+        // rush-in: lerp from trail distance to grab range over catchT
+        val z = if (c.catchT > 0f) Mathz.lerp(GameConfig.CHASER_Z, -0.55f, Mathz.easeOut(c.catchT))
+                else if (c.close) GameConfig.CHASER_Z_CLOSE else GameConfig.CHASER_Z
         val s = proj.scale(z)
         val x = proj.screenX(playerCharOffsetX(), z) + sx
         val groundY = proj.groundY(z) + sy
-        val u = proj.ppu * s * 1.30f * GameConfig.CHASER_VISUAL_SCALE
+        val scaleMul = if (c.close || c.catchT > 0f) 0.92f else GameConfig.CHASER_VISUAL_SCALE
+        val u = proj.ppu * s * 1.30f * scaleMul
+
+        // the DOG sprints beside the guard (slightly ahead when closing in)
+        dog(c, x + (GameConfig.CHASER_DOG_OFFSET_X + if (c.close) 0.18f else 0f) * u, groundY,
+            u * 0.72f, sx, sy, z)
 
         sr.setColor(0f, 0f, 0f, 0.3f)
         sr.ellipse(x - u * 0.45f, groundY - 5f, u * 0.9f, u * 0.15f)
 
         val OUT = Palette.UI_OUTLINE
         val g = 0.020f * u
-        val uniform = Color(0x36486aff.toInt())
-        val uniformDark = Color(0x2a3752ff.toInt())
-        val pants = Color(0x2b3440ff.toInt())
+        val uniform = Color(0x2e4373ff.toInt())
+        val uniformDark = Color(0x24365cff.toInt())
+        val pants = Color(0x27334bff.toInt())
 
         val H = u * GameConfig.PLAYER_HEIGHT
         val headR = 0.27f * u
@@ -625,6 +642,8 @@ class EntityRenderer(
 
         sr.identity()
         sr.translate(x, groundY, 0f)
+        // grabbed: lean over the player
+        if (c.grabbed) sr.rotate(0f, 0f, 1f, -4f)
 
         val swing = sin(c.runPhase)
         val swing2 = sin(c.runPhase + PI.toFloat())
@@ -652,7 +671,12 @@ class EntityRenderer(
         val loArm = H * 0.15f
         fun arm(side: Float, phase: Float) {
             val shX = side * 0.24f * u; val shY = shoulderY + 0.02f * u
-            val a = -phase * 0.62f
+            // catching: both arms thrown FORWARD toward the player; grab: locked down
+            val a = when {
+                c.grabbed -> -1.35f + side * 0.12f
+                c.catchT > 0f -> -2.75f + sin(c.runPhase * 2f + (if (side > 0) 0f else PI.toFloat())) * 0.3f
+                else -> -phase * 0.62f
+            }
             val ex = shX + sin(a) * upArm; val ey = shY - cos(a) * upArm
             val a2 = a + side * 0.9f
             val hx = ex + sin(a2) * loArm; val hy = ey - cos(a2) * loArm
@@ -664,19 +688,25 @@ class EntityRenderer(
         arm(1f, swing)
         arm(-1f, swing2)
 
-        // torso + head outline
+        // torso + head outline — burly guard belly
         sr.setColor(OUT)
-        sr.rect(-0.27f * u - g, hipY - 0.05f * u - g, 0.54f * u + 2 * g, shoulderY - hipY + 0.14f * u + 2 * g)
+        sr.rect(-0.30f * u - g, hipY - 0.05f * u - g, 0.60f * u + 2 * g, shoulderY - hipY + 0.14f * u + 2 * g)
         sr.circle(0f, shoulderY + 0.02f * u, 0.24f * u + g)
         sr.circle(0f, headCY, headR + g)
         // uniform
         sr.setColor(uniform)
-        sr.rect(-0.27f * u, hipY - 0.05f * u, 0.54f * u, shoulderY - hipY + 0.14f * u)
+        sr.rect(-0.30f * u, hipY - 0.05f * u, 0.60f * u, shoulderY - hipY + 0.14f * u)
         sr.circle(0f, shoulderY + 0.02f * u, 0.24f * u)
-        // belt
+        // belly shade + belt
+        sr.setColor(uniformDark)
+        sr.rect(-0.30f * u, hipY + 0.06f * u, 0.60f * u, 0.05f * u)
         sr.setColor(pc4.set(0x1d2530ff.toInt()))
-        sr.rect(-0.27f * u, hipY + 0.02f * u, 0.54f * u, 0.05f * u)
+        sr.rect(-0.30f * u, hipY + 0.02f * u, 0.60f * u, 0.05f * u)
         sr.setColor(Palette.GOLD); sr.rect(0.02f * u, hipY + 0.03f * u, 0.05f * u, 0.03f * u) // buckle
+        // shoulder epaulettes (SS inspector detail)
+        sr.setColor(uniformDark)
+        sr.circle(-0.21f * u, shoulderY + 0.05f * u, 0.055f * u)
+        sr.circle(0.21f * u, shoulderY + 0.05f * u, 0.055f * u)
         // head + skin
         sr.setColor(Color(0xd9975fff.toInt()))
         sr.circle(0f, headCY, headR)
@@ -689,12 +719,71 @@ class EntityRenderer(
         sr.setColor(Palette.GOLD)
         sr.circle(0f, headCY + headR * 0.50f, 0.045f * u)
 
-        // waving baton in the trailing hand
-        val bx = 0.34f * u + swing2 * 0.06f * u
-        sr.setColor(OUT); sr.rectLine(bx, shoulderY + 0.05f * u, bx + 0.06f * u, shoulderY + 0.38f * u, 0.075f * u)
-        sr.setColor(pc4.set(0x2b2118ff.toInt())); sr.rectLine(bx, shoulderY + 0.05f * u, bx + 0.06f * u, shoulderY + 0.38f * u, 0.055f * u)
+        // waving baton in the trailing hand (only while chasing, not grabbing)
+        if (!c.grabbed && c.catchT <= 0f) {
+            val bx = 0.34f * u + swing2 * 0.06f * u
+            sr.setColor(OUT); sr.rectLine(bx, shoulderY + 0.05f * u, bx + 0.06f * u, shoulderY + 0.38f * u, 0.075f * u)
+            sr.setColor(pc4.set(0x2b2118ff.toInt())); sr.rectLine(bx, shoulderY + 0.05f * u, bx + 0.06f * u, shoulderY + 0.38f * u, 0.055f * u)
+        }
 
         sr.identity()
+
+        // "!" rage mark while in grab range — SS's danger tell
+        if (c.close && !c.grabbed) {
+            val bob = sin(c.runPhase * 1.7f) * 3f
+            val ex = x + u * 0.42f
+            val ey = groundY + H * 1.08f + bob
+            sr.setColor(Palette.DANGER)
+            sr.rect(ex - u * 0.035f, ey - u * 0.14f, u * 0.07f, u * 0.20f)
+            sr.circle(ex, ey - u * 0.20f, u * 0.042f)
+        }
+    }
+
+    /** v3.0: the guard's dog — small sprinting chibi with flapping ears + tail. */
+    private fun dog(c: Chaser, x: Float, groundY: Float, u: Float, sx: Float, sy: Float, z: Float) {
+        val OUT = Palette.UI_OUTLINE
+        val g = 0.018f * u
+        val fur = Color(0x8a5a33ff.toInt())
+        val furDark = Color(0x6d4526ff.toInt())
+
+        val bodyY = groundY + u * 0.42f
+        val swing = sin(c.dogPhase)
+        val swing2 = sin(c.dogPhase + PI.toFloat())
+
+        sr.setColor(0f, 0f, 0f, 0.28f)
+        sr.ellipse(x - u * 0.4f, groundY - 3f, u * 0.8f, u * 0.12f)
+
+        // legs (4, two pairs opposing phase)
+        val legW = 0.07f * u
+        sr.setColor(OUT); sr.rectLine(x - u * 0.22f, bodyY - u * 0.12f, x - u * 0.22f + swing * u * 0.16f, groundY, legW + g)
+        sr.setColor(OUT); sr.rectLine(x + u * 0.22f, bodyY - u * 0.12f, x + u * 0.22f + swing2 * u * 0.16f, groundY, legW + g)
+        sr.setColor(furDark); sr.rectLine(x - u * 0.22f, bodyY - u * 0.12f, x - u * 0.22f + swing * u * 0.16f, groundY, legW)
+        sr.setColor(furDark); sr.rectLine(x + u * 0.22f, bodyY - u * 0.12f, x + u * 0.22f + swing2 * u * 0.16f, groundY, legW)
+
+        // body
+        sr.setColor(OUT); sr.ellipse(x, bodyY, u * 0.42f + g, u * 0.24f + g)
+        sr.setColor(fur); sr.ellipse(x, bodyY, u * 0.42f, u * 0.24f)
+        sr.setColor(furDark); sr.ellipse(x, bodyY - u * 0.07f, u * 0.38f, u * 0.13f)
+
+        // tail — happy panic wag
+        val tx = x - u * 0.40f; val ty = bodyY + u * 0.10f
+        sr.setColor(OUT); sr.rectLine(tx, ty, tx - u * 0.16f, ty + u * 0.16f + swing * u * 0.08f, 0.075f * u + g)
+        sr.setColor(fur); sr.rectLine(tx, ty, tx - u * 0.16f, ty + u * 0.16f + swing * u * 0.08f, 0.055f * u)
+
+        // head
+        val hx = x + u * 0.40f; val hy = bodyY + u * 0.18f
+        sr.setColor(OUT); sr.circle(hx, hy, u * 0.19f + g)
+        sr.setColor(fur); sr.circle(hx, hy, u * 0.19f)
+        // snout
+        sr.setColor(OUT); sr.ellipse(hx + u * 0.16f, hy - u * 0.03f, u * 0.13f + g, u * 0.085f + g)
+        sr.setColor(Color(0xc98048ff.toInt())); sr.ellipse(hx + u * 0.16f, hy - u * 0.03f, u * 0.13f, u * 0.085f)
+        sr.setColor(OUT); sr.circle(hx + u * 0.27f, hy - u * 0.01f, u * 0.035f)
+        // flapping ears (brown, darker)
+        sr.setColor(furDark)
+        sr.ellipse(hx - u * 0.06f + swing * u * 0.03f, hy + u * 0.16f, u * 0.075f, u * 0.13f, 0.5f)
+        // collar — red with gold tag (he's the guard's dog after all)
+        sr.setColor(Palette.DANGER); sr.rect(hx - u * 0.02f, hy - u * 0.20f, u * 0.10f, u * 0.05f)
+        sr.setColor(Palette.GOLD); sr.circle(hx + u * 0.03f, hy - u * 0.22f, u * 0.032f)
     }
 
     private fun playerCharOffsetX(): Float {

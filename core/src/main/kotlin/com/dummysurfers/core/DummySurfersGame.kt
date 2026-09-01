@@ -767,7 +767,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         worldRenderer.render(distance, Difficulty.speed(distance), shakeX, shakeY, tunnelDark)
         entityRenderer.render(world, spawner, player, chaser, character, shakeX, shakeY, particles,
             invulnBlink = player.invulnTimer > 0f, shieldOn = activePowerups[2] > 0f, boostOn = activePowerups[3] > 0f,
-            boardOn = boardTimer > 0f)
+            boardOn = boardTimer > 0f, stumbleOn = stumbleSlowTimer > 0f)
 
         // boost screen-edge speed glow (spec 9: BOOST — screen edge blur, SS-warm)
         if (activePowerups[3] > 0f) {
