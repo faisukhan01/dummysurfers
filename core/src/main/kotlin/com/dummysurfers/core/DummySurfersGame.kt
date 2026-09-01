@@ -183,7 +183,10 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             devInit = true
             if (System.getenv("DS_AUTORUN") == "1" && !menuFirst) restartRun()
         }
-        if (System.getenv("DS_GOD") == "1" && state == GameState.PLAYING) devAutopilot(rawDt)
+        if (System.getenv("DS_DIE") == "1" && state == GameState.PLAYING) {
+            // death-path QA: no autopilot, no invulnerability → run into hazards
+            player.invulnTimer = 0f
+        } else if (System.getenv("DS_GOD") == "1" && state == GameState.PLAYING) devAutopilot(rawDt)
         val dir = System.getenv("DS_SHOT_DIR") ?: return
         devT += rawDt
         if (devShotIdx < devShotTimes.size && devT >= devShotTimes[devShotIdx]) {

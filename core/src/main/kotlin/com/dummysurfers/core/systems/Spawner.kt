@@ -189,7 +189,7 @@ class Spawner {
         val zNear = t.z - t.totalLength
         var z = zNear + 1.4f
         while (z < t.z - 1.2f) {
-            spawnCoin(t.lanes[0], z, GameConfig.TRAIN_HEIGHT + 0.85f)
+            spawnCoin(t.lanes[0], z, GameConfig.TRAIN_HEIGHT + 0.7f)
             z += 1.7f
         }
     }

@@ -203,9 +203,9 @@ class ModelFactory {
      * (the roof edge is FARTHER ahead = smaller gz). Position via instance transform.
      */
     fun ramp(): Model = models.getOrPut("ramp") {
-        val hw = 0.95f
+        val hw = 0.88f
         build(matTex(TextureGen.hazardTex)) {
-            setUVRange(0f, 0f, 1f, 3f)
+            setUVRange(0f, 0f, 1f, 6f)
             c000.set(-hw, 0f, 0f); c010.set(-hw, 0.18f, 0f); c100.set(hw, 0f, 0f); c110.set(hw, 0.18f, 0f)
             c001.set(-hw, 2.2f, -3.15f); c011.set(-hw, 2.38f, -3.15f)
             c101.set(hw, 2.2f, -3.15f); c111.set(hw, 2.38f, -3.15f)

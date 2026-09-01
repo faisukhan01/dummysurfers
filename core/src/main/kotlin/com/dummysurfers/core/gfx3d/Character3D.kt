@@ -21,6 +21,8 @@ class Part(val instance: ModelInstance, val parent: Part?, val bx: Float, val by
     val local = Matrix4()
     val world = Matrix4()
 
+    init { local.setToTranslation(bx, by, bz) }
+
     fun update(parentWorld: Matrix4) {
         world.set(parentWorld).mul(local)
         instance.transform.set(world)
@@ -38,11 +40,10 @@ class Rig {
 
     fun renderables(): List<ModelInstance> = parts.map { it.instance }
 
-    /** Compose all local transforms down the tree starting from [root]. */
+    /** Compose world transforms down the tree. NOTE: locals are owned by pose() calls. */
     fun update(root: Matrix4) {
         for (p in parts) {
             val pw = p.parent?.world ?: root
-            p.local.setToTranslation(p.bx, p.by, p.bz)
             p.update(pw)
         }
     }
@@ -110,7 +111,7 @@ class Human3D(
         rig.add(ModelInstance(handM), foreR, 0f, -0.2f, 0.02f)
 
         val headM = buildHead(skin, hair, cap, capPanel, accent)
-        head = rig.add(ModelInstance(headM), torso, 0f, 0.6f, 0f)
+        head = rig.add(ModelInstance(headM), torso, 0f, 0.58f, 0f)
     }
 
     private fun buildTorso(hoodie: Int, vest: Int, hoodLining: Int, accent: Int, backpack: Int): com.badlogic.gdx.graphics.g3d.Model {
@@ -163,31 +164,31 @@ class Human3D(
         mb.begin()
         var mpb = mb.part("face", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(skin))
         mpb.setUVRange(0f, 0f, 1f, 1f)
-        mpb.cbox(0f, 0.24f, 0f, 0.5f, 0.46f, 0.44f)
+        mpb.cbox(0f, 0.26f, 0f, 0.58f, 0.52f, 0.5f)
         // spiky fringe under the cap edge
         mpb = mb.part("hair", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(hair))
-        mpb.cbox(0f, 0.47f, 0.03f, 0.52f, 0.1f, 0.46f)
-        mpb.cbox(0f, 0.4f, 0.23f, 0.4f, 0.1f, 0.04f)
+        mpb.cbox(0f, 0.52f, 0.04f, 0.6f, 0.11f, 0.52f)
+        mpb.cbox(0f, 0.44f, 0.27f, 0.44f, 0.1f, 0.04f)
         // cap dome + brim (backwards = brim behind) + front panel
         mpb = mb.part("cap", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(cap))
-        mpb.cbox(0f, 0.56f, -0.01f, 0.54f, 0.14f, 0.48f)
-        mpb.cbox(0f, 0.5f, -0.27f, 0.5f, 0.06f, 0.12f) // rear brim
-        mpb.cbox(0f, 0.63f, -0.01f, 0.2f, 0.05f, 0.16f) // top button-ish ridge
+        mpb.cbox(0f, 0.63f, -0.01f, 0.62f, 0.15f, 0.54f)
+        mpb.cbox(0f, 0.56f, -0.31f, 0.56f, 0.07f, 0.14f) // rear brim
+        mpb.cbox(0f, 0.71f, -0.01f, 0.22f, 0.05f, 0.18f) // top button-ish ridge
         if (capPanel != 0) {
             mpb = mb.part("panel", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(capPanel))
-            mpb.cbox(0f, 0.56f, 0.24f, 0.34f, 0.12f, 0.03f)
+            mpb.cbox(0f, 0.63f, 0.28f, 0.38f, 0.13f, 0.03f)
         }
         if (isGuard) {
             // gold badge on the cap + mustache
             mpb = mb.part("gbadge", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(0xffd23eff.toInt()))
-            mpb.cbox(0f, 0.57f, 0.24f, 0.12f, 0.1f, 0.03f)
+            mpb.cbox(0f, 0.64f, 0.28f, 0.13f, 0.11f, 0.03f)
             mpb = mb.part("stache", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(0x4a3524ff.toInt()))
-            mpb.cbox(0f, 0.16f, 0.235f, 0.26f, 0.06f, 0.03f)
+            mpb.cbox(0f, 0.17f, 0.265f, 0.3f, 0.07f, 0.03f)
         }
         // ears
         mpb = mb.part("ears", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(mul(skin, 0.92f)))
-        mpb.cbox(-0.27f, 0.24f, 0f, 0.07f, 0.12f, 0.1f)
-        mpb.cbox(0.27f, 0.24f, 0f, 0.07f, 0.12f, 0.1f)
+        mpb.cbox(-0.31f, 0.26f, 0f, 0.08f, 0.14f, 0.11f)
+        mpb.cbox(0.31f, 0.26f, 0f, 0.08f, 0.14f, 0.11f)
         return mb.end()
     }
 
@@ -301,11 +302,7 @@ class Human3D(
         armL.pose(aArmL); armR.pose(aArmR)
         foreL.pose(aForeL); foreR.pose(aForeR)
         head.pose(aHead)
-        rig.update(IDENTITY)
-    }
-
-    companion object {
-        private val IDENTITY = Matrix4()
+        rig.update(root)
     }
 }
 

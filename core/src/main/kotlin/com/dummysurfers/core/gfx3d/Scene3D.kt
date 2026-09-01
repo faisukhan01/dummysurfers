@@ -122,11 +122,11 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
         } else env.set(ambientDay)
 
         // ── camera rig ─────────────────────────────────────────────────
-        val followX = player.x * 0.45f
+        val followX = player.x * 0.58f
         val bob = if (player.state == PlayerState.RUNNING || player.state == PlayerState.LANE_SWITCH)
             sin(player.runPhase * 2f) * 0.035f else 0f
         cam.position.set(followX + shakeX * 0.012f, 2.62f + bob + shakeY * 0.01f, 4.9f)
-        cam.lookAt(player.x * 0.62f, 1.12f + player.jumpY * 0.32f, -7f)
+        cam.lookAt(player.x * 0.8f, 1.12f + player.jumpY * 0.32f, -7f)
         cam.update()
 
         // ── scrolling ground strips ────────────────────────────────────
