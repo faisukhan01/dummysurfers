@@ -318,7 +318,9 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
             s.transform.scale(sc, 1f, sc)
             frame.add(s)
         }
-        shadow(player.x, 0f, 0.85f, player.jumpY)
+        // v4.5: the blob now blinks WITH the runner — an orphan shadow on the
+        // ballast marked the invisible player's exact spot during invuln flicker
+        if (!blinkHide) shadow(player.x, 0f, 0.85f, player.jumpY)
         if (chaser.active) {
             // v4.3: shadows track the offset intro-chase positions
             val converge = if (chaser.catchT > 0f) (chaser.catchT * chaser.catchT).coerceIn(0f, 1f) else 0f
