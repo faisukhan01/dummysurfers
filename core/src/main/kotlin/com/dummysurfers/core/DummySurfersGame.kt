@@ -199,7 +199,11 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         val menuFirst = System.getenv("DS_MENU_FIRST") == "1"
         if (!devInit) {
             devInit = true
-            if (System.getenv("DS_AUTORUN") == "1" && !menuFirst) restartRun()
+            // v4.6: DS_DIE (and DS_CATCH/DS_CHASE) now auto-start too — they only
+            // act while PLAYING, so a bare `DS_DIE=1` batch used to shoot 10 idle
+            // menu frames and verify nothing (worklog Task 16 note)
+            if ((System.getenv("DS_AUTORUN") == "1" || System.getenv("DS_DIE") == "1" ||
+                System.getenv("DS_CATCH") == "1" || System.getenv("DS_CHASE") == "1") && !menuFirst) restartRun()
         }
         if (System.getenv("DS_DIE") == "1" && state == GameState.PLAYING) {
             // death-path QA: no autopilot, no invulnerability → run into hazards
