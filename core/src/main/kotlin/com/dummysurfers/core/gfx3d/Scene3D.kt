@@ -53,6 +53,7 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
     // ── instance pools ─────────────────────────────────────────────────
     private val frame = ArrayList<ModelInstance>(220)
     private val coinPool = ArrayList<ModelInstance>(96)
+    private val coinGlowPool = ArrayList<ModelInstance>(96)
     private val carPool = ArrayList<ModelInstance>(56)
     private val rampPool = ArrayList<ModelInstance>(12)
     private val obstaclePool = ArrayList<ModelInstance>(28)
@@ -286,6 +287,11 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
             m.rotate(Vector3(1f, 0f, 0f), 90f) // face the camera like SS coins
             inst.transform.set(m)
             frame.add(inst)
+            // v4.4: soft warm halo behind every coin — SS coins POP out of the
+            // scene; the bare gold discs melted into the bright ballast
+            val glow = poolGet(coinGlowPool, kn - 1, "cglow") { ModelInstance(factory.glowBillboard(1.15f, TextureGen.glow)) }
+            billboard(glow, c.x, c.y + wob, -c.z, 0.5f)
+            frame.add(glow)
         }
 
         // ── power-up pickups ───────────────────────────────────────────

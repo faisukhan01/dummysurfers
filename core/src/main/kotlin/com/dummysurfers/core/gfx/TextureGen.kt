@@ -784,6 +784,24 @@ object TextureGen {
         }
         p.setColor(1f, 1f, 1f, 0.22f); p.fillCircle((cx - 28f).toInt(), (headCY - 76f).toInt(), 11)
 
+        // ── signature accessories on the cards (were in-game only since v4.2)
+        if (ch.accessory == 2) {
+            // VOLT cap goggles: strap across the dome + teal lens + white glint
+            p.setColor(OUT); p.fillRectangle((cx - 58f).toInt(), (headCY - 68f).toInt(), 116, 12)
+            p.setColor(0x2ec4d9ff.toInt()); p.fillRectangle((cx - 54f).toInt(), (headCY - 66f).toInt(), 108, 8)
+            circ(cx + 36f, headCY - 40f, 16f, 0x2ec4d9ff.toInt())
+            p.setColor(0xdff8fbff.toInt()); p.fillCircle((cx + 36f).toInt(), (headCY - 45f).toInt(), 5)
+        } else if (ch.accessory == 3) {
+            // NOVA headphones: band over the dome + teal cups w/ lavender pads
+            p.setColor(OUT); p.fillRectangle((cx - 9f).toInt(), (headCY - headR - 16f).toInt(), 18, 12)
+            p.setColor(0xb48ce0ff.toInt()); p.fillRectangle((cx - 6f).toInt(), (headCY - headR - 13f).toInt(), 12, 6)
+            circ(cx - headR + 12f, headCY - 26f, 18f, 0x25a89aff.toInt())
+            circ(cx + headR - 12f, headCY - 26f, 18f, 0x25a89aff.toInt())
+            p.setColor(0xb48ce0ff.toInt())
+            p.fillCircle((cx - headR + 12f).toInt(), (headCY - 26f).toInt(), 8)
+            p.fillCircle((cx + headR - 12f).toInt(), (headCY - 26f).toInt(), 8)
+        }
+
         return tex(p)
     }
 
