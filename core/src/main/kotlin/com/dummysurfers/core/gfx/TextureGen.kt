@@ -735,20 +735,23 @@ object TextureGen {
         p.setColor(0xffffffff.toInt()); p.fillRectangle((cx - 10f).toInt(), (headCY + 34f).toInt(), 20, 6)
 
         // ── CAP — backwards dome + white panel + button + gloss ────────
-        circ(cx, headCY - 42f, headR - 12, ch.cap)
-        // dome edge band (where the folded brim would sit — backwards cap)
-        p.setColor(OUT); p.fillRectangle((cx - headR + 4f).toInt(), (headCY - 10f).toInt(), (headR * 2 - 8f).toInt(), 5)
-        p.setColor(mul(ch.cap, 0.8f)); p.fillRectangle((cx - headR + 6f).toInt(), (headCY - 6f).toInt(), (headR * 2 - 12f).toInt(), 8)
-        p.setColor(mul(ch.cap, 1.12f)); p.fillCircle(cx.toInt(), (headCY - 104f).toInt(), 8)
+        // v4.3b: dome shrunk (r 70→60, raised) — the old dome's bottom arc
+        // covered the brows/eyes and read as a helmet; hair fringe now peeks
+        // out under it (Jake DNA), strap hint at the hairline
+        circ(cx, headCY - 52f, headR - 22, ch.cap)
+        p.setColor(mul(ch.cap, 0.78f))
+        p.fillRectangle((cx - 17f).toInt(), (headCY + 1f).toInt(), 34, 7)
+        p.setColor(OUT); p.fillRectangle((cx - 17f).toInt(), (headCY + 1f).toInt(), 34, 2)
+        p.setColor(mul(ch.cap, 1.12f)); p.fillCircle(cx.toInt(), (headCY - 110f).toInt(), 8)
         if (ch.capPanel != 0) {
             p.setColor(ch.capPanel)
             for (i in 0..24) {
                 val t = i / 24f
-                val w = (38f * (1f - t * t)).toInt().coerceAtLeast(2)
-                p.fillRectangle((cx - w).toInt(), (headCY - 82f + i * 1.8f).toInt().coerceAtMost((headCY - 38f).toInt()), w * 2, 2)
+                val w = (28f * (1f - t * t)).toInt().coerceAtLeast(2)
+                p.fillRectangle((cx - w).toInt(), (headCY - 88f + i * 1.3f).toInt().coerceAtMost((headCY - 56f).toInt()), w * 2, 2)
             }
         }
-        p.setColor(1f, 1f, 1f, 0.22f); p.fillCircle((cx - 32f).toInt(), (headCY - 64f).toInt(), 14)
+        p.setColor(1f, 1f, 1f, 0.22f); p.fillCircle((cx - 28f).toInt(), (headCY - 76f).toInt(), 11)
 
         return tex(p)
     }
