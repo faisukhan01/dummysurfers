@@ -112,13 +112,15 @@ class ModelFactory {
             }
         }
 
-    /** Spinning coin — gold disc pair (outer + inner ridge). */
+    /** Spinning coin — gold disc pair (outer + inner ridge).
+     *  v4.3: shrunk to SS scale — at 0.68u diameter close coins projected as
+     *  dinner plates (QA shot-2/8). */
     fun coin(): Model = models.getOrPut("coin") {
         build(matColor(0xffd23eff.toInt())) {
             setUVRange(0f, 0f, 1f, 1f)
-            cylinder(0.68f, 0.09f, 0.68f, 14)
+            cylinder(0.46f, 0.07f, 0.46f, 14)
             setUVRange(0f, 0f, 1f, 1f)
-            cylinder(0.52f, 0.11f, 0.52f, 14)
+            cylinder(0.34f, 0.09f, 0.34f, 14)
         }
     }
 
@@ -474,17 +476,30 @@ class ModelFactory {
         mb.end()
     }
 
-    /** Bridge girder lattice (length along z). */
+    /**
+     * v4.3 Bridge truss REBUILD — the old model was one solid 24u red slab +
+     * teeth and projected as giant floating red walls in every bridge segment.
+     * Now an OPEN lattice: slim vertical posts + horizontal rails + a top beam,
+     * so the world reads through it like real bridge steel.
+     */
     fun girder(): Model = models.getOrPut("girder") {
-        build(matColor(0x8a4a3aff.toInt())) {
-            setUVRange(0f, 0f, 1f, 1f)
-            cbox(0f, 5.6f, 0f, 0.5f, 1.4f, 24f)
-            var z = -11f
-            while (z <= 11f) {
-                cbox(0f, 6.6f, z, 0.3f, 1.0f, 0.3f)
-                z += 3f
-            }
+        mb.begin()
+        var mpb = mb.part("posts", GL20.GL_TRIANGLES, ATTRS, matColor(0x7a4a38ff.toInt()))
+        mpb.setUVRange(0f, 0f, 1f, 1f)
+        var z = -11f
+        while (z <= 11f) {
+            mpb.cbox(0f, 2.9f, z, 0.2f, 5.8f, 0.2f)
+            z += 2.75f
         }
+        mpb = mb.part("rails", GL20.GL_TRIANGLES, ATTRS, matColor(0x8a563eff.toInt()))
+        mpb.setUVRange(0f, 0f, 1f, 1f)
+        mpb.cbox(0f, 1.8f, 0f, 0.15f, 0.2f, 22f)
+        mpb.cbox(0f, 3.6f, 0f, 0.15f, 0.2f, 22f)
+        mpb.cbox(0f, 4.9f, 0f, 0.15f, 0.2f, 22f)
+        mpb = mb.part("topBeam", GL20.GL_TRIANGLES, ATTRS, matColor(0x66412fff.toInt()))
+        mpb.setUVRange(0f, 0f, 1f, 1f)
+        mpb.cbox(0f, 6.0f, 0f, 0.34f, 0.44f, 24f)
+        mb.end()
     }
 
     /** Static waiting passenger (variant colors). */
