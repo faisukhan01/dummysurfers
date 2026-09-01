@@ -778,6 +778,16 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             batch.end()
         }
 
+        // v3.0: DANGER vignette — red edge pulse while the guard is in grab range
+        if (chaser.close && state == GameState.PLAYING) {
+            val pulse = 0.22f + (sin(time * 9f) * 0.10f) + (dangerTimer / GameConfig.DANGER_TIME) * 0.10f
+            batch.begin()
+            batch.setColor(1f, 0.18f, 0.12f, pulse)
+            batch.draw(TextureGen.vignette, 0f, 0f, proj.vw, proj.vh)
+            batch.setColor(1f, 1f, 1f, 1f)
+            batch.end()
+        }
+
         // UI overlays
         ui.flushFrame()
         batch.begin()
