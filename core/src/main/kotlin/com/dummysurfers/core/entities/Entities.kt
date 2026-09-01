@@ -16,12 +16,18 @@ class CharacterDef(
     val cap: Int,
     val backpack: Int,
     val accent: Int,
-    val hair: Int = 0x3a2a1eff.toInt()
+    val hair: Int = 0x3a2a1eff.toInt(),
+    /** v3.0: denim/side vest overlay color (0 = no vest) — Jack's signature layer. */
+    val vest: Int = 0,
+    /** v3.0: hood-bunch/undershirt color (0 = darker hoodie) — Jack's red tee. */
+    val hoodLining: Int = 0
 ) {
     companion object {
         val ALL = arrayOf(
-            // DASH — the face of the game: red hoodie, navy cap, gold pack
-            CharacterDef("dash", "DASH", 0, 0xf2c49bff.toInt(), 0xe23c3cff.toInt(), 0x35455aff.toInt(), 0xf2f2f2ff.toInt(), 0x24316bff.toInt(), 0xffc93cff.toInt(), 0xffd24aff.toInt(), 0x3a2a1eff.toInt()),
+            // JACK — the face of the game (Jake-inspired, 100% original art):
+            // white hoodie + red tee underneath, denim vest, blue jeans,
+            // white-red backwards cap, brown spiky hair, red pack
+            CharacterDef("dash", "JACK", 0, 0xf2c49bff.toInt(), 0xf2f2f0ff.toInt(), 0x3f5a83ff.toInt(), 0xf2f2f2ff.toInt(), 0xd8322aff.toInt(), 0xd8322aff.toInt(), 0xffd24aff.toInt(), 0x5a3a22ff.toInt(), 0x7d97b8ff.toInt(), 0xd8322aff.toInt()),
             // BLAZE — street artist: burnt-orange hoodie, black cap, spray-can energy
             CharacterDef("blaze", "BLAZE", 500, 0xd9975fff.toInt(), 0xf28c1aff.toInt(), 0x2e2320ff.toInt(), 0xf2b03cff.toInt(), 0x1e1e24ff.toInt(), 0xc22f2fff.toInt(), 0xff9c3cff.toInt(), 0x1e1611ff.toInt()),
             // VOLT — speed demon: electric-yellow hoodie, teal hair streak
