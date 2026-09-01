@@ -3,6 +3,15 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+// LibGDX natives jars carry their .so files at the JAR ROOT (libgdx.so,
+// libgdx-freetype.so) instead of lib/<abi>/, so AGP cannot package them as
+// plain dependencies. We resolve them via this custom configuration and
+// extract them into per-ABI folders ourselves (see extractGdxNatives below).
+val gdxNatives by configurations.creating {
+    isCanBeResolved = true
+    isCanBeConsumed = false
+}
+
 android {
     namespace = "com.dummysurfers.android"
     compileSdk = 34
@@ -11,8 +20,8 @@ android {
         applicationId = "com.fsk.dummysurfers"
         minSdk = 24
         targetSdk = 34
-        versionCode = 4
-        versionName = "1.2.0"
+        versionCode = 5
+        versionName = "1.2.1"
     }
 
     signingConfigs {
@@ -48,15 +57,52 @@ android {
             excludes += listOf("META-INF/AL2.0", "META-INF/LGPL2.1")
         }
     }
+
+    sourceSets {
+        getByName("main") {
+            // LibGDX template layout: game assets live in android/assets
+            // (the desktop launcher also reads them from there).
+            assets.srcDirs("assets")
+            // Extracted LibGDX natives land here at build time.
+            jniLibs.srcDir(layout.buildDirectory.dir("gdx-jniLibs"))
+        }
+    }
 }
 
 dependencies {
     implementation(project(":core"))
     implementation("com.badlogicgames.gdx:gdx-backend-android:1.12.1")
-    implementation("com.badlogicgames.gdx:gdx-platform:1.12.1:natives-armeabi-v7a")
-    implementation("com.badlogicgames.gdx:gdx-platform:1.12.1:natives-arm64-v8a")
-    implementation("com.badlogicgames.gdx:gdx-platform:1.12.1:natives-x86_64") // emulators
-    implementation("com.badlogicgames.gdx:gdx-freetype-platform:1.12.1:natives-armeabi-v7a")
-    implementation("com.badlogicgames.gdx:gdx-freetype-platform:1.12.1:natives-arm64-v8a")
-    implementation("com.badlogicgames.gdx:gdx-freetype-platform:1.12.1:natives-x86_64") // emulators
+
+    gdxNatives("com.badlogicgames.gdx:gdx-platform:1.12.1:natives-armeabi-v7a")
+    gdxNatives("com.badlogicgames.gdx:gdx-platform:1.12.1:natives-arm64-v8a")
+    gdxNatives("com.badlogicgames.gdx:gdx-platform:1.12.1:natives-x86_64") // emulators
+    gdxNatives("com.badlogicgames.gdx:gdx-freetype-platform:1.12.1:natives-armeabi-v7a")
+    gdxNatives("com.badlogicgames.gdx:gdx-freetype-platform:1.12.1:natives-arm64-v8a")
+    gdxNatives("com.badlogicgames.gdx:gdx-freetype-platform:1.12.1:natives-x86_64") // emulators
+}
+
+// Extract every natives jar into build/gdx-jniLibs/<abi>/*.so so AGP packages
+// them as real JNI libraries. Mirrors the classic LibGDX copyAndroidNatives
+// task, adapted to Kotlin DSL.
+val extractGdxNatives = tasks.register("extractGdxNatives") {
+    val outDir = layout.buildDirectory.dir("gdx-jniLibs")
+    inputs.files(gdxNatives)
+    outputs.dir(outDir)
+    doLast {
+        val out = outDir.get().asFile
+        out.deleteRecursively()
+        out.mkdirs()
+        gdxNatives.files.forEach { jar ->
+            val abi = Regex("""natives-(.+?)\.jar$""").find(jar.name)?.groupValues?.get(1)
+                ?: return@forEach
+            copy {
+                from(zipTree(jar))
+                include("*.so")
+                into(File(out, abi))
+            }
+        }
+    }
+}
+tasks.matching { it.name == "preBuild" }.configureEach {
+    dependsOn(extractGdxNatives)
 }
