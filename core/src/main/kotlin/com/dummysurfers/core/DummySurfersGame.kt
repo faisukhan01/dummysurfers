@@ -188,6 +188,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     private val devShotTimes = floatArrayOf(0.8f, 2.5f, 4.5f, 6.5f, 8.5f, 10.5f, 12.5f, 14.5f, 16.5f, 18.5f)
     private var devAiTimer = 0f
     private var spawnGrace = 0f // v4.5: brief post-RUN window where collisions are ignored
+    private var coinTextCascade = 0 // v4.5: successive coin texts cascade upward
     private var prevJetOn = false
     private var jetCoinTimer = 0f
 
@@ -713,6 +714,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     }
 
     private fun handleCoins(dt: Float) {
+        var anyCollected = false
         for (c in spawner.coins) {
             if (c.collected) continue
             if (c.z < -0.8f || c.z > 1.0f) continue
@@ -728,12 +730,19 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
                 audio.play(GameEvent.COIN, coinStreak.toFloat())
                 // v4.4: spark burst anchored through the true-3D cam (coins live
                 // in world space — the legacy projection put bursts mid-air)
+                // v4.5: consecutive pickup texts now cascade upward instead of
+                // stacking on the same spot (QA: +10/+20/+30 printed on top of
+                // each other during trail runs)
+                coinTextCascade = (coinTextCascade + 1).coerceAtMost(4)
+                anyCollected = true
                 scene3d.screenPos(c.x, c.y, c.z, fxV).let { s ->
                     particles.burst(s.x, s.y, 7, Palette.GOLD, 240f, 5f, shape = 1, life = 0.45f)
-                    particles.text(s.x, s.y + 20f, "+${GameConfig.COIN_VALUE * multiplier}", Palette.GOLD, 16f)
+                    particles.text(s.x + coinTextCascade * 7f, s.y + 20f + coinTextCascade * 26f, "+${GameConfig.COIN_VALUE * multiplier}", Palette.GOLD, 16f)
                 }
             }
         }
+        // cascade decays as soon as the trail ends so the next burst starts at the coin
+        if (!anyCollected) coinTextCascade = 0
     }
 
     private fun handlePowerups() {
@@ -807,6 +816,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         spawnGrace = GameConfig.SPAWN_GRACE_TIME // v4.5: no entity may touch the player right at RUN (QA once caught a 0m frame-1 death — "can't start new game")
         for (i in 0 until PowerUpType.entries.size) { activePowerups[i] = 0f; powerupTotal[i] = 0f }
         boardTimer = 0f; boardTotal = 0f; lastTapNanos = 0L
+        coinTextCascade = 0
         player.reset()
         chaser.reset()
         particles.clear()

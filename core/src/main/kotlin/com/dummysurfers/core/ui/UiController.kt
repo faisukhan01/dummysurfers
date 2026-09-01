@@ -478,6 +478,8 @@ class UiController(val theme: UiTheme) : InputAdapter() {
     // ════════════════════════════════════════════════════════════════════
     fun drawPause() {
         val b = bridge!!
+        // v4.5: same scene-dim as game over — world no longer bleeds through
+        theme.rect(batch, 0f, 0f, vw, vh, Palette.UI_DIM, 0.5f)
         // v4.1 SS-style pause card: white rounded card, character portrait,
         // stat chips, gold RESUME — reads like the SS pause overlay
         val cx = vw / 2f
@@ -506,6 +508,10 @@ class UiController(val theme: UiTheme) : InputAdapter() {
     // ════════════════════════════════════════════════════════════════════
     fun drawGameOver() {
         val b = bridge!!
+        // v4.5: dim the scene behind the card — the 3D world (esp. a frozen
+        // train right after a crash) bled through the panel and made the
+        // score card unreadable in QA shots. SS dims its overlays too.
+        theme.rect(batch, 0f, 0f, vw, vh, Palette.UI_DIM, 0.5f)
         // SS celebration: warm glow pulse behind the panel on NEW BEST (no fullscreen rainbow)
         if (b.newBest) {
             val pulse = 0.30f + sin(System.nanoTime() / 2.4e8f) * 0.10f

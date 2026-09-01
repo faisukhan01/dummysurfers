@@ -49,6 +49,7 @@ object Palette {
     val UI_PANEL_LIGHT = Color(0x9aa3e8ff.toInt()) // lighter card
     val UI_PANEL_DEEP = Color(0x4a529eff.toInt())  // inner slot
     val UI_NAVY = Color(0x2a3057ff.toInt())      // currency pills / tabs
+    val UI_DIM = Color(0x141830ff.toInt())       // v4.5 overlay backdrop dim (behind game-over/pause cards)
     val UI_OUTLINE = Color(0x24316bff.toInt())   // text outline navy
     val UI_GOLD_BTN = Color(0xffc93cff.toInt())  // primary RUN button
     val UI_GOLD_BTN_DEEP = Color(0xd89a14ff.toInt())
