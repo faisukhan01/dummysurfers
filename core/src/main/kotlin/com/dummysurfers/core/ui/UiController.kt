@@ -199,31 +199,31 @@ class UiController(val theme: UiTheme) : InputAdapter() {
 
         // graffiti-style logo with bounce
         val bounce = sin(time * 2.2f) * 8f
-        theme.text(batch, theme.fontHuge, "DUMMY", 0f, 1120f + bounce, Palette.GOLD, Align.center, vw)
-        theme.text(batch, theme.fontHuge, "SURFERS", 0f, 1052f + bounce, Color.WHITE, Align.center, vw)
+        theme.text(batch, theme.fontHuge, "DUMMY", 0f, 1150f + bounce, Palette.GOLD, Align.center, vw)
+        theme.text(batch, theme.fontHuge, "SURFERS", 0f, 1082f + bounce, Color.WHITE, Align.center, vw)
         // orange "BY FSK" tag chip
         val tagW = 150f
-        theme.button(batch, vw / 2f - tagW / 2f, 975f + bounce, tagW, 44f, Palette.UI_ORANGE, false)
-        theme.text(batch, theme.fontSmall, "BY FSK", 0f, 1004f + bounce, Color.WHITE, Align.center, vw)
+        theme.button(batch, vw / 2f - tagW / 2f, 1002f + bounce, tagW, 44f, Palette.UI_ORANGE, false)
+        theme.text(batch, theme.fontSmall, "BY FSK", 0f, 1031f + bounce, Color.WHITE, Align.center, vw)
 
-        // selected character preview front & center on the tracks
+        // selected character preview front & center on the tracks (big SS-style hero)
         val selIdx = CharacterDef.ALL.indexOfFirst { it.id == b.save.selectedCharacter }.coerceAtLeast(0)
-        drawMiniCharacter(selIdx, vw / 2f - 110f, 760f + sin(time * 1.7f) * 6f, 220f)
+        drawMiniCharacter(selIdx, vw / 2f - 130f, 704f + sin(time * 1.7f) * 7f, 260f)
 
         // HIGH SCORE card (periwinkle + deep slot + gold star)
         val hcW = 460f
         val hcX = vw / 2f - hcW / 2f
-        theme.panel(batch, hcX, 628f, hcW, 108f, Palette.UI_PANEL)
-        theme.panel(batch, hcX + 18f, 644f, hcW - 36f, 56f, Palette.UI_PANEL_DEEP)
+        theme.panel(batch, hcX, 560f, hcW, 108f, Palette.UI_PANEL)
+        theme.panel(batch, hcX + 18f, 576f, hcW - 36f, 56f, Palette.UI_PANEL_DEEP)
         batch.setColor(1f, 1f, 1f, 1f)
-        batch.draw(TextureGen.powerIcons[1], hcX + 22f, 648f, 48f, 48f)
-        theme.text(batch, theme.fontTiny, "HIGH SCORE", hcX + 80f, 706f, Palette.UI_MUTED)
-        theme.text(batch, theme.fontMed, "${b.save.best}", hcX + 80f, 684f, Palette.GOLD)
+        batch.draw(TextureGen.powerIcons[1], hcX + 22f, 580f, 48f, 48f)
+        theme.text(batch, theme.fontTiny, "HIGH SCORE", hcX + 80f, 638f, Palette.UI_MUTED)
+        theme.text(batch, theme.fontMed, "${b.save.best}", hcX + 80f, 616f, Palette.GOLD)
         // hoverboard rack count
-        theme.text(batch, theme.fontTiny, "HOVERBOARDS x${b.save.hoverboards}", 0f, 600f, Palette.UI_MUTED, Align.center, vw)
+        theme.text(batch, theme.fontTiny, "HOVERBOARDS x${b.save.hoverboards}", 0f, 532f, Palette.UI_MUTED, Align.center, vw)
 
         // giant gold RUN button
-        if (btn("play", vw / 2 - 210f, 452f, 420f, 136f, Palette.UI_GOLD_BTN, "RUN", theme.fontLarge)) {
+        if (btn("play", vw / 2 - 210f, 384f, 420f, 136f, Palette.UI_GOLD_BTN, "RUN", theme.fontLarge)) {
             b.startRun()
         }
 
