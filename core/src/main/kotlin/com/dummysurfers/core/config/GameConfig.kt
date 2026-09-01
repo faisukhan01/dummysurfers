@@ -89,7 +89,7 @@ object GameConfig {
     const val CHASER_NEARMISS_TIME = 2.8f
     const val CHASER_Z = -2.2f          // just behind the runner — nearer z renders
     const val CHASER_VISUAL_SCALE = 0.7f // bigger with proximity; shrink to SS size
-    const val CHASER_Z_CLOSE = -1.35f   // v3.0: in-grab-range distance after a stumble
+    const val CHASER_Z_CLOSE = -2.0f   // v3.0: in-grab-range distance after a stumble
     const val CHASER_DOG_OFFSET_X = 0.62f // v3.0: dog runs beside the guard
 
     // ── Stumble (v3.0) — SS's second-chance tension loop ───────────────

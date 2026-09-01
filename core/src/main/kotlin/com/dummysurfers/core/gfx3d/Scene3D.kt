@@ -130,11 +130,11 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
         cam.update()
 
         // ── scrolling ground strips ────────────────────────────────────
-        val period = SEG * NSEG
-        var z = -((distance % SEG)) + 3f   // first strip slightly behind the player
+        // Strides slide TOWARD the camera as distance grows; strip 0 sits just
+        // behind the runner, the last one far ahead (gz negative = ahead).
+        val slide = distance % SEG
         for (i in 0 until NSEG) {
-            val zg = z - i * SEG
-            val gz = -zg
+            val gz = slide + SEG * (1 - i)
             trackSegs[i].transform.setToTranslation(0f, -0.05f, gz)
             dirtL[i].transform.setToTranslation(-8.8f, -0.07f, gz)
             dirtR[i].transform.setToTranslation(8.8f, -0.07f, gz)
@@ -189,7 +189,7 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
         // ── obstacles ──────────────────────────────────────────────────
         var oi = 0
         for (o in spawnerSystems.obstacles) {
-            if (o.z < -4f || o.z > 80f) continue
+            if (o.z < -1.2f || o.z > 80f) continue
             val inst = poolGet(obstaclePool, oi++, "obs") { ModelInstance(obstacleModel(o.kind)) }
             val lx = o.lane * GameConfig.LANE_WIDTH
             inst.transform.setToTranslation(lx, 0f, -o.z)
@@ -234,7 +234,7 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
             s.transform.scale(sc, 1f, sc)
             frame.add(s)
         }
-        shadow(player.x, 0f, 1.2f, player.jumpY)
+        shadow(player.x, 0f, 0.85f, player.jumpY)
         if (chaser.active) shadow(guardX(player), chaserZ(chaser), 1.0f, 0f)
         if (chaser.active) shadow(guardX(player) + 0.62f, chaserZ(chaser) + 0.1f, 0.7f, 0f)
 
@@ -263,6 +263,7 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
             val gx = guardX(player)
             val gz = chaserZ(chaser)
             m.setToTranslation(gx, 0f, gz)
+            m.scale(0.92f, 0.92f, 0.92f)
             if (chaser.grabbed) {
                 // grab pose: guard lunges onto the runner
                 g.animate(m, PlayerState.DEAD, chaser.runPhase, 0f, 0f, 0f, false, time, time, true)
@@ -272,6 +273,7 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
             for (p in g.rig.parts) frame.add(p.instance)
             // dog gallops beside the guard
             m2.setToTranslation(gx + GameConfig.CHASER_DOG_OFFSET_X, 0f, gz + 0.12f)
+            m2.scale(0.8f, 0.8f, 0.8f)
             dog.animate(m2, chaser.dogPhase, time)
             for (p in dog.rig.parts) frame.add(p.instance)
         }

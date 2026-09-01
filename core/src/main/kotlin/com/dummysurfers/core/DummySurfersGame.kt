@@ -174,7 +174,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     private var devInit = false
     private var devShotIdx = 0
     private var devT = 0f
-    private val devShotTimes = floatArrayOf(0.8f, 2.5f, 4.5f, 6.5f, 8.5f, 10.5f)
+    private val devShotTimes = floatArrayOf(0.8f, 2.5f, 4.5f, 6.5f, 8.5f, 10.5f, 12.5f, 14.5f, 16.5f, 18.5f)
     private var devAiTimer = 0f
 
     private fun devHarness(rawDt: Float) {
@@ -188,8 +188,20 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         devT += rawDt
         if (devShotIdx < devShotTimes.size && devT >= devShotTimes[devShotIdx]) {
             val pm: Pixmap = ScreenUtils.getFrameBufferPixmap(vpX, vpY, vpW, vpH)
-            PixmapIO.writePNG(Gdx.files.absolute("$dir/shot-${devShotIdx}.png"), pm)
-            pm.dispose()
+            // GL framebuffer rows are bottom-up — flip so PNGs read like the screen
+            val out = Pixmap(pm.width, pm.height, pm.format)
+            val src = pm.pixels; val dst = out.pixels
+            src.rewind(); dst.rewind()
+            val rowBytes = pm.width * 4
+            val row = ByteArray(rowBytes)
+            for (y in 0 until pm.height) {
+                src.position((pm.height - 1 - y) * rowBytes)
+                src.get(row)
+                dst.position(y * rowBytes)
+                dst.put(row)
+            }
+            PixmapIO.writePNG(Gdx.files.absolute("$dir/shot-${devShotIdx}.png"), out)
+            pm.dispose(); out.dispose()
             devShotIdx++
             if (menuFirst && devShotIdx == 1) restartRun() // menu captured → start the run
             if (devShotIdx >= devShotTimes.size) Gdx.app.exit()
