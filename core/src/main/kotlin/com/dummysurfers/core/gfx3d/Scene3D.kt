@@ -444,7 +444,7 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
         modelBatch.end()
 
         // horizon haze drawn over the far 3D world
-        drawHaze(menuDim)
+        drawHaze(menuDim, tunnelDark)
     }
 
     // ── helpers ────────────────────────────────────────────────────────
@@ -602,11 +602,15 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
     private val hazeC = Color()
     /** Soft symmetric haze hugging the horizon line (v4.1 — the old one-side
      *  fade put a hard cream line across mid-screen). */
-    private fun drawHaze(menuDim: Float) {
+    private fun drawHaze(menuDim: Float, tunnelDark: Float = 0f) {
         val vw = proj.vw; val vh = proj.vh
         val fogH = vh * 0.13f
+        // v4.7: inside a tunnel the cream daylight haze drew straight across the
+        // dark walls like a misplaced fog stripe (every DS_TUNNEL QA shot) —
+        // daylight has no business in a tunnel, so ease it out with tunnelDark
+        val hazeA = 0.5f * (1f - tunnelDark.coerceIn(0f, 1f) * 0.85f)
         batch.begin()
-        batch.setColor(1f, 1f, 1f, 0.5f)
+        batch.setColor(1f, 1f, 1f, hazeA)
         batch.draw(TextureGen.hazeBand, 0f, proj.horizonY - fogH * 0.5f, vw, fogH)
         batch.setColor(1f, 1f, 1f, 1f)
         batch.end()
