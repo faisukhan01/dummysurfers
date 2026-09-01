@@ -536,30 +536,51 @@ class EntityRenderer(
         sr.setColor(packDark)
         sr.rect(-0.155f * u, shoulderY - 0.02f * u, 0.07f * u, 0.10f * u)
         sr.rect(0.085f * u, shoulderY - 0.02f * u, 0.07f * u, 0.10f * u)
-        // hood bunch at the neck
-        sr.setColor(hoodieDark)
+        // hood bunch at the neck (Jack: red undershirt hood pops against white hoodie)
+        sr.setColor(if (ch.hoodLining != 0) Color(ch.hoodLining) else hoodieDark)
         sr.circle(-0.10f * u, shoulderY + 0.05f * u, 0.095f * u)
         sr.circle(0.10f * u, shoulderY + 0.05f * u, 0.095f * u)
-        // head: hair base + fringe tips
+        // v3.0 denim vest: two side panels hugging the torso over the hoodie
+        if (ch.vest != 0) {
+            val vestC = Color(ch.vest)
+            sr.setColor(vestC)
+            // left panel
+            sr.rect(-0.27f * u, shoulderY - 0.02f * u, 0.115f * u, shoulderY - hipY + 0.10f * u)
+            sr.circle(-0.215f * u, shoulderY + 0.0f, 0.062f * u)
+            // right panel
+            sr.rect(0.155f * u, shoulderY - 0.02f * u, 0.115f * u, shoulderY - hipY + 0.10f * u)
+            sr.circle(0.215f * u, shoulderY + 0.0f, 0.062f * u)
+            // vest shading (inner edge)
+            sr.setColor(vestC.mul(0.85f))
+            sr.rect(-0.168f * u, shoulderY - 0.02f * u, 0.028f * u, shoulderY - hipY + 0.10f * u)
+            sr.rect(0.14f * u, shoulderY - 0.02f * u, 0.028f * u, shoulderY - hipY + 0.10f * u)
+        }
+        // head: hair base + spiky fringe tips poking out under the cap
         sr.setColor(hair)
         sr.circle(0f, headCY, headR)
-        sr.circle(-0.14f * u, headCY - headR * 0.42f, 0.07f * u)
-        sr.circle(0.14f * u, headCY - headR * 0.42f, 0.07f * u)
+        sr.circle(-0.15f * u, headCY - headR * 0.38f, 0.085f * u)
+        sr.circle(0.15f * u, headCY - headR * 0.38f, 0.085f * u)
+        sr.circle(-0.05f * u, headCY - headR * 0.46f, 0.07f * u)
+        sr.circle(0.07f * u, headCY - headR * 0.46f, 0.07f * u)
         // ears
         sr.setColor(OUT); sr.circle(-headR * 0.96f, headCY - 0.01f * u, 0.085f * u); sr.circle(headR * 0.96f, headCY - 0.01f * u, 0.085f * u)
         sr.setColor(skin); sr.circle(-headR * 0.96f, headCY - 0.01f * u, 0.07f * u); sr.circle(headR * 0.96f, headCY - 0.01f * u, 0.07f * u)
-        // backwards cap: dome + brim band across the back + adjuster strap
+        // backwards cap (Jake-style): dome + curved brim crescent at the back
         sr.setColor(cap)
         sr.circle(0f, headCY + headR * 0.38f, headR * 0.90f)
-        sr.rect(-headR * 0.93f, headCY + headR * 0.18f, headR * 1.86f, headR * 0.42f)
+        sr.ellipse(0f, headCY + headR * 0.28f, headR * 0.97f, headR * 0.30f) // brim bulge under the dome
         sr.setColor(capDark)
-        sr.rect(-headR * 0.95f, headCY + headR * 0.06f, headR * 1.9f, headR * 0.14f) // brim edge
-        sr.rect(-headR * 0.34f, headCY - headR * 0.12f, headR * 0.68f, headR * 0.17f) // adjuster strap
+        sr.ellipse(0f, headCY + headR * 0.16f, headR * 0.99f, headR * 0.16f) // brim edge shadow
         sr.setColor(OUT)
         sr.circle(0f, headCY - headR * 0.035f, 0.028f * u) // snap hole
         // cap gloss
-        sr.setColor(1f, 1f, 1f, 0.20f)
+        sr.setColor(1f, 1f, 1f, if (ch.capPanel != 0) 0.30f else 0.20f)
         sr.circle(-headR * 0.32f, headCY + headR * 0.62f, 0.055f * u)
+        // white front-panel hint (Jake DNA: white panel + red brim, worn backwards)
+        if (ch.capPanel != 0) {
+            sr.setColor(Color(ch.capPanel))
+            sr.ellipse(0f, headCY + headR * 0.30f, headR * 0.62f, headR * 0.34f)
+        }
 
         sr.identity()
 

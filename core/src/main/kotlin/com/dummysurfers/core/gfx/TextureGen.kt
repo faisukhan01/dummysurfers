@@ -468,6 +468,22 @@ object TextureGen {
         // zipper
         bare((cx - 2f).toInt(), (shoulderY + 14f).toInt(), 4, 62, mul(ch.hoodie, 0.62f))
         bare((cx - 5f).toInt(), (shoulderY + 40f).toInt(), 10, 14, 0xffc93cff.toInt())
+        // v3.0: undershirt collar hint (Jack's red tee under the hoodie)
+        if (ch.hoodLining != 0) {
+            p.setColor(ch.hoodLining)
+            p.fillRectangle((cx - 14f).toInt(), (shoulderY + 6f).toInt(), 28, 14)
+            p.setColor(OUT)
+            p.fillRectangle((cx - 14f).toInt(), (shoulderY + 6f).toInt(), 3, 14)
+            p.fillRectangle((cx + 11f).toInt(), (shoulderY + 6f).toInt(), 3, 14)
+        }
+        // v3.0: denim vest side panels (Jack's signature layer)
+        if (ch.vest != 0) {
+            roundRect(cx - 54f, shoulderY + 2f, 24f, hipY - shoulderY + 6f, 10f, ch.vest)
+            roundRect(cx + 30f, shoulderY + 2f, 24f, hipY - shoulderY + 6f, 10f, ch.vest)
+            p.setColor(mul(ch.vest, 0.82f))
+            p.fillRectangle((cx - 36f).toInt(), (shoulderY + 8f).toInt(), 6, (hipY - shoulderY - 8f).toInt())
+            p.fillRectangle((cx + 30f).toInt(), (shoulderY + 8f).toInt(), 6, (hipY - shoulderY - 8f).toInt())
+        }
 
         // BACKPACK STRAPS over the shoulders + chest strap
         for (side in intArrayOf(-1, 1)) {
@@ -511,13 +527,23 @@ object TextureGen {
         p.setColor(ch.skin); p.fillCircle(cx.toInt(), (headCY + 39f).toInt(), 12)
         p.setColor(0xffffffff.toInt()); p.fillRectangle((cx - 8f).toInt(), (headCY + 26f).toInt(), 16, 5)
 
-        // CAP — dome + brim band + top button (drawn to keep the FACE visible:
-        // dome sits high, brim above the eyes — fixes faceless-navy-blob bug)
+        // CAP — dome + brim band + top button + optional white front panel
+        // (Jack: red dome w/ white panel — the recognizable Jake DNA)
         circ(cx, headCY - 34f, headR - 10, ch.cap)
         bare((cx - headR + 2f).toInt(), (headCY - 14f).toInt(), (headR * 2 - 4f).toInt(), 14, ch.cap)
         p.setColor(OUT); p.fillRectangle((cx - headR - 1f).toInt(), (headCY - 2f).toInt(), (headR * 2 + 2f).toInt(), 5)
         p.setColor(mul(ch.cap, 0.82f)); p.fillRectangle((cx - headR).toInt(), (headCY + 1f).toInt(), (headR * 2).toInt(), 7)
         p.setColor(mul(ch.cap, 1.12f)); p.fillCircle(cx.toInt(), (headCY - 80f).toInt(), 7)
+        if (ch.capPanel != 0) {
+            // white front panel oval on the dome (Pixmap has no fillEllipse —
+            // approximate with a stack of shrinking scanline rects)
+            p.setColor(ch.capPanel)
+            for (i in 0..22) {
+                val t = i / 22f
+                val w = (34f * (1f - t * t)).toInt().coerceAtLeast(2)
+                p.fillRectangle((cx - w).toInt(), (headCY - 62f + i * 1.6f).toInt().coerceAtMost((headCY - 30f).toInt()), w * 2, 2)
+            }
+        }
         // cap gloss
         p.setColor(1f, 1f, 1f, 0.22f); p.fillCircle((cx - 26f).toInt(), (headCY - 50f).toInt(), 12)
 
