@@ -22,7 +22,9 @@ class CharacterDef(
     /** v3.0: hood-bunch/undershirt color (0 = darker hoodie) — Jack's red tee. */
     val hoodLining: Int = 0,
     /** v3.0: front-panel color on a backwards cap (0 = none) — Jake DNA. */
-    val capPanel: Int = 0
+    val capPanel: Int = 0,
+    /** v4.2: signature accessory — 0 none, 1 spray can, 2 cap goggles, 3 headphones. */
+    val accessory: Int = 0
 ) {
     companion object {
         val ALL = arrayOf(
@@ -31,11 +33,11 @@ class CharacterDef(
             // red backwards cap w/ white panel, brown spiky hair, white pack
             CharacterDef("dash", "JACK", 0, 0xf2c49bff.toInt(), 0xd8322aff.toInt(), 0x3f5a83ff.toInt(), 0xf2f2f2ff.toInt(), 0xd8322aff.toInt(), 0xf2f2f0ff.toInt(), 0xffd24aff.toInt(), 0x5a3a22ff.toInt(), 0x7d97b8ff.toInt(), 0xf2f2f0ff.toInt(), 0xf4f4f4ff.toInt()),
             // BLAZE — street artist: burnt-orange hoodie, black cap, spray-can energy
-            CharacterDef("blaze", "BLAZE", 500, 0xd9975fff.toInt(), 0xf28c1aff.toInt(), 0x2e2320ff.toInt(), 0xf2b03cff.toInt(), 0x1e1e24ff.toInt(), 0xc22f2fff.toInt(), 0xff9c3cff.toInt(), 0x1e1611ff.toInt()),
-            // VOLT — speed demon: electric-yellow hoodie, teal hair streak
-            CharacterDef("volt", "VOLT", 1000, 0xc9a07aff.toInt(), 0xf2c53cff.toInt(), 0x2b2b2fff.toInt(), 0x3a3a42ff.toInt(), 0x1e1e24ff.toInt(), 0x454545ff.toInt(), 0xfff060ff.toInt(), 0x2ec4d9ff.toInt()),
-            // NOVA — cool runner: mint hoodie, lavender hair, white cap
-            CharacterDef("nova", "NOVA", 2000, 0x8a6a52ff.toInt(), 0x2dd4bfff.toInt(), 0x1f4d47ff.toInt(), 0xf2ead0ff.toInt(), 0xf2ead0ff.toInt(), 0x25a89aff.toInt(), 0x7df2e2ff.toInt(), 0xb48ce0ff.toInt())
+            CharacterDef("blaze", "BLAZE", 500, 0xd9975fff.toInt(), 0xf28c1aff.toInt(), 0x2e2320ff.toInt(), 0xf2b03cff.toInt(), 0x1e1e24ff.toInt(), 0xc22f2fff.toInt(), 0xff9c3cff.toInt(), 0x1e1611ff.toInt(), accessory = 1),
+            // VOLT — speed demon: electric-yellow hoodie, teal hair streak, cap goggles
+            CharacterDef("volt", "VOLT", 1000, 0xc9a07aff.toInt(), 0xf2c53cff.toInt(), 0x2b2b2fff.toInt(), 0x3a3a42ff.toInt(), 0x1e1e24ff.toInt(), 0x454545ff.toInt(), 0xfff060ff.toInt(), 0x2ec4d9ff.toInt(), accessory = 2),
+            // NOVA — cool runner: mint hoodie, lavender hair, white cap, headphones
+            CharacterDef("nova", "NOVA", 2000, 0x8a6a52ff.toInt(), 0x2dd4bfff.toInt(), 0x1f4d47ff.toInt(), 0xf2ead0ff.toInt(), 0xf2ead0ff.toInt(), 0x25a89aff.toInt(), 0x7df2e2ff.toInt(), 0xb48ce0ff.toInt(), accessory = 3)
         )
 
         fun byId(id: String): CharacterDef = ALL.firstOrNull { it.id == id } ?: ALL[0]

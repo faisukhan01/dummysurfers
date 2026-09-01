@@ -391,7 +391,7 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
     private fun getHuman(ch: CharacterDef): Human3D {
         if (human == null || humanCharId != ch.id) {
             human = Human3D(factory, ch.skin, ch.hoodie, ch.pants, ch.shoes, ch.cap, ch.backpack,
-                ch.accent, ch.hair, ch.vest, ch.hoodLining, ch.capPanel, isGuard = false)
+                ch.accent, ch.hair, ch.vest, ch.hoodLining, ch.capPanel, ch.accessory, isGuard = false)
             humanCharId = ch.id
         }
         return human!!
@@ -401,7 +401,7 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
         if (guard == null) {
             guard = Human3D(factory, 0xe8a97eff.toInt(), 0x2c3a58ff.toInt(), 0x25314aff.toInt(),
                 0x1c2028ff.toInt(), 0x25314aff.toInt(), 0x25314aff.toInt(),
-                0xffd23eff.toInt(), 0x4a3a2aff.toInt(), 0, 0, 0, isGuard = true)
+                0xffd23eff.toInt(), 0x4a3a2aff.toInt(), 0, 0, 0, 0, isGuard = true)
         }
         return guard!!
     }

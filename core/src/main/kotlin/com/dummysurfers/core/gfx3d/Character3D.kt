@@ -74,6 +74,7 @@ class Human3D(
     private val f: ModelFactory,
     skin: Int, hoodie: Int, pants: Int, shoes: Int, cap: Int, backpack: Int,
     accent: Int, hair: Int, vest: Int, hoodLining: Int, capPanel: Int,
+    accessory: Int = 0,
     private val isGuard: Boolean
 ) {
     val rig = Rig()
@@ -114,6 +115,51 @@ class Human3D(
 
         val headM = buildHead(skin, hair, cap, capPanel, accent)
         head = rig.add(ModelInstance(headM), torso, 0f, 0.58f, 0f)
+
+        // v4.2 signature accessories (child parts of head/torso)
+        when (accessory) {
+            1 -> {
+                // street-artist spray can strapped to the pack's side
+                val canM = buildSprayCan(accent)
+                rig.add(ModelInstance(canM), torso, 0.27f, 0.3f, -0.33f)
+            }
+            2 -> {
+                // cap goggles: strap around the dome + teal lens on the true front
+                val strapM = f.colorBox("gogStrap$accent", 0.05f, 0.055f, 0.5f, 0x22262cff.toInt())
+                rig.add(ModelInstance(strapM), head, -0.31f, 0.6f, 0f)
+                rig.add(ModelInstance(strapM), head, 0.31f, 0.6f, 0f)
+                val lensM = f.colorBox("gogLens$accent", 0.4f, 0.13f, 0.05f, accent)
+                rig.add(ModelInstance(lensM), head, 0f, 0.61f, -0.3f)
+                val rimM = f.colorBox("gogRim$accent", 0.44f, 0.17f, 0.03f, 0x22262cff.toInt())
+                rig.add(ModelInstance(rimM), head, 0f, 0.61f, -0.33f)
+            }
+            3 -> {
+                // headphones: over-cap band + cups that show from behind
+                val bandM = f.colorBox("hpBand$accent", 0.68f, 0.06f, 0.09f, 0x22262cff.toInt())
+                rig.add(ModelInstance(bandM), head, 0f, 0.76f, 0f)
+                val cupM = f.colorBox("hpCup$accent", 0.09f, 0.2f, 0.17f, 0x22262cff.toInt())
+                rig.add(ModelInstance(cupM), head, -0.35f, 0.56f, 0f)
+                rig.add(ModelInstance(cupM), head, 0.35f, 0.56f, 0f)
+                val ringM = f.colorBox("hpRing$accent", 0.1f, 0.12f, 0.18f, accent)
+                rig.add(ModelInstance(ringM), head, -0.36f, 0.56f, 0f)
+                rig.add(ModelInstance(ringM), head, 0.36f, 0.56f, 0f)
+            }
+        }
+    }
+
+    /** Spray can: colored body + silver shoulder + nozzle. */
+    private fun buildSprayCan(accent: Int): com.badlogic.gdx.graphics.g3d.Model {
+        val f = this.f
+        val mb = f.mb
+        mb.begin()
+        var mpb = mb.part("canBody", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(accent))
+        mpb.setUVRange(0f, 0f, 1f, 1f)
+        mpb.cylinder(0.055f, 0.2f, 0.055f, 10)
+        mpb = mb.part("canTop", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(0xc9ced6ff.toInt()))
+        mpb.cylinder(0.045f, 0.04f, 0.045f, 10)
+        mpb = mb.part("canNozzle", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(0x22262cff.toInt()))
+        mpb.cbox(0f, 0.13f, 0.02f, 0.03f, 0.04f, 0.05f)
+        return mb.end()
     }
 
     private fun buildTorso(hoodie: Int, vest: Int, hoodLining: Int, accent: Int, backpack: Int): com.badlogic.gdx.graphics.g3d.Model {
