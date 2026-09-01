@@ -63,6 +63,9 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
     private val lampPoolR = ArrayList<ModelInstance>(8)
     private val lampGlowPool = ArrayList<ModelInstance>(12)
     private val lampFloorPool = ArrayList<ModelInstance>(12)
+    // v4.7: headlight glows for moving/approaching trains
+    private val headlightPool = ArrayList<ModelInstance>(8)
+    private val headlightCorePool = ArrayList<ModelInstance>(8)
     private val decoMap = HashMap<Deco, DecoInst>(160)
 
     /** Cached instance + the deco shape it was built for (Deco objects are pooled & repurposed). */
@@ -244,13 +247,27 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
         }
 
         // ── trains (+ramps) ────────────────────────────────────────────
-        var ci = 0; var ri = 0
+        var ci = 0; var ri = 0; var hi = 0
         for (t in spawnerSystems.trains) {
             val zNear = t.z - t.totalLength
             val zFar = t.z
             if (zFar < -6f) continue
             for (lane in t.lanes) {
                 val lx = lane * GameConfig.LANE_WIDTH
+                // v4.7 HEADLIGHTS: moving (kind 1) and approaching (kind 2)
+                // trains carry a warm beam + hot core just off the player-facing
+                // nose — oncoming trains read from afar and pierce the tunnel
+                // dark. Parked consists stay unlit.
+                if (t.kind != 0 && zNear > 2.5f && zNear < 85f) {
+                    val noseGz = zNear - 0.9f
+                    val beam = poolGet(headlightPool, hi, "hbeam") { ModelInstance(factory.glowBillboard(2.3f, TextureGen.warmGlow)) }
+                    billboard(beam, lx, 1.85f, noseGz, 0.9f)
+                    frame.add(beam)
+                    val core = poolGet(headlightCorePool, hi, "hcore") { ModelInstance(factory.glowBillboard(0.8f, TextureGen.glow)) }
+                    billboard(core, lx, 1.85f, noseGz - 0.05f, 0.9f)
+                    frame.add(core)
+                    hi++
+                }
                 var cz = zNear + GameConfig.TRAIN_CAR_LENGTH * 0.5f
                 for (car in 0 until t.cars) {
                     if (cz > zFar + 1f) break

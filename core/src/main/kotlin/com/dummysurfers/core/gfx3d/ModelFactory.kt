@@ -184,8 +184,11 @@ class ModelFactory {
      */
     fun lightPool(w: Float, d: Float): Model = models.getOrPut("lpool${w}x$d") {
         mb.begin()
+        // v4.7: 0.55 read "subtle" in every QA batch since v4.6 (Task 17 note) —
+        // 0.75 makes the lamp pools read as actual light on the ballast while
+        // the v4.7 near-camera cull keeps the pass-under from flooding the lens
         val m = Material(TextureAttribute.createDiffuse(TextureGen.warmGlow),
-            BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE, 0.55f))
+            BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE, 0.75f))
         val mpb = mb.part("p", GL20.GL_TRIANGLES, ATTRS, m)
         val hw = w / 2f; val hd = d / 2f
         mpb.setUVRange(0f, 0f, 1f, 1f)
