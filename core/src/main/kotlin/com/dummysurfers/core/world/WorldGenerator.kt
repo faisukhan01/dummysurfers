@@ -172,7 +172,9 @@ class WorldGenerator {
             }
             // street furniture
             if (rng.nextFloat() < 0.5f) add(DecoKind.LAMP, if (rng.nextBoolean()) -1 else 1, (if (rng.nextBoolean()) -1 else 1) * (edgeX + 1.5f), z + 1f, 3.6f, 0.4f)
-            if (rng.nextFloat() < 0.3f) add(DecoKind.SIGNAL, if (rng.nextBoolean()) -1 else 1, 0f, z, 0f, 0f, rng.nextInt(2))
+            // v4.2: signals were spawning at x=0 — dead-center in a running
+            // lane, reading as an obstacle; park them trackside instead
+            if (rng.nextFloat() < 0.3f) { val s = if (rng.nextBoolean()) -1 else 1; add(DecoKind.SIGNAL, s, s * (edgeX + 0.9f), z, 2.6f, 0.5f, rng.nextInt(2)) }
             z += Mathz.rnd(rng, 7f, 13f)
         }
         // catenary poles on a regular rhythm with wires
