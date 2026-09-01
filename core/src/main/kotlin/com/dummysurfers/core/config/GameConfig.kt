@@ -81,6 +81,8 @@ object GameConfig {
     const val MOVING_TRAIN_REL_SPEED = 4.2f
     const val APPROACH_TRAIN_SPEED = 9f
     const val TRAIN_HORN_DISTANCE = 46f
+    const val RAMP_LENGTH = 3.15f          // v4: ramp run-up onto train roofs
+    const val ROOF_FALL_GRAVITY = 30f      // v4: falling off a roof / into a gap
 
     // ── Chaser ─────────────────────────────────────────────────────────
     const val CHASER_START_TIME = 4.5f

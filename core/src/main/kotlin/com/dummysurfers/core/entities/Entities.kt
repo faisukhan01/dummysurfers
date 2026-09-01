@@ -50,6 +50,8 @@ class Player {
     var lane = 0                        // -1, 0, +1
     var x = 0f                          // continuous world x
     var jumpY = 0f                      // height above ground
+    var supportY = 0f                   // v4: ground height under the player (train roofs/ramps)
+    var jumpBase = 0f                   // v4: height the current jump started from
     var state = PlayerState.RUNNING
     var stateTime = 0f
     var runPhase = 0f                   // drives leg/arm animation
@@ -73,7 +75,8 @@ class Player {
         get() = if (state == PlayerState.SLIDING) GameConfig.PLAYER_HEIGHT * GameConfig.SLIDE_HEIGHT_RATIO else GameConfig.PLAYER_HEIGHT
 
     fun reset() {
-        lane = 0; x = 0f; jumpY = 0f; state = PlayerState.RUNNING; stateTime = 0f
+        lane = 0; x = 0f; jumpY = 0f; supportY = 0f; jumpBase = 0f
+        state = PlayerState.RUNNING; stateTime = 0f
         runPhase = 0f; lean = 0f; squash = 0f; slideTimer = 0f; jumpBuffered = false
         bufferTimer = 0f; invulnTimer = 0f; deadTimer = 0f; deathSpin = 0f
         fastFalling = false
@@ -90,7 +93,7 @@ class Player {
         stateTime = 0f
     }
 
-    /** Jump arc: y(t) = strength * sin(PI * t / duration). Params captured at launch.
+    /** Jump arc: y(t) = base + strength * sin(PI * t / duration). Params captured at launch.
      * @return true when a fresh jump actually started (not buffered). */
     fun startJump(superJump: Boolean): Boolean {
         if (state == PlayerState.JUMPING) { jumpBuffered = true; bufferTimer = 0.1f; return false }
@@ -98,6 +101,7 @@ class Player {
         state = PlayerState.JUMPING
         stateTime = 0f
         fastFalling = false
+        jumpBase = jumpY
         curJumpStrength = GameConfig.JUMP_STRENGTH * if (superJump) GameConfig.SUPERJUMP_STRENGTH_MULT else 1f
         curJumpDuration = GameConfig.JUMP_DURATION * if (superJump) GameConfig.SUPERJUMP_DURATION_MULT else 1f
         return true
@@ -118,10 +122,29 @@ class Player {
         if (state == PlayerState.DEAD) {
             deadTimer += dt
             deathSpin += dt * 9f
-            jumpY = Mathz.approach(jumpY, 0f, dt * 14f)
+            jumpY = Mathz.approach(jumpY, supportY, dt * 14f)
             return false
         }
 
+        // v4 roof-running: if the support under us dropped (ran off a train end
+        // or swiped into an empty lane) the runner FALLS back down; if support
+        // rose (ran up a ramp) the runner is carried up.
+        if (state == PlayerState.RUNNING || state == PlayerState.LANE_SWITCH) {
+            if (jumpY > supportY + 0.02f) {
+                // airborne fall
+                jumpY -= GameConfig.ROOF_FALL_GRAVITY * dt
+                if (jumpY <= supportY) {
+                    jumpY = supportY
+                    land()
+                    landed = true
+                }
+            } else if (jumpY < supportY - 0.02f) {
+                // carried up by a ramp
+                jumpY = Mathz.approach(jumpY, supportY, dt * 12f)
+            } else {
+                jumpY = supportY
+            }
+        }
         // lane interpolation with ease-out (0.15s)
         if (switchT < GameConfig.LANE_SWITCH_DURATION) {
             switchT += dt
@@ -140,11 +163,13 @@ class Player {
                 val t = stateTime / curJumpDuration
                 if (fastFalling) {
                     jumpY -= GameConfig.FAST_FALL_GRAVITY * dt
-                    if (jumpY <= 0f) { jumpY = 0f; land(); landed = true }
+                    if (jumpY <= supportY) { jumpY = supportY; land(); landed = true }
                 } else if (t >= 1f) {
-                    jumpY = 0f; land(); landed = true
+                    jumpY = supportY; land(); landed = true
                 } else {
-                    jumpY = curJumpStrength * Mathz.sinPi(t)
+                    jumpY = jumpBase + curJumpStrength * Mathz.sinPi(t)
+                    // landed early on a rising support (ramp top / train roof)
+                    if (jumpY < supportY) { jumpY = supportY; land(); landed = true }
                 }
             }
             PlayerState.SLIDING -> {

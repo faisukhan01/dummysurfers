@@ -169,16 +169,50 @@ class Spawner {
     private fun singleTrain() {
         val lanes = laneArrayOf()
         safeLane = pickSafe(lanes)
-        spawnTrain(lanes, cars = 3 + rng.nextInt(6), kind = 0, speed = 0f)
+        val t = spawnTrain(lanes, cars = 3 + rng.nextInt(6), kind = 0, speed = 0f)
         coinTrailTo(safeLane, frontier + 2f, 10f)
+        maybeRoofCoins(t)
     }
 
     private fun doubleTrain() {
         val clear = rng.nextInt(3) - 1
         val lanes = (-1..1).filter { it != clear }.toIntArray()
         safeLane = clear
-        spawnTrain(lanes, cars = 3 + rng.nextInt(4), kind = 0, speed = 0f)
+        val t = spawnTrain(lanes, cars = 3 + rng.nextInt(4), kind = 0, speed = 0f)
         coinTrailTo(clear, frontier + 2f, 12f)
+        maybeRoofCoins(t)
+    }
+
+    /** v4 roof-running: parked trains get a ramp + a jackpot coin line on top. */
+    private fun maybeRoofCoins(t: Train) {
+        if (t.cars < 3) return
+        val zNear = t.z - t.totalLength
+        var z = zNear + 1.4f
+        while (z < t.z - 1.2f) {
+            spawnCoin(t.lanes[0], z, GameConfig.TRAIN_HEIGHT + 0.85f)
+            z += 1.7f
+        }
+    }
+
+    /**
+     * v4: ground/support height under the player — 0 on the ballast,
+     * TRAIN_HEIGHT on a train roof, interpolating up a ramp.
+     */
+    fun supportAt(lane: Int, x: Float): Float {
+        var s = 0f
+        for (t in trains) {
+            if (!t.lanes.contains(lane)) continue
+            if (t.kind == 2) continue // oncoming trains never carry you
+            val zNear = t.z - t.totalLength
+            val zFar = t.z
+            if (zNear <= 0f && zFar >= 0f) {
+                s = maxOf(s, GameConfig.TRAIN_HEIGHT)
+            } else if (t.kind == 0 && zNear > 0f && zNear < GameConfig.RAMP_LENGTH) {
+                val h = GameConfig.TRAIN_HEIGHT * (1f - zNear / GameConfig.RAMP_LENGTH)
+                s = maxOf(s, h)
+            }
+        }
+        return s
     }
 
     private fun lowBarriers() {
@@ -290,11 +324,12 @@ class Spawner {
         return target
     }
 
-    private fun spawnTrain(lanes: IntArray, cars: Int, kind: Int, speed: Float) {
+    private fun spawnTrain(lanes: IntArray, cars: Int, kind: Int, speed: Float): Train {
         val t = trainPool.removeLastOrNull() ?: Train()
         t.reset(lanes, frontier, cars, kind, speed, rng.nextInt(6))
         trains.add(t)
         lastAction = 'd'; lastActionZ = frontier
+        return t
     }
 
     private fun spawnObstacle(kind: ObstacleKind, lane: Int) {

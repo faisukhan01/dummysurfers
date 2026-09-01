@@ -22,10 +22,9 @@ import com.dummysurfers.core.entities.Player
 import com.dummysurfers.core.entities.Train
 import com.dummysurfers.core.gfx.Palette
 import com.dummysurfers.core.gfx.TextureGen
+import com.dummysurfers.core.gfx3d.Scene3D
 import com.dummysurfers.core.input.SwipeDetector
 import com.dummysurfers.core.particles.Particles
-import com.dummysurfers.core.rendering.EntityRenderer
-import com.dummysurfers.core.rendering.WorldRenderer
 import com.dummysurfers.core.state.GameEvent
 import com.dummysurfers.core.state.GameState
 import com.dummysurfers.core.state.MenuPanel
@@ -56,8 +55,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     lateinit var sr: ShapeRenderer; private set
     private val camera = OrthographicCamera()
     private val proj = Projection()
-    private lateinit var worldRenderer: WorldRenderer
-    private lateinit var entityRenderer: EntityRenderer
+    private lateinit var scene3d: Scene3D
     private val theme = UiTheme()
     private lateinit var ui: UiController
     private val audio = AudioManager()
@@ -133,8 +131,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         proj.setViewport(GameConfig.VIRTUAL_WIDTH, GameConfig.VIRTUAL_HEIGHT)
         TextureGen.generate()
         theme.create()
-        worldRenderer = WorldRenderer(proj, batch, sr)
-        entityRenderer = EntityRenderer(proj, batch, sr, theme.fontLarge, theme.fontSmall)
+        scene3d = Scene3D(batch, proj)
         ui = UiController(theme)
         ui.bridge = bridge
         audio.start()
@@ -298,7 +295,8 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         spawner.speedHint = speed
         spawner.update(dt, speed, scroll, player.lane, attractMode = tutorial)
 
-        // player physics
+        // player physics — support = train roofs / ramps (v4 roof-running)
+        player.supportY = spawner.supportAt(player.lane, player.x)
         val grounded = player.update(dt, speed)
         if (grounded) {
             audio.play(GameEvent.LAND)
@@ -403,7 +401,6 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
 
         // camera
         proj.update(player.x * GameConfig.CAMERA_FOLLOW, dt)
-        entityRenderer.chaserX = player.x
 
         coinStreakTimer -= dt
         if (coinStreakTimer <= 0f) coinStreak = 0
@@ -505,6 +502,8 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             val zFar = t.z
             val zNear = t.z - t.totalLength
             if (zNear > 0.5f || zFar < -0.5f) continue
+            // v4 roof-running: runner above roof height is SAFE on top
+            if (player.jumpY >= GameConfig.TRAIN_HEIGHT - 0.3f) continue
             for (lane in t.lanes) {
                 val laneX = lane * GameConfig.LANE_WIDTH
                 if (playerOverlaps(laneX, GameConfig.TRAIN_WIDTH / 2f, zNear, zFar, 0f, GameConfig.TRAIN_HEIGHT)) {
@@ -750,6 +749,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         audio.dispose()
         theme.dispose()
         TextureGen.dispose()
+        scene3d.dispose()
         batch.dispose()
         sr.dispose()
     }
@@ -757,9 +757,9 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     // ── Drawing ────────────────────────────────────────────────────────
     private fun draw(rawDt: Float) {
         val gl = Gdx.gl
-        gl.glClearColor(0.09f, 0.06f, 0.05f, 1f)
+        gl.glClearColor(0.55f, 0.75f, 0.9f, 1f)
         gl.glViewport(0, 0, screenW, screenH)
-        gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
+        gl.glClear(GL20.GL_COLOR_BUFFER_BIT or GL20.GL_DEPTH_BUFFER_BIT)
         gl.glViewport(vpX, vpY, vpW, vpH)
         gl.glEnable(GL20.GL_BLEND)
         gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA)
@@ -772,12 +772,12 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             }
         }
 
-        worldRenderer.menuDim = if (state == GameState.MENU || state == GameState.GAME_OVER) 0.55f else 0f
-        worldRenderer.time = time
-        worldRenderer.render(distance, Difficulty.speed(distance), shakeX, shakeY, tunnelDark)
-        entityRenderer.render(world, spawner, player, chaser, character, shakeX, shakeY, particles,
-            invulnBlink = player.invulnTimer > 0f, shieldOn = activePowerups[2] > 0f, boostOn = activePowerups[3] > 0f,
-            boardOn = boardTimer > 0f, stumbleOn = stumbleSlowTimer > 0f)
+        val menuDim = if (state == GameState.MENU || state == GameState.GAME_OVER) 0.55f else 0f
+        scene3d.render(distance, Difficulty.speed(distance), time, world, spawner, player, chaser, character,
+            shakeX, shakeY,
+            blinkHide = player.invulnTimer > 0f && sin(time * 42f) > 0.2f,
+            boardOn = boardTimer > 0f, stumbleOn = stumbleSlowTimer > 0f, shieldOn = activePowerups[2] > 0f,
+            tunnelDark = tunnelDark, menuDim = menuDim)
 
         // boost screen-edge speed glow (spec 9: BOOST — screen edge blur, SS-warm)
         if (activePowerups[3] > 0f) {
