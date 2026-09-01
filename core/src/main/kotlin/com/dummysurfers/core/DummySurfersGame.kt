@@ -224,7 +224,12 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         fun blockedIn(lane: Int, zLo: Float, zHi: Float): Boolean {
             for (t in spawner.trains) {
                 if (t.z < zLo || t.z - t.totalLength > zHi) continue
-                if (t.lanes.contains(lane)) return true
+                if (t.lanes.contains(lane)) {
+                    // v4: ramped parked trains are CLIMBABLE — the autopilot runs up
+                    // them so the roof-running path gets exercised in QA shots
+                    if (t.kind == 0) continue
+                    return true
+                }
             }
             for (o in spawner.obstacles) {
                 if (o.z < zLo || o.z > zHi) continue
