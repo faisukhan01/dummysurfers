@@ -175,6 +175,25 @@ class ModelFactory {
         mb.end()
     }
 
+    /**
+     * v4.6 TUNNEL LIGHT POOLS — ADDITIVE warm quad lying on the ballast under
+     * each ceiling lamp (GL_SRC_ALPHA, GL_ONE: brightens whatever is under it,
+     * so the grey ballast reads sunlit-patch warm inside the dark tunnel —
+     * the lamp tubes existed since v4.2 but threw NO light on the ground).
+     * Single +y face (never seen from below).
+     */
+    fun lightPool(w: Float, d: Float): Model = models.getOrPut("lpool${w}x$d") {
+        mb.begin()
+        val m = Material(TextureAttribute.createDiffuse(TextureGen.warmGlow),
+            BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE, 0.55f))
+        val mpb = mb.part("p", GL20.GL_TRIANGLES, ATTRS, m)
+        val hw = w / 2f; val hd = d / 2f
+        mpb.setUVRange(0f, 0f, 1f, 1f)
+        mpb.rect(Vector3(-hw, 0f, hd), Vector3(hw, 0f, hd), Vector3(hw, 0f, -hd), Vector3(-hw, 0f, -hd),
+            Vector3(0f, 1f, 0f))
+        mb.end()
+    }
+
     // ── Train car (multi-part, per-livery, cached) ─────────────────────
 
     /**

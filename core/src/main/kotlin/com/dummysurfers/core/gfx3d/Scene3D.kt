@@ -62,6 +62,7 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
     private val lampPool = ArrayList<ModelInstance>(8)
     private val lampPoolR = ArrayList<ModelInstance>(8)
     private val lampGlowPool = ArrayList<ModelInstance>(12)
+    private val lampFloorPool = ArrayList<ModelInstance>(12)
     private val decoMap = HashMap<Deco, DecoInst>(160)
 
     /** Cached instance + the deco shape it was built for (Deco objects are pooled & repurposed). */
@@ -191,13 +192,17 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
             decoMap.keys.removeAll { k -> world.decos.none { it === k } }
         }
 
-        // ── tunnel interior lighting pass (v4.2) ─────────────────────
+        // ── tunnel interior lighting pass (v4.2, pools v4.6) ──────────
         // Warm tube lamps every 8u along each tunnel + soft halos — tunnels
         // used to be a flat dark box with nothing to look at.
         // (per-side pools: a pooled instance is welded to its model/side)
-        var liL = 0; var liR = 0
+        // v4.6: each lamp also throws an ADDITIVE warm pool on the ballast
+        // (tubes were lit but threw no light — floor stayed flat grey), and
+        // the wall halo switched to the warm texture instead of neutral white.
+        var liL = 0; var liR = 0; var liF = 0
         val lampModelL by lazy { factory.tunnelLamp(-1) }
         val lampModelR by lazy { factory.tunnelLamp(1) }
+        val floorPoolModel by lazy { factory.lightPool(5.2f, 3.8f) }
         for (r in world.tunnelRanges) {
             if (r[1] < 0f || r[0] > 80f) continue
             var z = (r[0] + 3f)
@@ -214,9 +219,13 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
                         inst.transform.setToTranslation(0f, 0f, gz)
                         frame.add(inst)
                     }
-                    val glow = poolGet(lampGlowPool, liL + liR - 1, "tglow") { ModelInstance(factory.glowBillboard(2.6f, TextureGen.glow)) }
-                    billboard(glow, side * 4.35f, 5.2f, gz, 0.5f)
+                    val glow = poolGet(lampGlowPool, liL + liR - 1, "tglow") { ModelInstance(factory.glowBillboard(2.6f, TextureGen.warmGlow)) }
+                    billboard(glow, side * 4.35f, 5.2f, gz, 0.55f)
                     frame.add(glow)
+                    // v4.6 additive warm pool on the ballast, biased to the lamp's wall
+                    val fp = poolGet(lampFloorPool, liF++, "tfloor") { ModelInstance(floorPoolModel) }
+                    fp.transform.setToTranslation(side * 1.7f, 0.04f, gz)
+                    frame.add(fp)
                 }
                 z += 8f
             }

@@ -106,6 +106,7 @@ object TextureGen {
     lateinit var disc: Texture            // hard-edged circle (UI pips, wheels, dots)
     lateinit var hazeBand: Texture        // symmetric horizon haze (soft both edges)
     lateinit var jetFlame: Texture        // v4.1 warm thruster glow under jetpack flyers
+    lateinit var warmGlow: Texture        // v4.6 warm lamp halo + additive floor light pools
     lateinit var previews: Array<Texture> // character card portraits
 
     // FaceBatch materials — textured pseudo-3D faces (renderer v2)
@@ -131,6 +132,7 @@ object TextureGen {
         disc = radial(64, Color(1f, 1f, 1f, 1f), 0.86f) // solid core, 14% feather
         hazeBand = horizonHaze(8, 256)
         jetFlame = radial(128, Color(1f, 0.62f, 0.2f, 0.95f), 0.12f)
+        warmGlow = radial(128, Color(1f, 0.80f, 0.44f, 0.95f), 0.02f)
         glow = radial(128, Color(1f, 1f, 1f, 1f), 0f)
         softShadow = radial(128, Color(0f, 0f, 0f, 0.55f), 0.25f)
         sky = verticalGradient(8, 512, Palette.SKY_TOP, Palette.SKY_MID, Palette.SKY_LOW)
@@ -169,7 +171,7 @@ object TextureGen {
     }
 
     fun dispose() {
-        listOf(glow, softShadow, sky, fog, cloudA, cloudB, skylineFar, skylineNear, vignette, edgeVignette, rainbowBurst, white, disc, hazeBand, jetFlame,
+        listOf(glow, softShadow, sky, fog, cloudA, cloudB, skylineFar, skylineNear, vignette, edgeVignette, rainbowBurst, white, disc, hazeBand, jetFlame, warmGlow,
             trainRoofTex, hazardTex, signTealTex, containerTex, glassTex).forEach { it.dispose() }
         coinFrames.forEach { it.dispose() }
         powerIcons.forEach { it.dispose() }
