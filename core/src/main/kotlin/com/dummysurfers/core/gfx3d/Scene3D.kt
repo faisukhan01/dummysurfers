@@ -237,7 +237,12 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
                 // ramp leaning onto parked trains
                 if (t.kind == 0) {
                     val rampGz = 3.15f - zNear
-                    if (rampGz > -5f && zNear > 0f) {
+                    // v4.3: the wedge's bottom end swept INTO the lens during the
+                    // climb (rampGz up to 3.15 = 1.75u from the camera → the
+                    // giant yellow slab in QA shots 3/5). Cull once the nose is
+                    // this close — the train takes over visually for the last
+                    // stretch of the climb.
+                    if (zNear > 1.4f) {
                         val r = poolGet(rampPool, ri++, "ramp") { ModelInstance(factory.ramp()) }
                         r.transform.setToTranslation(lx, 0f, rampGz)
                         frame.add(r)
@@ -297,8 +302,14 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
             frame.add(s)
         }
         shadow(player.x, 0f, 0.85f, player.jumpY)
-        if (chaser.active) shadow(guardX(player), chaserZ(chaser), 1.0f, 0f)
-        if (chaser.active) shadow(guardX(player) + 0.62f, chaserZ(chaser) + 0.1f, 0.7f, 0f)
+        if (chaser.active) {
+            // v4.3: shadows track the offset intro-chase positions
+            val converge = if (chaser.catchT > 0f) (chaser.catchT * chaser.catchT).coerceIn(0f, 1f) else 0f
+            val gx = guardX(player) + (1f - converge) * 0.95f
+            val gz = chaserZ(chaser) - (1f - converge) * 0.55f
+            shadow(gx, gz, 1.0f, 0f)
+            shadow(gx + GameConfig.CHASER_DOG_OFFSET_X * 0.55f, gz + 0.1f, 0.7f, 0f)
+        }
 
         // ── characters ─────────────────────────────────────────────────
         val h = getHuman(character)
@@ -336,15 +347,20 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
 
         // ── the chase: guard + dog ─────────────────────────────────────
         // v4.2 SIGN FIX: chaserZ() returns WORLD z (negative = behind the
-        // runner); meshes need gz = -worldZ like every other entity. The old
-        // direct use put the guard AHEAD of the runner — invisible for the
-        // whole intro chase (only the grab pose landed near-correct).
+        // runner); meshes need gz = -worldZ like every other entity.
+        // v4.3 FRAMING FIX: during the intro the guard chased in the SAME lane
+        // 2.2u behind — at 0.84 scale his cap/shoulders filled the bottom half
+        // of the screen (QA shots 0-1). Now he chases one lane OVER and a touch
+        // farther back at SS scale, converging into the runner's lane only for
+        // the grab lunge.
         if (chaser.active) {
             val g = getGuard()
-            val gx = guardX(player)
-            val gz = -chaserZ(chaser)
+            val converge = if (chaser.catchT > 0f) (chaser.catchT * chaser.catchT).coerceIn(0f, 1f) else 0f
+            val gx = guardX(player) + (1f - converge) * 0.95f
+            val guardWorldZ = chaserZ(chaser) - (1f - converge) * 0.55f
+            val gz = -guardWorldZ
             m.setToTranslation(gx, 0f, gz)
-            m.scale(0.84f, 0.84f, 0.84f)
+            m.scale(0.68f, 0.68f, 0.68f)
             if (chaser.grabbed) {
                 // grab pose: guard lunges onto the runner
                 g.animate(m, PlayerState.DEAD, chaser.runPhase, 0f, 0f, 0f, false, time, time, true)
@@ -353,8 +369,8 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
             }
             for (p in g.rig.parts) frame.add(p.instance)
             // dog gallops beside the guard (a touch further back)
-            m2.setToTranslation(gx + GameConfig.CHASER_DOG_OFFSET_X, 0f, gz - 0.12f)
-            m2.scale(0.72f, 0.72f, 0.72f)
+            m2.setToTranslation(gx + GameConfig.CHASER_DOG_OFFSET_X * 0.55f, 0f, gz - 0.3f)
+            m2.scale(0.56f, 0.56f, 0.56f)
             dog.animate(m2, chaser.dogPhase, time)
             for (p in dog.rig.parts) frame.add(p.instance)
         }
