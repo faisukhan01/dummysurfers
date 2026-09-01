@@ -177,26 +177,28 @@ class Human3D(
             mpb.cbox(-0.315f, 0.34f, 0f, 0.07f, 0.42f, 0.36f)
             mpb.cbox(0.315f, 0.34f, 0f, 0.07f, 0.42f, 0.36f)
         }
-        // chest tee stripe (red under-layer peeking out)
+        // chest tee stripe (red under-layer peeking out) — TRUE front (-z;
+        // v4.2: it used to render on the BACK while the pack sat on the chest)
         val lining = if (hoodLining != 0) hoodLining else mul(hoodie, 0.8f)
         mpb = mb.part("tee", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(lining))
         mpb.setUVRange(0f, 0f, 1f, 1f)
-        mpb.cbox(0f, 0.4f, 0.18f, 0.3f, 0.3f, 0.02f)
-        // backpack + flap + straps
+        mpb.cbox(0f, 0.4f, -0.18f, 0.3f, 0.3f, 0.02f)
+        // backpack + flap + straps (ON THE BACK = +z, faces the chase cam —
+        // v4.2 fix: the pack used to hang on the chest, invisible in-game)
         if (!isGuard) {
             mpb = mb.part("pack", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(backpack))
             mpb.setUVRange(0f, 0f, 1f, 1f)
-            mpb.cbox(0f, 0.3f, -0.24f, 0.42f, 0.46f, 0.16f)
+            mpb.cbox(0f, 0.3f, 0.24f, 0.42f, 0.46f, 0.16f)
             mpb = mb.part("packFlap", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(mul(backpack, 0.8f)))
             mpb.setUVRange(0f, 0f, 1f, 1f)
-            mpb.cbox(0f, 0.44f, -0.33f, 0.42f, 0.14f, 0.05f)
+            mpb.cbox(0f, 0.44f, 0.33f, 0.42f, 0.14f, 0.05f)
             mpb = mb.part("straps", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(mul(backpack, 0.7f)))
-            mpb.cbox(-0.16f, 0.42f, 0.18f, 0.07f, 0.34f, 0.02f)
-            mpb.cbox(0.16f, 0.42f, 0.18f, 0.07f, 0.34f, 0.02f)
+            mpb.cbox(-0.16f, 0.42f, 0.19f, 0.07f, 0.34f, 0.02f)
+            mpb.cbox(0.16f, 0.42f, 0.19f, 0.07f, 0.34f, 0.02f)
         } else {
             // guard: gold badge + belt + shoulder epaulettes
             mpb = mb.part("badge", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(0xffd23eff.toInt()))
-            mpb.cbox(0.14f, 0.42f, 0.18f, 0.09f, 0.09f, 0.02f)
+            mpb.cbox(0.14f, 0.42f, -0.18f, 0.09f, 0.09f, 0.02f)
             mpb = mb.part("belt", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(0x1c2028ff.toInt()))
             mpb.cbox(0f, 0.04f, 0f, 0.62f, 0.1f, 0.36f)
             mpb = mb.part("epau", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(0xffd23eff.toInt(), 0.85f))
