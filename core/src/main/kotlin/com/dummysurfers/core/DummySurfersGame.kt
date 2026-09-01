@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.utils.ScreenUtils
 import com.badlogic.gdx.graphics.Pixmap
 import com.badlogic.gdx.graphics.PixmapIO
+import com.badlogic.gdx.math.Vector3
 import com.dummysurfers.core.audio.AudioManager
 import com.dummysurfers.core.camera.Projection
 import com.dummysurfers.core.config.GameConfig
@@ -77,6 +78,14 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
 
     private val rng = Random(System.nanoTime())
     private val tmpColor = Color()
+    private val fxV = Vector3()
+
+    /** v4.4: anchor a 2D FX burst to the runner's TRUE-3D screen position
+     *  (feet by default). The legacy proj.screenX/groundY anchored to the
+     *  retired 2.5D layout — dust puffs materialized as stray specks around
+     *  the shadow instead of under the feet. */
+    private fun fxAnchor(y: Float = player.jumpY): Vector3 =
+        scene3d.screenPos(player.x, y, 0f, fxV)
     private var state: GameState = GameState.MENU
     private var menuPanel = MenuPanel.NONE
     private var shopTab = ShopTab.CHARACTERS
@@ -328,7 +337,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         val grounded = player.update(dt, speed)
         if (grounded) {
             audio.play(GameEvent.LAND)
-            particles.burst(proj.screenX(player.x, 0f), proj.groundY(0f), 5, Color(0xcbb9a4ff.toInt()), 130f, 4f, grav = 500f, life = 0.35f)
+            fxAnchor().let { f -> particles.burst(f.x, f.y, 5, Color(0xcbb9a4ff.toInt()), 130f, 4f, grav = 500f, life = 0.35f) }
         }
 
         // footsteps synced to run cycle
@@ -336,7 +345,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             lastStepParity = player.stepParity
             audio.play(GameEvent.FOOTSTEP)
             if (rng.nextFloat() < 0.5f) {
-                particles.burst(proj.screenX(player.x, 0f) + rng.nextFloat() * 16f - 8f, proj.groundY(0f), 2, Color(0xbfae9aff.toInt()), 90f, 3f, grav = 420f, life = 0.3f)
+                fxAnchor().let { f -> particles.burst(f.x + rng.nextFloat() * 16f - 8f, f.y, 2, Color(0xbfae9aff.toInt()), 90f, 3f, grav = 420f, life = 0.3f) }
             }
         }
 
@@ -380,9 +389,10 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             }
             // thruster sparks + soft flame puffs under the pack
             if (rng.nextFloat() < 0.6f) {
-                particles.burst(proj.screenX(player.x, 0f) + rng.nextFloat() * 14f - 7f,
-                    proj.groundY(0f) - player.jumpY * proj.ppu + 46f, 2,
-                    Color(0xf9a03aff.toInt()), 130f, 4f, grav = -220f, life = 0.3f)
+                fxAnchor(player.jumpY - 0.45f).let { f ->
+                    particles.burst(f.x + rng.nextFloat() * 14f - 7f, f.y, 2,
+                        Color(0xf9a03aff.toInt()), 130f, 4f, grav = -220f, life = 0.3f)
+                }
             }
         }
         if (!jetOn && prevJetOn && player.jumpY > 1.2f) {
@@ -453,8 +463,8 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
                 2 -> Color(0xf97316ff.toInt())
                 else -> Mathz.hsv(time * 140f, 0.85f, 1f, 1f, tmpColor)
             }
-            val emitX = proj.screenX(player.x, 0f) + rng.nextFloat() * 14f - 7f
-            particles.burst(emitX, proj.groundY(0f) - player.jumpY * proj.ppu + 16f, 1, col, 40f, 5f, grav = -60f, life = 0.4f)
+            val emitX = fxAnchor(player.jumpY + 0.15f).x + rng.nextFloat() * 14f - 7f
+            particles.burst(emitX, fxAnchor(player.jumpY + 0.15f).y, 1, col, 40f, 5f, grav = -60f, life = 0.4f)
         }
 
         // camera
@@ -542,7 +552,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         boardTotal = boardTimer
         audio.play(GameEvent.POWERUP)
         vibrate(50)
-        particles.burst(proj.screenX(player.x, 0f), proj.groundY(0f) + 20f, 18, Color(0x37b8a8ff.toInt()), 300f, 6f, life = 0.6f)
+        fxAnchor().let { f -> particles.burst(f.x, f.y + 14f, 18, Color(0x37b8a8ff.toInt()), 300f, 6f, life = 0.6f) }
     }
 
     private fun playerOverlaps(boxX: Float, boxHalfW: Float, zNear: Float, zFar: Float, yLo: Float, yHi: Float): Boolean {
@@ -555,11 +565,13 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     /** v4.1: skid dust kicked up on lane changes (SS has a puff under each swap). */
     private fun laneDust() {
         repeat(6) {
-            particles.burst(
-                proj.screenX(player.x, 0f) + rng.nextFloat() * 26f - 13f,
-                proj.groundY(0f) - player.jumpY * proj.ppu + rng.nextFloat() * 10f,
-                1, Color(0xd8c9b0ff.toInt()), 150f, 4f, grav = 260f, life = 0.4f
-            )
+            fxAnchor().let { f ->
+                particles.burst(
+                    f.x + rng.nextFloat() * 26f - 13f,
+                    f.y + rng.nextFloat() * 10f,
+                    1, Color(0xd8c9b0ff.toInt()), 150f, 4f, grav = 260f, life = 0.4f
+                )
+            }
         }
     }
 
@@ -646,7 +658,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             player.invulnTimer = GameConfig.SHIELD_INVULN
             audio.play(GameEvent.SHIELD_BREAK)
             vibrate(60)
-            particles.burst(proj.screenX(player.x, 0f), proj.groundY(0f) - player.jumpY * proj.ppu + 120f, 16, Color(0x2dd4bfff.toInt()), 320f, 6f, shape = 1)
+            particles.burst(fxAnchor(player.jumpY + 0.7f).x, fxAnchor(player.jumpY + 0.7f).y, 16, Color(0x2dd4bfff.toInt()), 320f, 6f, shape = 1)
             return
         }
         if (boardTimer > 0f) {
@@ -656,7 +668,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             audio.play(GameEvent.SHIELD_BREAK)
             vibrate(80)
             particles.text(proj.vw / 2f, proj.vh * 0.55f, "SAVED!", Color(0x37b8a8ff.toInt()), 26f)
-            particles.burst(proj.screenX(player.x, 0f), proj.groundY(0f) - player.jumpY * proj.ppu + 60f, 24, Color(0x37b8a8ff.toInt()), 380f, 7f, shape = 1)
+            particles.burst(fxAnchor(player.jumpY + 0.35f).x, fxAnchor(player.jumpY + 0.35f).y, 24, Color(0x37b8a8ff.toInt()), 380f, 7f, shape = 1)
             return
         }
         // ── STUMBLE: first glancing hit wounds instead of killing ──

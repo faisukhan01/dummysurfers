@@ -92,6 +92,15 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
     private val m2 = Matrix4()
     private val v = Vector3()
 
+    /** World (game z) → screen in virtual units — anchors 2D FX (dust/sparks)
+     *  to the TRUE-3D camera. The legacy Projection.screenX/groundY anchored
+     *  them to the retired 2.5D layout, scattering specks off the runner's
+     *  feet (QA 2026-09-02). Valid after this frame's cam.update(). */
+    fun screenPos(x: Float, y: Float, zGame: Float, out: Vector3): Vector3 {
+        out.set(x, y, -zGame)
+        return cam.project(out)
+    }
+
     init {
         env.set(ambientDay)
         env.add(sun)
