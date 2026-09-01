@@ -57,7 +57,10 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
     private val obstaclePool = ArrayList<ModelInstance>(28)
     private val powerPool = ArrayList<ModelInstance>(8)
     private val shadowPool = ArrayList<ModelInstance>(16)
-    private val decoMap = HashMap<Deco, ModelInstance>(160)
+    private val decoMap = HashMap<Deco, DecoInst>(160)
+
+    /** Cached instance + the deco shape it was built for (Deco objects are pooled & repurposed). */
+    private class DecoInst(val inst: ModelInstance, var kind: DecoKind, var variant: Int)
 
     // track/dirt/wall recycled strips
     private val trackSegs = ArrayList<ModelInstance>(14)
@@ -147,9 +150,14 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
         // ── decorations ────────────────────────────────────────────────
         for (d in world.decos) {
             if (d.z < -14f || d.z > 92f) continue
-            val inst = decoMap.getOrPut(d) { ModelInstance(decoModel(d)) }
-            placeDeco(inst, d, time)
-            frame.add(inst)
+            var di = decoMap.getOrPut(d) { DecoInst(ModelInstance(decoModel(d)), d.kind, d.variant) }
+            // pooled Deco objects get repurposed — rebuild the instance when the shape changed
+            if (di.kind != d.kind || di.variant != d.variant) {
+                di = DecoInst(ModelInstance(decoModel(d)), d.kind, d.variant)
+                decoMap[d] = di
+            }
+            placeDeco(di.inst, d, time)
+            frame.add(di.inst)
         }
         // occasional cleanup of stale entries
         if ((time * 60f).toInt() % 300 == 0 && world.decos.isNotEmpty()) {

@@ -121,6 +121,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     private var vpX = 0; private var vpY = 0; private var vpW = 0; private var vpH = 0
     private var screenW = 0; private var screenH = 0
     private var viewScale = 1f
+    private val fontLayout = com.badlogic.gdx.graphics.g2d.GlyphLayout()
 
     private lateinit var character: CharacterDef
 
@@ -793,6 +794,25 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             blinkHide = player.invulnTimer > 0f && sin(time * 42f) > 0.2f,
             boardOn = boardTimer > 0f, stumbleOn = stumbleSlowTimer > 0f, shieldOn = activePowerups[2] > 0f,
             tunnelDark = tunnelDark, menuDim = menuDim)
+
+        // particle FX layer (sparks, confetti, streaks) + floating score texts
+        sr.begin(ShapeRenderer.ShapeType.Filled)
+        particles.render(sr)
+        sr.end()
+        batch.begin()
+        particles.eachText { t ->
+            val alpha = Mathz.clamp01(t.life / t.maxLife * 1.6f)
+            val font = if (t.size > 22f) theme.fontLarge else theme.fontSmall
+            font.setColor(t.color.r, t.color.g, t.color.b, alpha)
+            font.data.setScale(t.size / 32f)
+            fontLayout.setText(font, t.text)
+            font.draw(batch, t.text, t.x - fontLayout.width / 2 + shakeX, t.y + shakeY)
+        }
+        theme.fontSmall.setColor(1f, 1f, 1f, 1f)
+        theme.fontLarge.setColor(1f, 1f, 1f, 1f)
+        theme.fontSmall.data.setScale(1f)
+        theme.fontLarge.data.setScale(1f)
+        batch.end()
 
         // boost screen-edge speed glow (spec 9: BOOST — screen edge blur, SS-warm)
         if (activePowerups[3] > 0f) {
