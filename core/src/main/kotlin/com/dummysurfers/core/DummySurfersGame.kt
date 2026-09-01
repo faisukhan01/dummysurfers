@@ -317,7 +317,16 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         // score & multiplier
         if (!tutorial) {
             score += (scroll * GameConfig.DISTANCE_SCORE_PER_METER).toInt() * multiplier
-            multiplier = Difficulty.multiplier(distance)
+            val newMult = Difficulty.multiplier(distance)
+            if (newMult > multiplier) {
+                // v3.0: celebrate the rank-up (SS pops a badge when the multiplier climbs)
+                multiplier = newMult
+                particles.text(proj.vw / 2f, proj.vh * 0.40f, "SCORE x$newMult!", Palette.GOLD, 30f)
+                audio.play(GameEvent.POWERUP)
+                vibrate(50)
+            } else {
+                multiplier = newMult
+            }
         }
 
         // power-up timers
