@@ -3,7 +3,9 @@ package com.dummysurfers.core.rendering
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.dummysurfers.core.camera.Projection
+import com.dummysurfers.core.gfx.FaceBatch
 import com.dummysurfers.core.gfx.Palette
+import com.dummysurfers.core.gfx.TextureGen
 import com.dummysurfers.core.world.Deco
 import com.dummysurfers.core.world.DecoKind
 import kotlin.math.abs
@@ -76,6 +78,39 @@ object DecoRenderer {
         }
         sr.setColor(front)
         sr.rect(xlF, ytF, xrF - xlF, ybF - ytF)
+    }
+
+    /**
+     * Textured building (renderer v2): facade texture w/ baked windows on the
+     * front face, shaded side, rooftop cap. Replaces the flat ShapeRenderer
+     * building for BUILDING / SKYSCRAPER deco kinds.
+     */
+    fun buildingTextured(d: Deco, fb: FaceBatch, proj: Projection, sx: Float, sy: Float) {
+        val zBack = (d.z + d.w).coerceAtMost(72f)
+        val zFront = d.z.coerceAtLeast(-8f)
+        if (zBack - zFront < 0.2f) return
+        fogged(proj, tmpC, Color(1f, 1f, 1f, 1f), (zFront + zBack) * 0.5f)
+        val front = tmpC2.set(tmpC)
+        val side = tmpC.cpy().mul(0.76f)
+        val top = tmpC.cpy().mul(1.12f)
+        val tex = if (d.kind == DecoKind.SKYSCRAPER) TextureGen.glassTex else TextureGen.facades[d.variant % TextureGen.facades.size]
+
+        // rooftop slab + parapet / crown
+        fb.faceTop(TextureGen.white, d.h, d.x - d.w / 2f, d.x + d.w / 2f, zFront, zBack, top)
+        if (d.kind != DecoKind.SKYSCRAPER) {
+            fb.faceFront(TextureGen.white, zFront, d.x - d.w / 2f, d.x + d.w / 2f, d.h, d.h + 0.14f, tmpC.cpy().mul(0.85f))
+        } else {
+            // glass tower crown: darker mechanical floor
+            fb.faceFront(TextureGen.white, zFront, d.x - d.w / 2f, d.x + d.w / 2f, d.h, d.h + 0.5f, tmpC.cpy().mul(0.55f))
+            fb.faceTop(TextureGen.white, d.h + 0.5f, d.x - d.w / 2f + 0.15f, d.x + d.w / 2f - 0.15f, zFront, zBack, tmpC.cpy().mul(0.5f))
+        }
+
+        // visible side face
+        if (proj.camX < d.x - d.w / 2f) fb.faceSide(tex, d.x - d.w / 2f, zFront, zBack, 0f, d.h, side)
+        else if (proj.camX > d.x + d.w / 2f) fb.faceSide(tex, d.x + d.w / 2f, zFront, zBack, 0f, d.h, side)
+
+        // facade (front)
+        fb.faceFront(tex, zFront, d.x - d.w / 2f, d.x + d.w / 2f, 0f, d.h, front)
     }
 
     private fun building(d: Deco, sr: ShapeRenderer, proj: Projection, sx: Float, sy: Float) {
