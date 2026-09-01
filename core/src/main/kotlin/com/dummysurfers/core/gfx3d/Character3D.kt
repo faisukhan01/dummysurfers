@@ -91,10 +91,11 @@ class Human3D(
         val thighM = f.colorBox("thigh$pants", 0.21f, 0.32f, 0.24f, pants)
         val shinM = f.colorBox("shin$pants", 0.18f, 0.26f, 0.2f, pants)
         val shoeM = f.colorBox("shoe$shoes$accent", 0.19f, 0.13f, 0.36f, shoes)
-        val upperM = f.colorBox("upper$hoodie", 0.17f, 0.27f, 0.18f, hoodie)
+        // v4.7: slimmed 0.17x0.27x0.18 -> 0.15x0.24x0.17 — chunky arms read as slabs mid-swing
+        val upperM = f.colorBox("upper$hoodie", 0.15f, 0.24f, 0.17f, hoodie)
         // v4.2: guard gets uniform-covered forearms (bare skin read as T-shirt
         // arms on a duty officer)
-        val foreM = f.colorBox("fore$skin$isGuard", 0.15f, 0.2f, 0.16f, if (isGuard) hoodie else skin)
+        val foreM = f.colorBox("fore$skin$isGuard", 0.13f, 0.2f, 0.15f, if (isGuard) hoodie else skin)
         val handM = f.colorBox("hand$skin", 0.14f, 0.13f, 0.15f, skin)
 
         thighL = rig.add(ModelInstance(thighM), null, -0.13f, 0.72f, 0f)
@@ -128,6 +129,11 @@ class Human3D(
                 val strapM = f.colorBox("gogStrap$accent", 0.05f, 0.055f, 0.5f, 0x22262cff.toInt())
                 rig.add(ModelInstance(strapM), head, -0.31f, 0.6f, 0f)
                 rig.add(ModelInstance(strapM), head, 0.31f, 0.6f, 0f)
+                // v4.7: BACK segment across the dome — the side straps were
+                // edge-on from the chase cam, so VOLT's goggles were invisible
+                // in every in-game shot (only the CHARS portrait showed them)
+                val strapBackM = f.colorBox("gogStrapBack$accent", 0.62f, 0.055f, 0.05f, 0x22262cff.toInt())
+                rig.add(ModelInstance(strapBackM), head, 0f, 0.6f, 0.26f)
                 val lensM = f.colorBox("gogLens$accent", 0.4f, 0.13f, 0.05f, accent)
                 rig.add(ModelInstance(lensM), head, 0f, 0.61f, -0.3f)
                 val rimM = f.colorBox("gogRim$accent", 0.44f, 0.17f, 0.03f, 0x22262cff.toInt())
@@ -290,9 +296,15 @@ class Human3D(
                 aThighL.x = s * 0.95f; aThighR.x = -s * 0.95f
                 aShinL.x = -(0.25f + kotlin.math.max(0f, -s) * 1.25f)
                 aShinR.x = -(0.25f + kotlin.math.max(0f, s) * 1.25f)
-                aArmL.x = -s * 0.85f; aArmR.x = s * 0.85f
-                aArmL.z = 0.12f; aArmR.z = -0.12f
-                aForeL.x = -0.7f; aForeR.x = -0.7f
+                // v4.7 ARM PUMP RETUNE: ±0.85 rad swung the chunky upper-arm
+                // boxes up to shoulder height, where the low chase cam projected
+                // them as horizontal "T-pose" slabs (BLAZE/VOLT QA shots); real
+                // runners pump elbows, not windmill. Swing 0.85→0.5, abduction
+                // 0.12→0.2 (arms clear the torso), elbow bend -0.7→-1.0 so the
+                // pump reads at the FOREARM like SS Jack.
+                aArmL.x = -s * 0.5f; aArmR.x = s * 0.5f
+                aArmL.z = 0.2f; aArmR.z = -0.2f
+                aForeL.x = -1.0f; aForeR.x = -1.0f
                 bodyLift = abs(s) * 0.05f
             }
             PlayerState.JUMPING -> {
