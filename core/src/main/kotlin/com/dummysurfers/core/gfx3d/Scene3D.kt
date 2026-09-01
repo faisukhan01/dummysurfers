@@ -129,14 +129,16 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
         } else env.set(ambientDay)
 
         // ── camera rig ─────────────────────────────────────────────────
-        val followX = player.x * 0.58f
+        // v4.2: follow 0.85 / look 0.95 — the old 0.58 follow let lane changes
+        // throw the runner to the screen edge (QA shots 6-9)
+        val followX = player.x * 0.85f
         val bob = if (player.state == PlayerState.RUNNING || player.state == PlayerState.LANE_SWITCH)
             sin(player.runPhase * 2f) * 0.035f else 0f
         // v4.1: camera rides up with jetpack/high flight so the runner stays
         // framed with the track visible far below (SS jetpack framing)
         val airLift = max(0f, player.jumpY - 1.6f)
         cam.position.set(followX + shakeX * 0.012f, 2.62f + bob + airLift * 0.62f + shakeY * 0.01f, 4.9f)
-        cam.lookAt(player.x * 0.8f, 1.12f + player.jumpY * 0.34f + airLift * 0.42f, -7f)
+        cam.lookAt(player.x * 0.95f, 1.12f + player.jumpY * 0.34f + airLift * 0.42f, -7f)
         cam.update()
 
         // ── scrolling ground strips ────────────────────────────────────
@@ -296,10 +298,14 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
         }
 
         // ── the chase: guard + dog ─────────────────────────────────────
+        // v4.2 SIGN FIX: chaserZ() returns WORLD z (negative = behind the
+        // runner); meshes need gz = -worldZ like every other entity. The old
+        // direct use put the guard AHEAD of the runner — invisible for the
+        // whole intro chase (only the grab pose landed near-correct).
         if (chaser.active) {
             val g = getGuard()
             val gx = guardX(player)
-            val gz = chaserZ(chaser)
+            val gz = -chaserZ(chaser)
             m.setToTranslation(gx, 0f, gz)
             m.scale(0.92f, 0.92f, 0.92f)
             if (chaser.grabbed) {
@@ -309,8 +315,8 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
                 g.animate(m, PlayerState.RUNNING, chaser.runPhase, 0f, chaser.lean, 0f, false, time, time, false)
             }
             for (p in g.rig.parts) frame.add(p.instance)
-            // dog gallops beside the guard
-            m2.setToTranslation(gx + GameConfig.CHASER_DOG_OFFSET_X, 0f, gz + 0.12f)
+            // dog gallops beside the guard (a touch further back)
+            m2.setToTranslation(gx + GameConfig.CHASER_DOG_OFFSET_X, 0f, gz - 0.12f)
             m2.scale(0.8f, 0.8f, 0.8f)
             dog.animate(m2, chaser.dogPhase, time)
             for (p in dog.rig.parts) frame.add(p.instance)
@@ -335,7 +341,9 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
         player.x * 0.85f  // guard tracks the runner's lane with lag
 
     private fun chaserZ(c: Chaser): Float = when {
-        c.catchT > 0f -> -2.2f + (c.catchT * c.catchT) * 2.3f
+        // v4.2: rush lands just BEHIND the runner (world z -0.45) — the old
+        // +0.1 put the grab inside the player mesh
+        c.catchT > 0f -> -2.2f + (c.catchT * c.catchT) * 1.75f
         c.close -> GameConfig.CHASER_Z_CLOSE
         else -> GameConfig.CHASER_Z
     }
@@ -479,9 +487,9 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
      *  fade put a hard cream line across mid-screen). */
     private fun drawHaze(menuDim: Float) {
         val vw = proj.vw; val vh = proj.vh
-        val fogH = vh * 0.17f
+        val fogH = vh * 0.13f
         batch.begin()
-        batch.setColor(1f, 1f, 1f, 0.9f)
+        batch.setColor(1f, 1f, 1f, 0.5f)
         batch.draw(TextureGen.hazeBand, 0f, proj.horizonY - fogH * 0.5f, vw, fogH)
         batch.setColor(1f, 1f, 1f, 1f)
         batch.end()

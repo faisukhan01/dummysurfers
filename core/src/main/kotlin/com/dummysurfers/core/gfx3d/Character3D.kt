@@ -165,30 +165,32 @@ class Human3D(
         var mpb = mb.part("face", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(skin))
         mpb.setUVRange(0f, 0f, 1f, 1f)
         mpb.cbox(0f, 0.26f, 0f, 0.58f, 0.52f, 0.5f)
-        // spiky fringe under the cap edge
+        // spiky fringe under the cap edge (TRUE front = -z, the run direction;
+        // v4.2 fix: face features were mirrored — they stared at the chase cam)
         mpb = mb.part("hair", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(hair))
-        mpb.cbox(0f, 0.52f, 0.04f, 0.6f, 0.11f, 0.52f)
-        mpb.cbox(0f, 0.44f, 0.27f, 0.44f, 0.1f, 0.04f)
-        // cap dome + brim (backwards = brim behind) + front panel
+        mpb.cbox(0f, 0.50f, -0.04f, 0.6f, 0.09f, 0.54f)
+        mpb.cbox(0f, 0.44f, -0.27f, 0.44f, 0.1f, 0.04f)
+        // cap dome + brim (BACKWARDS: brim points +z, at the chase camera) + ridge
         mpb = mb.part("cap", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(cap))
-        mpb.cbox(0f, 0.63f, -0.01f, 0.62f, 0.15f, 0.54f)
-        mpb.cbox(0f, 0.56f, -0.31f, 0.56f, 0.07f, 0.14f) // rear brim
-        mpb.cbox(0f, 0.71f, -0.01f, 0.22f, 0.05f, 0.18f) // top button-ish ridge
+        mpb.cbox(0f, 0.63f, -0.01f, 0.62f, 0.16f, 0.54f)
+        mpb.cbox(0f, 0.575f, 0.31f, 0.56f, 0.07f, 0.15f) // backwards brim — visible from behind
+        mpb.cbox(0f, 0.72f, -0.01f, 0.22f, 0.05f, 0.18f) // top button-ish ridge
         if (capPanel != 0) {
             mpb = mb.part("panel", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(capPanel))
-            mpb.cbox(0f, 0.63f, 0.28f, 0.38f, 0.13f, 0.03f)
+            mpb.cbox(0f, 0.63f, -0.28f, 0.38f, 0.13f, 0.03f) // true front — hidden from the chase cam
         }
         if (isGuard) {
-            // gold badge on the cap + mustache
+            // gold badge on the cap + mustache — true front (-z)
             mpb = mb.part("gbadge", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(0xffd23eff.toInt()))
-            mpb.cbox(0f, 0.64f, 0.28f, 0.13f, 0.11f, 0.03f)
+            mpb.cbox(0f, 0.64f, -0.28f, 0.13f, 0.11f, 0.03f)
             mpb = mb.part("stache", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(0x4a3524ff.toInt()))
-            mpb.cbox(0f, 0.17f, 0.265f, 0.3f, 0.07f, 0.03f)
+            mpb.cbox(0f, 0.17f, -0.265f, 0.3f, 0.07f, 0.03f)
         }
-        // ears — small, tucked to the skull (v4.1: were pig-like flags)
-        mpb = mb.part("ears", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(mul(skin, 0.92f)))
-        mpb.cbox(-0.295f, 0.26f, 0f, 0.055f, 0.1f, 0.08f)
-        mpb.cbox(0.295f, 0.26f, 0f, 0.055f, 0.1f, 0.08f)
+        // ears — small, tucked to the skull (v4.2: smaller + skin-true, were
+        // salmon flags sticking out of the hair)
+        mpb = mb.part("ears", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(mul(skin, 0.96f)))
+        mpb.cbox(-0.27f, 0.26f, -0.02f, 0.04f, 0.09f, 0.07f)
+        mpb.cbox(0.27f, 0.26f, -0.02f, 0.04f, 0.09f, 0.07f)
         return mb.end()
     }
 

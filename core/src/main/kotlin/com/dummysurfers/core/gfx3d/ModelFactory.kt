@@ -122,9 +122,10 @@ class ModelFactory {
         }
     }
 
-    /** Soft dark ellipse under characters/props. */
+    /** Soft dark ellipse under characters/props (v4.2: lighter — 35% near-black
+     *  read as a tar puddle under the runner). */
     fun shadowBlob(r: Float): Model = models.getOrPut("shadow$r") {
-        build(matBlend(0x101418ff.toInt(), 0.35f)) {
+        build(matBlend(0x27303cff.toInt(), 0.22f)) {
             setUVRange(0f, 0f, 1f, 1f)
             cylinder(r * 2f, 0.02f, r * 2f, 14)
         }
@@ -183,17 +184,21 @@ class ModelFactory {
         mpb.setUVRange(0f, 0f, 1f, 1f)
         mpb.rect(Vector3(hw, y0, -hl), Vector3(-hw, y0, -hl), Vector3(-hw, y1, -hl), Vector3(hw, y1, -hl),
             Vector3(0f, 0f, -1f))
-        // skirt + wheels + vents (shared dark material)
+        // skirt + wheels (shared dark material) + roof vents (v4.2: the vents
+        // shared the dark skirt material — from the roof they read as tar slabs;
+        // SS roof pods are light silver AC units)
         mpb = mb.part("dark", GL20.GL_TRIANGLES, ATTRS, matColor(0x2a2d33ff.toInt()))
         mpb.setUVRange(0f, 0f, 1f, 1f)
         mpb.cbox(0f, y0 / 2f, 0f, W - 0.1f, y0, L - 0.5f)
+        mpb = mb.part("vents", GL20.GL_TRIANGLES, ATTRS, matColor(0xaeb6c0ff.toInt()))
+        mpb.setUVRange(0f, 0f, 1f, 1f)
         for (zz in floatArrayOf(-hl + 1.4f, hl - 1.4f)) {
             for (xx in floatArrayOf(-0.72f, 0.72f)) {
                 mpb.cbox(xx, 0.17f, zz, 0.56f, 0.3f, 0.56f)
             }
         }
-        mpb.cbox(0f, y1 + 0.07f, -1.4f, 1.1f, 0.14f, 1.6f)
-        mpb.cbox(0f, y1 + 0.07f, 1.4f, 1.1f, 0.14f, 1.6f)
+        mpb.cbox(0f, y1 + 0.07f, -1.4f, 1.0f, 0.15f, 1.5f)
+        mpb.cbox(0f, y1 + 0.07f, 1.4f, 1.0f, 0.15f, 1.5f)
         mb.end()
     }
 
