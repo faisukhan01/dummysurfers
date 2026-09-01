@@ -681,9 +681,10 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             audio.play(GameEvent.WHISTLE)
             vibrate(70)
             shake = max(shake, 7f)
-            val sy = proj.groundY(0f) - player.jumpY * proj.ppu + 130f
             particles.text(proj.vw / 2f, proj.vh * 0.58f, "STUMBLE!", Color(0xff6b5eff.toInt()), 26f)
-            particles.burst(proj.screenX(player.x, 0f), sy, 14, Color(0xf2a75bff.toInt()), 260f, 5f)
+            fxAnchor(player.jumpY + 1.3f).let { f ->
+                particles.burst(f.x, f.y, 14, Color(0xf2a75bff.toInt()), 260f, 5f)
+            }
             return
         }
         val caughtByGuard = glancing && dangerTimer > 0f
@@ -701,8 +702,10 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         }
         shake = GameConfig.CRASH_SHAKE
         vibrate(120)
-        particles.burst(proj.screenX(player.x, 0f), proj.groundY(0f) - player.jumpY * proj.ppu + 120f, 26, Color(0xef4444ff.toInt()), 420f, 7f, shape = 1)
-        particles.burst(proj.screenX(player.x, 0f), proj.groundY(0f) - player.jumpY * proj.ppu + 120f, 14, Color(0xf2a75bff.toInt()), 300f, 5f)
+        fxAnchor(player.jumpY + 1.1f).let { f ->
+            particles.burst(f.x, f.y, 26, Color(0xef4444ff.toInt()), 420f, 7f, shape = 1)
+            particles.burst(f.x, f.y, 14, Color(0xf2a75bff.toInt()), 300f, 5f)
+        }
     }
 
     private fun handleCoins(dt: Float) {
@@ -719,8 +722,12 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
                 coinStreak++
                 coinStreakTimer = 0.8f
                 audio.play(GameEvent.COIN, coinStreak.toFloat())
-                particles.burst(proj.screenX(c.x, c.z), proj.groundY(c.z) - c.y * proj.ppu * proj.scale(c.z), 7, Palette.GOLD, 240f, 5f, shape = 1, life = 0.45f)
-                particles.text(proj.screenX(c.x, c.z), proj.groundY(c.z) - c.y * proj.ppu * proj.scale(c.z) + 20f, "+${GameConfig.COIN_VALUE * multiplier}", Palette.GOLD, 16f)
+                // v4.4: spark burst anchored through the true-3D cam (coins live
+                // in world space — the legacy projection put bursts mid-air)
+                scene3d.screenPos(c.x, c.y, c.z, fxV).let { s ->
+                    particles.burst(s.x, s.y, 7, Palette.GOLD, 240f, 5f, shape = 1, life = 0.45f)
+                    particles.text(s.x, s.y + 20f, "+${GameConfig.COIN_VALUE * multiplier}", Palette.GOLD, 16f)
+                }
             }
         }
     }
@@ -740,10 +747,10 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
                 score += GameConfig.POWERUP_SCORE * multiplier
                 audio.play(GameEvent.POWERUP)
                 vibrate(40)
-                val sx = proj.screenX(px, p.z)
-                val sy = proj.groundY(p.z) - 1.35f * proj.ppu * proj.scale(p.z)
-                particles.burst(sx, sy, 20, powerColor(idx), 340f, 6f, life = 0.7f)
-                particles.text(sx, sy + 30f, GameConfig.POWERUP_LABELS[idx], powerColor(idx), 22f)
+                scene3d.screenPos(px, 1.25f, p.z, fxV).let { s ->
+                    particles.burst(s.x, s.y, 20, powerColor(idx), 340f, 6f, life = 0.7f)
+                    particles.text(s.x, s.y + 30f, GameConfig.POWERUP_LABELS[idx], powerColor(idx), 22f)
+                }
             }
         }
     }
