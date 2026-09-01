@@ -681,6 +681,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         shake = 0f
         proj.zoom = 1f
         chaser.trigger(GameConfig.CHASER_START_TIME)
+        audio.play(GameEvent.WHISTLE) // the chase is ON from meter zero
     }
 
     fun startRun() {
