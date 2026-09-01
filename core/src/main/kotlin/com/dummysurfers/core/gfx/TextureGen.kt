@@ -98,6 +98,8 @@ object TextureGen {
     lateinit var panelNine: NinePatch
     lateinit var buttonNine: NinePatch
     lateinit var white: Texture
+    lateinit var disc: Texture            // hard-edged circle (UI pips, wheels, dots)
+    lateinit var hazeBand: Texture        // symmetric horizon haze (soft both edges)
     lateinit var previews: Array<Texture> // character card portraits
 
     // FaceBatch materials — textured pseudo-3D faces (renderer v2)
@@ -120,6 +122,8 @@ object TextureGen {
 
     fun generate() {
         white = solid(4, 4, Color.WHITE)
+        disc = radial(64, Color(1f, 1f, 1f, 1f), 0.86f) // solid core, 14% feather
+        hazeBand = horizonHaze(8, 256)
         glow = radial(128, Color(1f, 1f, 1f, 1f), 0f)
         softShadow = radial(128, Color(0f, 0f, 0f, 0.55f), 0.25f)
         sky = verticalGradient(8, 512, Palette.SKY_TOP, Palette.SKY_MID, Palette.SKY_LOW)
@@ -156,7 +160,7 @@ object TextureGen {
     }
 
     fun dispose() {
-        listOf(glow, softShadow, sky, fog, cloudA, cloudB, skylineFar, skylineNear, vignette, rainbowBurst, white,
+        listOf(glow, softShadow, sky, fog, cloudA, cloudB, skylineFar, skylineNear, vignette, rainbowBurst, white, disc, hazeBand,
             trainRoofTex, hazardTex, signTealTex, containerTex, glassTex).forEach { it.dispose() }
         coinFrames.forEach { it.dispose() }
         powerIcons.forEach { it.dispose() }
@@ -325,6 +329,20 @@ object TextureGen {
     }
 
     /** Fog: opaque at bottom → transparent at top (drawn near horizon). */
+    /** Symmetric horizon haze: transparent → opaque center → transparent. */
+    private fun horizonHaze(w: Int, h: Int): Texture {
+        val p = Pixmap(w, h, Pixmap.Format.RGBA8888)
+        val c = Palette.FOG
+        for (y in 0 until h) {
+            val t = abs(y / (h - 1f) * 2f - 1f)      // 0 at center, 1 at edges
+            val a = (1f - t)
+            val aa = a * a * (3f - 2f * a)            // smoothstep falloff
+            p.setColor(c.r, c.g, c.b, aa)
+            p.drawLine(0, y, w - 1, y)
+        }
+        val tex = Texture(p); p.dispose(); return tex
+    }
+
     private fun verticalGradientFade(w: Int, h: Int, c: Color): Texture {
         val p = Pixmap(w, h, Pixmap.Format.RGBA8888)
         for (y in 0 until h) {

@@ -312,16 +312,13 @@ class UiController(val theme: UiTheme) : InputAdapter() {
             theme.text(batch, theme.fontSmall, "★ BEST!", bx, vh - 163f + bob, Color.WHITE, Align.center, bw)
         }
 
-        // pause button — orange rounded square, white bars (top-right)
+        // pause button — white frosted rounded square, navy bars (SS top-right)
         val pauseX = vw - 92f
         val pauseY = vh - 96f
         hits.add(HitRect("pause", pauseX, pauseY, 68f, 68f) {})
-        theme.button(batch, pauseX, pauseY, 68f, 68f, Palette.UI_ORANGE, pressedId == "pause")
-        sr.begin(ShapeRenderer.ShapeType.Filled)
-        sr.setColor(1f, 1f, 1f, 1f)
-        sr.rect(pauseX + 20f, pauseY + 17f, 8f, 34f)
-        sr.rect(pauseX + 40f, pauseY + 17f, 8f, 34f)
-        sr.end()
+        theme.pill(batch, pauseX, pauseY, 68f, 68f, Palette.UI_PANEL_LIGHT, 0.85f)
+        theme.rect(batch, pauseX + 21f, pauseY + 17f, 8f, 34f, Palette.UI_NAVY)
+        theme.rect(batch, pauseX + 39f, pauseY + 17f, 8f, 34f, Palette.UI_NAVY)
 
         // hoverboard chip — bottom-right: tap it (or double-tap anywhere) to ride
         val boards = b.save.hoverboards
@@ -336,22 +333,14 @@ class UiController(val theme: UiTheme) : InputAdapter() {
             theme.button(batch, chipX, chipY, chipW, chipH, if (active) Palette.UI_ACCENT2 else Palette.UI_NAVY, pressedId == "board")
             val ix = chipX + chipW / 2f
             val iy = chipY + chipH / 2f + 8f
-            sr.begin(ShapeRenderer.ShapeType.Filled)
-            sr.setColor(if (active) Color.WHITE else Palette.UI_ACCENT2)
-            sr.rect(ix - 32f, iy - 7f, 64f, 14f)
-            sr.circle(ix - 32f, iy, 7f)
-            sr.circle(ix + 32f, iy, 7f)
-            sr.setColor(Palette.GOLD)
-            sr.rect(ix - 32f, iy - 2f, 64f, 4f)
-            sr.end()
+            // hoverboard side view (deck + gold stripe + wheels) — batch-safe
+            theme.pill(batch, ix - 34f, iy - 9f, 68f, 18f, if (active) Color.WHITE else Palette.UI_ACCENT2)
+            theme.rect(batch, ix - 34f, iy - 3f, 68f, 5f, Palette.GOLD)
+            theme.disc(batch, ix - 24f, iy - 12f, 6.5f, Palette.UI_PANEL_DEEP)
+            theme.disc(batch, ix + 24f, iy - 12f, 6.5f, Palette.UI_PANEL_DEEP)
             if (active) {
                 val t = if (b.boardTotal > 0f) (bt / b.boardTotal).coerceIn(0f, 1f) else 0f
-                sr.begin(ShapeRenderer.ShapeType.Filled)
-                sr.setColor(Palette.UI_PANEL_DEEP)
-                sr.rect(chipX + 12f, chipY + 14f, chipW - 24f, 10f)
-                sr.setColor(Color.WHITE)
-                sr.rect(chipX + 12f, chipY + 14f, (chipW - 24f) * t, 10f)
-                sr.end()
+                theme.bar(batch, chipX + 12f, chipY + 14f, chipW - 24f, 10f, t, Color.WHITE)
             } else {
                 theme.text(batch, theme.fontTiny, "x$boards", chipX, chipY + 12f, Color.WHITE, Align.center, chipW)
             }
@@ -380,16 +369,13 @@ class UiController(val theme: UiTheme) : InputAdapter() {
                 batch.setColor(1f, 1f, 1f, if (flashing) 0.55f else 1f)
                 batch.draw(TextureGen.powerIcons[i], mX + 14f, mY + 8f, 40f, 40f)
                 batch.setColor(1f, 1f, 1f, 1f)
-                // segmented fill (5 segments like the SS board meter)
-                sr.begin(ShapeRenderer.ShapeType.Filled)
+                // segmented fill (5 segments like the SS board meter) — batch-safe
                 val segs = 5
                 val segW = (mW - 76f) / segs
                 val filled = ceil(t * segs).toInt().coerceIn(0, segs)
                 for (sg in 0 until filled) {
-                    sr.setColor(color)
-                    sr.rect(mX + 62f + sg * segW + 2f, mY + 12f, segW - 4f, 32f)
+                    theme.rect(batch, mX + 62f + sg * segW + 2f, mY + 12f, segW - 4f, 32f, color)
                 }
-                sr.end()
             }
         }
 
@@ -442,27 +428,16 @@ class UiController(val theme: UiTheme) : InputAdapter() {
             "SWIPE DOWN\nTO SLIDE"
         )
         val msg = msgs[step.coerceIn(0, 3)]
-        // pulsing arrow
+        // pulsing arrow — big gold glyph (batch-safe)
         val pulse = sin(time * 5f) * 14f
-        sr.begin(ShapeRenderer.ShapeType.Filled)
-        sr.setColor(Palette.GOLD)
         val cx = vw / 2f
         val cy = vh * 0.42f
-        when (step) {
-            0 -> { // left chevron
-                sr.triangle(cx - 40f - pulse, cy, cx + 10f - pulse, cy + 50f, cx + 10f - pulse, cy - 50f)
-            }
-            1 -> { // right chevron
-                sr.triangle(cx + 40f + pulse, cy, cx - 10f + pulse, cy + 50f, cx - 10f + pulse, cy - 50f)
-            }
-            2 -> { // up chevron
-                sr.triangle(cx, cy + 44f + pulse, cx - 48f, cy - 6f + pulse, cx + 48f, cy - 6f + pulse)
-            }
-            3 -> { // down chevron
-                sr.triangle(cx, cy - 44f - pulse, cx - 48f, cy + 6f - pulse, cx + 48f, cy + 6f - pulse)
-            }
+        val glyph = when (step) {
+            0 -> "←"; 1 -> "→"; 2 -> "↑"; else -> "↓"
         }
-        sr.end()
+        val offX = if (step == 0) -pulse else if (step == 1) pulse else 0f
+        val offY = if (step == 2) pulse else if (step == 3) -pulse else 0f
+        theme.text(batch, theme.fontHuge, glyph, cx - 40f + offX, cy + 40f + offY, Palette.GOLD, Align.center, 80f)
         theme.panel(batch, 60f, vh * 0.16f, vw - 120f, 150f, Palette.UI_PANEL)
         theme.text(batch, theme.fontMed, msg, 0f, vh * 0.16f + 105f, Palette.UI_TEXT, Align.center, vw)
     }
@@ -574,9 +549,6 @@ class UiController(val theme: UiTheme) : InputAdapter() {
             }
         }
 
-        sr.begin(ShapeRenderer.ShapeType.Filled)
-        sr.setColor(1f, 1f, 1f, 1f)
-        sr.end()
         when (b.shopTab) {
             ShopTab.CHARACTERS -> shopCharacters()
             ShopTab.UPGRADES -> shopUpgrades()
@@ -634,12 +606,9 @@ class UiController(val theme: UiTheme) : InputAdapter() {
             batch.setColor(1f, 1f, 1f, 1f)
             batch.draw(TextureGen.powerIcons[i], 44f, y + 38f, 72f, 72f)
             theme.text(batch, theme.fontSmall, GameConfig.POWERUP_LABELS[i], 142f, y + 106f, Palette.UI_TEXT)
-            // level pips
+            // level pips — batch-safe discs
             for (p in 0 until 3) {
-                sr.begin(ShapeRenderer.ShapeType.Filled)
-                sr.setColor(if (p < lvl) Palette.GOLD else Palette.UI_PANEL_DEEP)
-                sr.circle(152f + p * 32f, y + 76f, 11f)
-                sr.end()
+                theme.disc(batch, 152f + p * 32f, y + 76f, 11f, if (p < lvl) Palette.GOLD else Palette.UI_PANEL_DEEP)
             }
             val costText = if (lvl >= 3) "MAXED" else "+3s  ${GameConfig.UPGRADE_COSTS[i][lvl]} C"
             theme.text(batch, theme.fontTiny, costText, 142f, y + 42f, Palette.UI_MUTED)
@@ -657,14 +626,11 @@ class UiController(val theme: UiTheme) : InputAdapter() {
             theme.panel(batch, 24f, y, vw - 48f, 148f, Palette.UI_PANEL_LIGHT)
             val ix = 80f
             val iy = y + 74f
-            sr.begin(ShapeRenderer.ShapeType.Filled)
-            sr.setColor(Palette.UI_ACCENT2)
-            sr.rect(ix - 34f, iy - 8f, 68f, 16f)
-            sr.circle(ix - 34f, iy, 8f)
-            sr.circle(ix + 34f, iy, 8f)
-            sr.setColor(Palette.GOLD)
-            sr.rect(ix - 34f, iy - 2f, 68f, 4f)
-            sr.end()
+            // hoverboard preview — deck + gold stripe + wheels (batch-safe)
+            theme.pill(batch, ix - 34f, iy - 8f, 68f, 16f, Palette.UI_ACCENT2)
+            theme.rect(batch, ix - 34f, iy - 2f, 68f, 4f, Palette.GOLD)
+            theme.disc(batch, ix - 24f, iy - 11f, 6f, Palette.UI_PANEL_DEEP)
+            theme.disc(batch, ix + 24f, iy - 11f, 6f, Palette.UI_PANEL_DEEP)
             theme.text(batch, theme.fontSmall, "HOVERBOARD", 142f, y + 106f, Palette.UI_TEXT)
             val full = b.save.hoverboards >= GameConfig.HOVERBOARD_MAX
             theme.text(batch, theme.fontTiny, "x${b.save.hoverboards} · SAVES FROM ONE CRASH · DOUBLE-TAP TO RIDE", 142f, y + 74f, Palette.UI_MUTED)
@@ -688,13 +654,10 @@ class UiController(val theme: UiTheme) : InputAdapter() {
             val owned = i == 0 || b.save.trail >= i
             val active = b.save.trail == i
             theme.panel(batch, 24f, y, vw - 48f, 150f, Palette.UI_PANEL_LIGHT)
-            // trail preview: three blobs
-            sr.begin(ShapeRenderer.ShapeType.Filled)
+            // trail preview: three fading blobs (batch-safe)
             for (k in 0 until 3) {
-                sr.setColor(colors[i])
-                sr.circle(90f + k * 34f, y + 75f - k * 4f, 14f - k * 3f)
+                theme.disc(batch, 90f + k * 34f, y + 75f - k * 4f, 14f - k * 3f, colors[i], 1f - k * 0.22f)
             }
-            sr.end()
             theme.text(batch, theme.fontMed, names[i], 200f, y + 100f, Palette.UI_TEXT)
             val statusText = if (i == 0) "DEFAULT" else if (active) "EQUIPPED" else if (owned) "OWNED" else "${GameConfig.TRAIL_COSTS[i]} COINS"
             theme.text(batch, theme.fontTiny, statusText, 200f, y + 60f, if (active) Palette.UI_ACCENT2 else Palette.UI_MUTED)
@@ -749,7 +712,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
             theme.panel(batch, 24f, y, vw - 48f, 200f, Palette.UI_PANEL_LIGHT)
             theme.text(batch, theme.fontSmall, missionLabel(m.type), 44f, y + 150f, Palette.UI_TEXT)
             theme.text(batch, theme.fontTiny, "REWARD ${m.reward} COINS", 44f, y + 112f, Palette.GOLD)
-            theme.progressBar(sr, 44f, y + 55f, vw - 400f, 20f, m.progress.toFloat() / m.goal, if (done) Palette.UI_GREEN else Palette.GOLD)
+            theme.bar(batch, 44f, y + 55f, vw - 400f, 20f, m.progress.toFloat() / m.goal, if (done) Palette.UI_GREEN else Palette.GOLD)
             theme.text(batch, theme.fontTiny, "${min(m.progress, m.goal)}/${m.goal}", 44f, y + 40f, Palette.UI_MUTED)
             if (m.claimed) {
                 theme.panel(batch, vw - 280f, y + 60f, 230f, 80f, Palette.UI_PANEL_DEEP)
@@ -779,16 +742,12 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         fun toggle(id: String, label: String, on: Boolean, set: (Boolean) -> Unit) {
             theme.panel(batch, 24f, y, vw - 48f, 110f, Palette.UI_PANEL_LIGHT)
             theme.text(batch, theme.fontMed, label, 48f, y + 65f, Palette.UI_TEXT)
-            // switch
+            // switch — pill track + sliding knob (batch-safe)
             val sx = vw - 220f
-            sr.begin(ShapeRenderer.ShapeType.Filled)
-            sr.setColor(if (on) Palette.UI_GREEN else Palette.UI_PANEL_DEEP)
-            sr.rect(sx, y + 30f, 150f, 50f)
-            sr.circle(sx + 25f, y + 55f, 25f)
-            sr.circle(sx + 125f, y + 55f, 25f)
-            sr.setColor(Color.WHITE)
-            sr.circle(if (on) sx + 118f else sx + 32f, y + 55f, 21f)
-            sr.end()
+            theme.pill(batch, sx, y + 30f, 150f, 50f, if (on) Palette.UI_GREEN else Palette.UI_PANEL_DEEP)
+            theme.disc(batch, sx + 25f, y + 55f, 24f, if (on) Palette.UI_GREEN else Palette.UI_PANEL_DEEP)
+            theme.disc(batch, sx + 125f, y + 55f, 24f, if (on) Palette.UI_GREEN else Palette.UI_PANEL_DEEP)
+            theme.disc(batch, if (on) sx + 118f else sx + 32f, y + 55f, 20f, Color.WHITE)
             hits.add(HitRect(id, sx - 20f, y + 20f, 190f, 70f) {})
             if (clickId == id) set(!on)
         }
@@ -799,7 +758,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         toggle("vib", "VIBRATION", b.save.vibrationOn) { b.setVibration(it) }
         y -= 170f
         if (btn("reset", vw / 2 - 190f, y, 380f, 100f, Palette.DANGER, "RESET DATA", theme.fontSmall)) b.openPanel(MenuPanel.RESET_CONFIRM)
-        theme.text(batch, theme.fontTiny, "DUMMY SURFERS BY FSK — V1.0", 0f, 80f, Palette.UI_MUTED, Align.center, vw)
+        theme.text(batch, theme.fontTiny, "DUMMY SURFERS BY FSK", 0f, 80f, Palette.UI_MUTED, Align.center, vw)
         theme.text(batch, theme.fontTiny, "RUNS ${b.save.stats.runs}   BEST DIST ${b.save.stats.bestDistance}m", 0f, 110f, Palette.UI_MUTED, Align.center, vw)
     }
 

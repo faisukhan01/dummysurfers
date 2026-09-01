@@ -102,6 +102,37 @@ class UiTheme {
         sr.end()
     }
 
+    // ── Batch-safe primitives (v4.1) ───────────────────────────────────
+    // The HUD draws between the game's batch.begin()/end(); ShapeRenderer
+    // there gets OVERPAINTED when the batch flushes at end() — so UI shapes
+    // must go through the batch (white/disc textures tinted per draw).
+
+    fun rect(batch: SpriteBatch, x: Float, y: Float, w: Float, h: Float, color: Color, alpha: Float = 1f) {
+        batch.setColor(color.r, color.g, color.b, color.a * alpha)
+        batch.draw(TextureGen.white, x, y, w, h)
+        batch.setColor(1f, 1f, 1f, 1f)
+    }
+
+    fun disc(batch: SpriteBatch, cx: Float, cy: Float, r: Float, color: Color, alpha: Float = 1f) {
+        batch.setColor(color.r, color.g, color.b, color.a * alpha)
+        batch.draw(TextureGen.disc, cx - r, cy - r, r * 2f, r * 2f)
+        batch.setColor(1f, 1f, 1f, 1f)
+    }
+
+    /** Rounded pill via the button ninepatch — used for switch tracks, meters. */
+    fun pill(batch: SpriteBatch, x: Float, y: Float, w: Float, h: Float, color: Color, alpha: Float = 1f) {
+        val np = TextureGen.panelNine
+        np.setColor(npColor.set(color.r, color.g, color.b, color.a * alpha))
+        np.draw(batch, x, y, w, h)
+        np.setColor(npColor.set(1f, 1f, 1f, 1f))
+    }
+
+    /** Batch progress bar (mission meters, board timer). */
+    fun bar(batch: SpriteBatch, x: Float, y: Float, w: Float, h: Float, t: Float, color: Color) {
+        pill(batch, x - 3f, y - 3f, w + 6f, h + 6f, Palette.UI_PANEL_DEEP)
+        if (t > 0f) rect(batch, x, y, w * t.coerceIn(0f, 1f), h, color)
+    }
+
     fun coinIcon(batch: SpriteBatch, x: Float, y: Float, size: Float) {
         batch.draw(TextureGen.coinFrames[0], x, y, size, size)
     }
