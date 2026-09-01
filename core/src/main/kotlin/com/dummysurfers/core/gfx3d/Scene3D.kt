@@ -96,8 +96,10 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
         env.set(ambientDay)
         env.add(sun)
         // build recycled strips once
-        val trackM = factory.texBox("trackSeg", 10.6f, 0.1f, SEG, TextureGen.trackTex, 1.42f, 2f)
-        val dirtM = factory.texBox("dirtSeg", 7.5f, 0.08f, SEG, TextureGen.dirtTex, 1f, 2f)
+        // v4.4: texGround quads — box() transposed the top-face UV (ties ran
+        // ALONG the track, rails ACROSS as zebra stripes; QA 2026-09-02)
+        val trackM = factory.texGround("trackSeg", 10.6f, SEG, TextureGen.trackTex, 1f, 2f)
+        val dirtM = factory.texGround("dirtSeg", 7.5f, SEG, TextureGen.dirtTex, 3f, 2f)
         val wallM = factory.texBox("wallSeg", 0.35f, 3.0f, SEG, TextureGen.wallTex, 2f, 1f)
         repeat(NSEG) {
             trackSegs.add(ModelInstance(trackM))

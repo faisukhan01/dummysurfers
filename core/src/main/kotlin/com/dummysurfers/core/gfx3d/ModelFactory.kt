@@ -86,6 +86,24 @@ class ModelFactory {
             }
         }
 
+    /**
+     * Flat ground strip with CORRECT texture orientation: texture-u across x
+     * (width), texture-v along z (depth). LibGDX's box() maps the top face
+     * TRANSPOSED — ties rendered ALONG the track and rails ACROSS it (QA
+     * 2026-09-02). Top face only: the camera never dips below the ground.
+     */
+    fun texGround(key: String, w: Float, d: Float, tex: Texture, uvU: Float = 1f, uvV: Float = 1f): Model =
+        models.getOrPut(key) {
+            mb.begin()
+            val mpb = mb.part("p", GL20.GL_TRIANGLES, ATTRS, matTex(tex))
+            val hw = w / 2f; val hd = d / 2f
+            mpb.setUVRange(0f, 0f, uvU, uvV)
+            // CCW seen from +y (right-hand rule normal = +y, else back-face culled)
+            mpb.rect(Vector3(-hw, 0f, hd), Vector3(hw, 0f, hd), Vector3(hw, 0f, -hd), Vector3(-hw, 0f, -hd),
+                Vector3(0f, 1f, 0f))
+            mb.end()
+        }
+
     /** Thin textured slab standing up (double-sided by default). */
     fun texPlane(key: String, w: Float, h: Float, tex: Texture, doubleSided: Boolean = true): Model =
         models.getOrPut(key) {

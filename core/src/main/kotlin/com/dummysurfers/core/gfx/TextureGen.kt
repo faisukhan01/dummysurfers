@@ -176,38 +176,46 @@ object TextureGen {
         trackTex.dispose(); dirtTex.dispose(); wallTex.dispose(); tunnelTex.dispose()
     }
 
-    /** Ballast + wooden sleepers + steel rails — one tile = 7.5u wide × 3.5u deep. */
+    /** Ballast + wooden sleepers + steel rails — one tile = 10.6u wide × 3.5u
+     *  deep, geometry-matched to the 3D track strip (v4.4): lane centers at
+     *  ±2.5u (LANE_WIDTH), rails at ±0.88u per lane, tie every 1.75u. The old
+     *  tile was authored for a 3-lanes-per-tile layout at 1.42 repeats — rails
+     *  landed at ±4.66u where no lane exists. */
     private fun trackTile(): Texture {
         val s = 256
         val p = Pixmap(s, s, Pixmap.Format.RGBA8888)
         // ballast base
         p.setColor(0x8f8578ff.toInt()); p.fill()
         val rnd = java.util.Random(9L)
-        for (i in 0 until 900) {
-            val g = (0.75f + rnd.nextFloat() * 0.5f)
+        // v4.4: finer, subtler speckle — the old 2-5px chips magnified into
+        // cow-print blotches at 0.04u/texel
+        for (i in 0 until 1500) {
+            val g = (0.84f + rnd.nextFloat() * 0.32f)
             p.setColor((0.56f * g).coerceAtMost(1f), (0.52f * g).coerceAtMost(1f), (0.47f * g).coerceAtMost(1f), 1f)
-            p.fillRectangle(rnd.nextInt(s), rnd.nextInt(s), 2 + rnd.nextInt(3), 2 + rnd.nextInt(2))
+            p.fillRectangle(rnd.nextInt(s), rnd.nextInt(s), 1 + rnd.nextInt(2), 1 + rnd.nextInt(2))
         }
-        // dark ties across every lane (3 lanes → centers at 1/6, 3/6, 5/6)
-        val tieH = 34
+        val pxU = s / 10.6f // 24.15 px per world unit across
+        // dark ties across every lane (lane centers at -2.5, 0, +2.5)
+        val tieH = 33
         var ty = 60
         while (ty < s) {
-            for (lane in 0 until 3) {
-                val cx = s / 6 + lane * s / 3
-                p.setColor(0x4a3a2aff.toInt()); p.fillRectangle(cx - 96, ty, 76, tieH)
-                p.setColor(0x5c4834ff.toInt()); p.fillRectangle(cx - 96, ty, 76, 6)
-                p.setColor(0x3a2d20ff.toInt()); p.fillRectangle(cx - 96, ty + tieH - 5, 76, 5)
+            for (lane in -1..1) {
+                val cx = (s / 2f + lane * 2.5f * pxU)
+                val x0 = (cx - 1.05f * pxU).toInt()
+                val tw = (2.1f * pxU).toInt()
+                p.setColor(0x4a3a2aff.toInt()); p.fillRectangle(x0, ty, tw, tieH)
+                p.setColor(0x5c4834ff.toInt()); p.fillRectangle(x0, ty, tw, 6)
+                p.setColor(0x3a2d20ff.toInt()); p.fillRectangle(x0, ty + tieH - 5, tw, 5)
             }
             ty += 128
         }
-        // steel rails (2 per lane) with shine
-        for (lane in 0 until 3) {
-            val cx = s / 6 + lane * s / 3
-            for (off in intArrayOf(-52, 52)) {
-                val rx = cx + off - 5
-                p.setColor(0x6a6f76ff.toInt()); p.fillRectangle(rx, 0, 10, s)
-                p.setColor(0xd9dde2ff.toInt()); p.fillRectangle(rx + 2, 0, 3, s)
-                p.setColor(0x9aa0a8ff.toInt()); p.fillRectangle(rx + 7, 0, 3, s)
+        // steel rails (2 per lane at ±0.88u) with shine
+        for (lane in -1..1) {
+            for (off in floatArrayOf(-0.88f, 0.88f)) {
+                val rx = (s / 2f + (lane * 2.5f + off) * pxU).toInt() - 3
+                p.setColor(0x6a6f76ff.toInt()); p.fillRectangle(rx, 0, 6, s)
+                p.setColor(0xd9dde2ff.toInt()); p.fillRectangle(rx + 1, 0, 2, s)
+                p.setColor(0x9aa0a8ff.toInt()); p.fillRectangle(rx + 4, 0, 2, s)
             }
         }
         val t = Texture(p); p.dispose()
@@ -222,10 +230,11 @@ object TextureGen {
         val p = Pixmap(s, s, Pixmap.Format.RGBA8888)
         p.setColor(0x9b8a72ff.toInt()); p.fill()
         val rnd = java.util.Random(31L)
-        for (i in 0 until 420) {
-            val g = 0.7f + rnd.nextFloat() * 0.6f
+        // v4.4: finer speckle (old 2-5px chips magnified into blotches)
+        for (i in 0 until 700) {
+            val g = 0.82f + rnd.nextFloat() * 0.36f
             p.setColor((0.61f * g).coerceAtMost(1f), (0.54f * g).coerceAtMost(1f), (0.42f * g).coerceAtMost(1f), 1f)
-            p.fillRectangle(rnd.nextInt(s), rnd.nextInt(s), 2 + rnd.nextInt(3), 2 + rnd.nextInt(2))
+            p.fillRectangle(rnd.nextInt(s), rnd.nextInt(s), 1 + rnd.nextInt(2), 1 + rnd.nextInt(2))
         }
         val t = Texture(p); p.dispose()
         t.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat)
