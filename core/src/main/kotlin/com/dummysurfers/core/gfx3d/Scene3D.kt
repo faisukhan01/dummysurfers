@@ -162,7 +162,9 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
 
         // ── decorations ────────────────────────────────────────────────
         for (d in world.decos) {
-            if (d.z < -14f || d.z > 92f) continue
+            // v4.2: cull decos once they pass the runner — benches/signs at
+            // z≈0 projected into giant dark slabs at the frame edges
+            if (d.z < 0.5f || d.z > 92f) continue
             var di = decoMap.getOrPut(d) { DecoInst(ModelInstance(decoModel(d)), d.kind, d.variant) }
             // pooled Deco objects get repurposed — rebuild the instance when the shape changed
             if (di.kind != d.kind || di.variant != d.variant) {
