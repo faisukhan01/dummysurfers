@@ -219,13 +219,25 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
                         inst.transform.setToTranslation(0f, 0f, gz)
                         frame.add(inst)
                     }
-                    val glow = poolGet(lampGlowPool, liL + liR - 1, "tglow") { ModelInstance(factory.glowBillboard(2.6f, TextureGen.warmGlow)) }
-                    billboard(glow, side * 4.35f, 5.2f, gz, 0.55f)
-                    frame.add(glow)
-                    // v4.6 additive warm pool on the ballast, biased to the lamp's wall
-                    val fp = poolGet(lampFloorPool, liF++, "tfloor") { ModelInstance(floorPoolModel) }
-                    fp.transform.setToTranslation(side * 1.7f, 0.04f, gz)
-                    frame.add(fp)
+                    // v4.7 WASH FIX: halos/pools rendered all the way down to
+                    // z=-1 — a 2.6u halo or a 5.2x3.8 ADDITIVE pool just 3.9u
+                    // from the lens flooded ~70% of the frame with white light
+                    // every time the runner passed under a lamp (QA chase batch
+                    // shots 4-9). The lamp MODEL still whooshes past overhead
+                    // (solid geometry reads fine up close); the glows now cull
+                    // at 3.5 and ease their scale in from 9 — tunnels stay
+                    // amber-lit ahead without the lens flash at the pass-under.
+                    if (z > 3.5f) {
+                        val near = ((z - 3.5f) / 5.5f).coerceIn(0f, 1f) // 0 @3.5 → 1 @9
+                        val glow = poolGet(lampGlowPool, liL + liR - 1, "tglow") { ModelInstance(factory.glowBillboard(2.6f, TextureGen.warmGlow)) }
+                        billboard(glow, side * 4.35f, 5.2f, gz, 0.55f * near)
+                        frame.add(glow)
+                        // v4.6 additive warm pool on the ballast, biased to the lamp's wall
+                        val fp = poolGet(lampFloorPool, liF++, "tfloor") { ModelInstance(floorPoolModel) }
+                        fp.transform.setToTranslation(side * 1.7f, 0.04f, gz)
+                        fp.transform.scale(near, 1f, near)
+                        frame.add(fp)
+                    }
                 }
                 z += 8f
             }
