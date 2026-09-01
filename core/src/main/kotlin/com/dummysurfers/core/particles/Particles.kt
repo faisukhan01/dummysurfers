@@ -115,26 +115,39 @@ class Particles(private val max: Int = 320) {
     }
 
     fun render(sr: ShapeRenderer) {
+        // NOTE: rendered inside a single ShapeType.Filled pass (see EntityRenderer).
+        // We must NOT call sr.set() here — it throws unless autoShapeType was
+        // enabled, and this was a LATENT CRASH on every coin-pickup spark burst.
+        // Line-style shapes are drawn as thin filled quads (rectLine) instead.
         for (p in pool) {
             if (!p.active) continue
             val t = p.life / p.maxLife
             tmp.set(p.color); tmp.a = Mathz.clamp01(t * 1.4f)
             sr.setColor(tmp)
             when (p.shape) {
-                0 -> { sr.set(ShapeRenderer.ShapeType.Filled); sr.circle(p.x, p.y, p.size * (0.5f + t * 0.5f)) }
+                0 -> sr.circle(p.x, p.y, p.size * (0.5f + t * 0.5f))
                 1 -> {
-                    sr.set(ShapeRenderer.ShapeType.Line)
-                    sr.line(p.x, p.y, p.x - p.vx * 0.03f, p.y - p.vy * 0.03f)
+                    val w = (p.size * 0.45f).coerceAtLeast(1.2f)
+                    sr.rectLine(p.x, p.y, p.x - p.vx * 0.03f, p.y - p.vy * 0.03f, w)
                 }
-                2 -> {
-                    sr.set(ShapeRenderer.ShapeType.Filled)
-                    sr.rect(p.x - p.size / 2, p.y - p.size / 4, p.size / 2, p.size / 4, p.size, p.size / 2, 1f, 1f, p.rot)
+                2 -> sr.rect(p.x - p.size / 2, p.y - p.size / 4, p.size / 2, p.size / 4, p.size, p.size / 2, 1f, 1f, p.rot)
+                3 -> {
+                    // ring drawn as short filled segments around the circumference
+                    val r = p.size * (1.4f - t)
+                    val segs = 12
+                    val lw = 1.6f
+                    var i = 0
+                    while (i < segs) {
+                        val a0 = 2.0 * PI * i / segs
+                        val a1 = 2.0 * PI * (i + 1) / segs
+                        sr.rectLine(
+                            p.x + cos(a0).toFloat() * r, p.y + sin(a0).toFloat() * r,
+                            p.x + cos(a1).toFloat() * r, p.y + sin(a1).toFloat() * r, lw
+                        )
+                        i++
+                    }
                 }
-                3 -> { sr.set(ShapeRenderer.ShapeType.Line); sr.circle(p.x, p.y, p.size * (1.4f - t)) }
-                4 -> {
-                    sr.set(ShapeRenderer.ShapeType.Line)
-                    sr.line(p.x, p.y, p.x - p.vx * 0.05f, p.y - p.vy * 0.05f)
-                }
+                4 -> sr.rectLine(p.x, p.y, p.x - p.vx * 0.05f, p.y - p.vy * 0.05f, (p.size * 0.6f).coerceAtLeast(1.2f))
             }
         }
     }
