@@ -91,7 +91,9 @@ class Human3D(
         val shinM = f.colorBox("shin$pants", 0.18f, 0.26f, 0.2f, pants)
         val shoeM = f.colorBox("shoe$shoes$accent", 0.19f, 0.13f, 0.36f, shoes)
         val upperM = f.colorBox("upper$hoodie", 0.17f, 0.27f, 0.18f, hoodie)
-        val foreM = f.colorBox("fore$skin", 0.15f, 0.2f, 0.16f, skin)
+        // v4.2: guard gets uniform-covered forearms (bare skin read as T-shirt
+        // arms on a duty officer)
+        val foreM = f.colorBox("fore$skin$isGuard", 0.15f, 0.2f, 0.16f, if (isGuard) hoodie else skin)
         val handM = f.colorBox("hand$skin", 0.14f, 0.13f, 0.15f, skin)
 
         thighL = rig.add(ModelInstance(thighM), null, -0.13f, 0.72f, 0f)
@@ -170,6 +172,9 @@ class Human3D(
         mpb = mb.part("hair", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(hair))
         mpb.cbox(0f, 0.50f, -0.04f, 0.6f, 0.09f, 0.54f)
         mpb.cbox(0f, 0.44f, -0.27f, 0.44f, 0.1f, 0.04f)
+        // BACK of the head — hair panel under the cap (v4.2: the uniform-skin
+        // head box read bald from the chase cam; SS heads show hair at the back)
+        mpb.cbox(0f, 0.33f, 0.26f, 0.52f, 0.3f, 0.03f)
         // cap dome + brim (BACKWARDS: brim points +z, at the chase camera) + ridge
         mpb = mb.part("cap", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(cap))
         mpb.cbox(0f, 0.63f, -0.01f, 0.62f, 0.16f, 0.54f)

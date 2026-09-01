@@ -307,7 +307,7 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
             val gx = guardX(player)
             val gz = -chaserZ(chaser)
             m.setToTranslation(gx, 0f, gz)
-            m.scale(0.92f, 0.92f, 0.92f)
+            m.scale(0.84f, 0.84f, 0.84f)
             if (chaser.grabbed) {
                 // grab pose: guard lunges onto the runner
                 g.animate(m, PlayerState.DEAD, chaser.runPhase, 0f, 0f, 0f, false, time, time, true)
@@ -317,7 +317,7 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
             for (p in g.rig.parts) frame.add(p.instance)
             // dog gallops beside the guard (a touch further back)
             m2.setToTranslation(gx + GameConfig.CHASER_DOG_OFFSET_X, 0f, gz - 0.12f)
-            m2.scale(0.8f, 0.8f, 0.8f)
+            m2.scale(0.72f, 0.72f, 0.72f)
             dog.animate(m2, chaser.dogPhase, time)
             for (p in dog.rig.parts) frame.add(p.instance)
         }
