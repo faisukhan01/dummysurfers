@@ -83,9 +83,9 @@ class AndroidLauncher : AndroidApplication() {
         }
     }
 
-    private fun askToReport(text: String) {
+    private fun askToReport(report: String) {
         val body = TextView(this).apply {
-            text = "Something went wrong last time.\nSend this report to the developer (Copy or Share), then tap Start game.\n\n$text"
+            setText("Something went wrong last time.\nSend this report to the developer (Copy or Share), then tap Start game.\n\n$report")
             setTextIsSelectable(true)
             setPadding(48, 24, 48, 24)
         }
@@ -93,12 +93,12 @@ class AndroidLauncher : AndroidApplication() {
         AlertDialog.Builder(this)
             .setTitle("Oops — Dummy Surfers crashed")
             .setView(scroll)
-            .setPositiveButton("Copy report") { _, _ -> copy(text) }
+            .setPositiveButton("Copy report") { _, _ -> copy(report) }
             .setNegativeButton("Share…") { _, _ ->
                 val i = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
                     putExtra(Intent.EXTRA_SUBJECT, "Dummy Surfers crash report")
-                    putExtra(Intent.EXTRA_TEXT, text)
+                    putExtra(Intent.EXTRA_TEXT, report)
                 }
                 startActivity(Intent.createChooser(i, "Share crash report"))
             }
