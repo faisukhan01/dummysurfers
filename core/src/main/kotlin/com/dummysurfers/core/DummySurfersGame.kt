@@ -59,7 +59,11 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     private lateinit var ui: UiController
     private val audio = AudioManager()
 
-    private val save = SaveManager()
+    // v1.2.0 FIX: must NOT be constructed eagerly here — this initializer runs
+    // before LibGDX assigns Gdx.app, and SaveManager's constructor calls
+    // Gdx.app.getPreferences(...) → instant NPE at launch. `by lazy` defers the
+    // first access to create()/callbacks, when the engine is fully wired up.
+    private val save: SaveManager by lazy { SaveManager() }
     private val world = WorldGenerator()
     private val spawner = Spawner()
     private val player = Player()

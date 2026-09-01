@@ -11,8 +11,8 @@ android {
         applicationId = "com.fsk.dummysurfers"
         minSdk = 24
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.1.1"
+        versionCode = 4
+        versionName = "1.2.0"
     }
 
     signingConfigs {
@@ -55,6 +55,8 @@ dependencies {
     implementation("com.badlogicgames.gdx:gdx-backend-android:1.12.1")
     implementation("com.badlogicgames.gdx:gdx-platform:1.12.1:natives-armeabi-v7a")
     implementation("com.badlogicgames.gdx:gdx-platform:1.12.1:natives-arm64-v8a")
+    implementation("com.badlogicgames.gdx:gdx-platform:1.12.1:natives-x86_64") // emulators
     implementation("com.badlogicgames.gdx:gdx-freetype-platform:1.12.1:natives-armeabi-v7a")
     implementation("com.badlogicgames.gdx:gdx-freetype-platform:1.12.1:natives-arm64-v8a")
+    implementation("com.badlogicgames.gdx:gdx-freetype-platform:1.12.1:natives-x86_64") // emulators
 }
