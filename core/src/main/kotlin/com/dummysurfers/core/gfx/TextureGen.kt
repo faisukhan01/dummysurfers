@@ -602,19 +602,26 @@ object TextureGen {
         return Color(col.r * f, col.g * f, col.b * f, 1f).toIntBits()
     }
 
-    /** Standing character portrait for shop cards (SS front-view chibi). */
+    /**
+     * v4.3 STANDING PORTRAIT REBUILD — the old 320px preview read as broken
+     * robot-armor on the menu (arms were a diagonal chain of outlined circles
+     * = "wings", legs vanished against the track, sneakers floated mid-air).
+     * New: 360px canvas, SS chibi proportions (head ≈ 45% of height), ONE
+     * connected capsule per arm, planted chunky sneakers + in-texture ground
+     * shadow, simplified torso (hoodie/zipper/pocket + subtle vest stripes).
+     */
     private fun characterPreview(ch: CharacterDef): Texture {
-        val s = 320
+        val s = 360
         val p = Pixmap(s, s, Pixmap.Format.RGBA8888)
         val cx = s / 2f
         val OUT = 0x24316bff.toInt()
 
-        // geometry (feet at y=308)
-        val headR = 60f
-        val headCY = 92f
-        val shoulderY = 176f
-        val hipY = 248f
-        val footY = 308f
+        // geometry (feet at y=344)
+        val headR = 82f
+        val headCY = 132f
+        val shoulderY = 222f
+        val hipY = 278f
+        val footY = 344f
 
         fun circ(x: Float, y: Float, r: Float, col: Int) {
             p.setColor(OUT); p.fillCircle(x.toInt(), y.toInt(), (r + 4f).toInt())
@@ -631,107 +638,117 @@ object TextureGen {
             circ(x + r, y + h - r, r, col); circ(x + w - r, y + h - r, r, col)
         }
         fun bare(x: Int, y: Int, w: Int, h: Int, col: Int) { p.setColor(col); p.fillRectangle(x, y, w, h) }
+        fun softCol(col: Int, a: Float) { val c = Color(col); p.setColor(c.r, c.g, c.b, a) }
 
-        // LEGS + SNEAKERS (drawn first, torso overlaps hips)
-        val legW = 26f
-        for (side in intArrayOf(-1, 1)) {
-            val lx = cx + side * 17f - legW / 2
-            rect(lx, hipY, legW, footY - hipY - 10f, ch.pants)
-            // knee patch hint
-            bare((lx + 5f).toInt(), (hipY + 26f).toInt(), (legW - 10f).toInt(), 8, mul(ch.pants, 1.18f))
-            // chunky sneaker: rounded + white sole + lace hint
-            roundRect(cx + side * 17f - 20f, footY - 22f, 40f, 16f, 8f, ch.shoes)
-            bare((cx + side * 17f - 20f).toInt(), (footY - 8f).toInt(), 40, 8, 0xf7f7f7ff.toInt())
-            bare((cx + side * 17f - 8f).toInt(), (footY - 18f).toInt(), 16, 5, mul(ch.shoes, 0.75f))
+        // grounding shadow inside the texture — the hero never floats
+        // (Pixmap has no fillEllipse — scanline stack)
+        softCol(0x1c2440ff.toInt(), 0.32f)
+        var si = 0
+        while (si < 13) {
+            val t = si / 12f
+            val w = (96f * kotlin.math.sqrt(1f - (t - 0.5f) * (t - 0.5f) * 4f)).toInt().coerceAtLeast(4)
+            p.fillRectangle((cx - w).toInt(), (footY - 14f + si * 2f).toInt(), w * 2, 2)
+            si++
         }
 
-        // TORSO — hoodie with rounded shoulders
-        roundRect(cx - 52f, shoulderY, 104f, hipY - shoulderY + 14f, 26f, ch.hoodie)
-        // hoodie hem band
-        bare((cx - 52f).toInt(), (hipY - 2f).toInt(), 104, 12, mul(ch.hoodie, 0.82f))
+        // ── LEGS + SNEAKERS (drawn first, torso overlaps hips) ─────────
+        val legW = 32f
+        for (side in intArrayOf(-1, 1)) {
+            val lx = cx + side * 20f - legW / 2
+            rect(lx, hipY, legW, footY - hipY - 14f, ch.pants)
+            // knee patch hint
+            bare((lx + 6f).toInt(), (hipY + 28f).toInt(), (legW - 12f).toInt(), 9, mul(ch.pants, 1.2f))
+            // chunky sneaker planted on the baseline: body + white sole + lace band
+            roundRect(cx + side * 20f - 24f, footY - 26f, 48f, 20f, 9f, ch.shoes)
+            bare((cx + side * 20f - 24f).toInt(), (footY - 9f).toInt(), 48, 9, 0xd8dadeff.toInt())
+            bare((cx + side * 20f - 10f).toInt(), (footY - 22f).toInt(), 20, 5, mul(ch.shoes, 0.72f))
+            p.setColor(OUT); p.fillRectangle((cx + side * 20f - 26f).toInt(), (footY - 3f).toInt(), 52, 3)
+        }
+
+        // ── TORSO — hoodie, one clean silhouette ───────────────────────
+        roundRect(cx - 56f, shoulderY, 112f, hipY - shoulderY + 16f, 28f, ch.hoodie)
+        bare((cx - 56f).toInt(), (hipY + 2f).toInt(), 112, 12, mul(ch.hoodie, 0.8f))
         // front pocket
-        roundRect(cx - 30f, hipY - 14f, 60f, 26f, 9f, mul(ch.hoodie, 0.88f))
+        roundRect(cx - 32f, hipY - 12f, 64f, 28f, 10f, mul(ch.hoodie, 0.86f))
         // zipper
-        bare((cx - 2f).toInt(), (shoulderY + 14f).toInt(), 4, 62, mul(ch.hoodie, 0.62f))
-        bare((cx - 5f).toInt(), (shoulderY + 40f).toInt(), 10, 14, 0xffc93cff.toInt())
-        // v3.0: undershirt collar hint (Jack's red tee under the hoodie)
+        bare((cx - 2f).toInt(), (shoulderY + 16f).toInt(), 4, 66, mul(ch.hoodie, 0.58f))
+        bare((cx - 6f).toInt(), (shoulderY + 44f).toInt(), 12, 15, ch.accent)
+        // undershirt collar hint (Jack's white tee under the red hoodie)
         if (ch.hoodLining != 0) {
             p.setColor(ch.hoodLining)
-            p.fillRectangle((cx - 14f).toInt(), (shoulderY + 6f).toInt(), 28, 14)
+            p.fillRectangle((cx - 15f).toInt(), (shoulderY + 8f).toInt(), 30, 15)
             p.setColor(OUT)
-            p.fillRectangle((cx - 14f).toInt(), (shoulderY + 6f).toInt(), 3, 14)
-            p.fillRectangle((cx + 11f).toInt(), (shoulderY + 6f).toInt(), 3, 14)
+            p.fillRectangle((cx - 15f).toInt(), (shoulderY + 8f).toInt(), 3, 15)
+            p.fillRectangle((cx + 12f).toInt(), (shoulderY + 8f).toInt(), 3, 15)
         }
-        // v3.0: denim vest side panels (Jack's signature layer)
+        // vest: SUBTLE side stripes INSIDE the silhouette (no more outline blobs)
         if (ch.vest != 0) {
-            roundRect(cx - 54f, shoulderY + 2f, 24f, hipY - shoulderY + 6f, 10f, ch.vest)
-            roundRect(cx + 30f, shoulderY + 2f, 24f, hipY - shoulderY + 6f, 10f, ch.vest)
-            p.setColor(mul(ch.vest, 0.82f))
-            p.fillRectangle((cx - 36f).toInt(), (shoulderY + 8f).toInt(), 6, (hipY - shoulderY - 8f).toInt())
-            p.fillRectangle((cx + 30f).toInt(), (shoulderY + 8f).toInt(), 6, (hipY - shoulderY - 8f).toInt())
+            p.setColor(mul(ch.vest, 1.02f))
+            p.fillRectangle((cx - 50f).toInt(), (shoulderY + 10f).toInt(), 15, (hipY - shoulderY - 4f).toInt())
+            p.fillRectangle((cx + 35f).toInt(), (shoulderY + 10f).toInt(), 15, (hipY - shoulderY - 4f).toInt())
+            p.setColor(mul(ch.vest, 0.78f))
+            p.fillRectangle((cx - 37f).toInt(), (shoulderY + 10f).toInt(), 4, (hipY - shoulderY - 4f).toInt())
+            p.fillRectangle((cx + 33f).toInt(), (shoulderY + 10f).toInt(), 4, (hipY - shoulderY - 4f).toInt())
         }
-
-        // BACKPACK STRAPS over the shoulders + chest strap
+        // backpack straps over the shoulders (kept subtle)
         for (side in intArrayOf(-1, 1)) {
-            roundRect(cx + side * 34f - 8f, shoulderY + 4f, 16f, hipY - shoulderY - 8f, 7f, mul(ch.backpack, 0.9f))
+            p.setColor(mul(ch.backpack, 0.88f))
+            p.fillRectangle((cx + side * 34f - 7f).toInt(), (shoulderY + 6f).toInt(), 14, (hipY - shoulderY - 10f).toInt())
+            p.setColor(mul(ch.backpack, 1.08f))
+            p.fillRectangle((cx + side * 34f - 7f).toInt(), (shoulderY + 6f).toInt(), 4, (hipY - shoulderY - 10f).toInt())
         }
-        roundRect(cx - 26f, shoulderY + 30f, 52f, 10f, 5f, mul(ch.backpack, 1.1f))
 
-        // ARMS — capsule sleeves + hands
+        // ── ARMS — ONE connected capsule per side + hand ────────────────
         for (side in intArrayOf(-1, 1)) {
-            val shoulderX = cx + side * 52f
-            circ(shoulderX + side * 4f, shoulderY + 18f, 15f, ch.hoodie)
-            circ(shoulderX + side * 12f, shoulderY + 44f, 13f, ch.hoodie)
-            circ(shoulderX + side * 17f, shoulderY + 66f, 11f, mul(ch.hoodie, 0.92f))
-            circ(shoulderX + side * 18f, shoulderY + 80f, 10f, ch.skin)
+            val sx = cx + side * 58f
+            roundRect(sx - 16f, shoulderY + 6f, 32f, 62f, 16f, ch.hoodie)
+            // cuff
+            bare((sx - 14f).toInt(), (shoulderY + 56f).toInt(), 28, 9, mul(ch.hoodie, 0.7f))
+            circ(sx, shoulderY + 74f, 14f, ch.skin)
         }
 
-        // HEAD — hair base, ears, then face plate
-        for (side in intArrayOf(-1, 1)) circ(cx + side * (headR - 2f), headCY + 6f, 11f, ch.skin)
+        // ── HEAD — hair base, ears, face plate ─────────────────────────
+        for (side in intArrayOf(-1, 1)) circ(cx + side * (headR - 4f), headCY + 10f, 13f, ch.skin)
         circ(cx, headCY, headR, ch.hair)
-        p.setColor(OUT); p.fillCircle(cx.toInt(), (headCY + 8f).toInt(), (headR - 6f + 4f).toInt())
-        p.setColor(ch.skin); p.fillCircle(cx.toInt(), (headCY + 8f).toInt(), (headR - 6f).toInt())
-        // hair fringe poking under the cap brim
-        for (i in 0..5) {
-            val fx = cx - 44f + i * 17.6f
-            p.setColor(ch.hair); p.fillCircle(fx.toInt(), (headCY - 26f).toInt(), 9)
+        p.setColor(OUT); p.fillCircle(cx.toInt(), (headCY + 10f).toInt(), (headR - 8f + 4f).toInt())
+        p.setColor(ch.skin); p.fillCircle(cx.toInt(), (headCY + 10f).toInt(), (headR - 8f).toInt())
+        // hair fringe poking under the cap line
+        for (i in 0..6) {
+            val fx = cx - 54f + i * 18f
+            p.setColor(ch.hair); p.fillCircle(fx.toInt(), (headCY - 34f).toInt(), 10)
         }
 
-        // FACE — big cartoon eyes, brows, nose, grin, blush
+        // ── FACE — big cartoon eyes, brows, nose, grin, blush ──────────
         for (side in intArrayOf(-1, 1)) {
-            val ex = cx + side * 26f
-            p.setColor(0xffffffff.toInt()); p.fillCircle(ex.toInt(), (headCY + 12f).toInt(), 15)
-            p.setColor(0x5a3a1fff.toInt()); p.fillCircle(ex.toInt(), (headCY + 13f).toInt(), 10)
-            p.setColor(0x24160aff.toInt()); p.fillCircle(ex.toInt(), (headCY + 14f).toInt(), 5)
-            p.setColor(0xffffffff.toInt()); p.fillCircle((ex - 4f).toInt(), (headCY + 8f).toInt(), 4)
-            bare((ex - 15f).toInt(), (headCY - 10f).toInt(), 30, 7, mul(ch.hair, 0.7f))
-            p.setColor(0.95f, 0.55f, 0.5f, 0.4f); p.fillCircle((cx + side * 44f).toInt(), (headCY + 26f).toInt(), 8)
+            val ex = cx + side * 34f
+            p.setColor(0xffffffff.toInt()); p.fillCircle(ex.toInt(), (headCY + 16f).toInt(), 19)
+            p.setColor(0x5a3a1fff.toInt()); p.fillCircle(ex.toInt(), (headCY + 17f).toInt(), 13)
+            p.setColor(0x24160aff.toInt()); p.fillCircle(ex.toInt(), (headCY + 18f).toInt(), 6)
+            p.setColor(0xffffffff.toInt()); p.fillCircle((ex - 5f).toInt(), (headCY + 11f).toInt(), 5)
+            bare((ex - 18f).toInt(), (headCY - 12f).toInt(), 36, 8, mul(ch.hair, 0.7f))
+            p.setColor(0.95f, 0.55f, 0.5f, 0.4f); p.fillCircle((cx + side * 58f).toInt(), (headCY + 34f).toInt(), 9)
         }
-        p.setColor(mul(ch.skin, 0.9f)); p.fillCircle(cx.toInt(), (headCY + 24f).toInt(), 5)
-        // grin — crescent (dark circle masked by skin circle) + teeth
-        p.setColor(0x5e2c1dff.toInt()); p.fillCircle(cx.toInt(), (headCY + 34f).toInt(), 14)
-        p.setColor(ch.skin); p.fillCircle(cx.toInt(), (headCY + 39f).toInt(), 12)
-        p.setColor(0xffffffff.toInt()); p.fillRectangle((cx - 8f).toInt(), (headCY + 26f).toInt(), 16, 5)
+        p.setColor(mul(ch.skin, 0.9f)); p.fillCircle(cx.toInt(), (headCY + 30f).toInt(), 6)
+        // grin — crescent + teeth
+        p.setColor(0x5e2c1dff.toInt()); p.fillCircle(cx.toInt(), (headCY + 44f).toInt(), 17)
+        p.setColor(ch.skin); p.fillCircle(cx.toInt(), (headCY + 50f).toInt(), 15)
+        p.setColor(0xffffffff.toInt()); p.fillRectangle((cx - 10f).toInt(), (headCY + 34f).toInt(), 20, 6)
 
-        // CAP — dome + brim band + top button + optional white front panel
-        // (Jack: red dome w/ white panel — the recognizable Jake DNA)
-        circ(cx, headCY - 34f, headR - 10, ch.cap)
-        bare((cx - headR + 2f).toInt(), (headCY - 14f).toInt(), (headR * 2 - 4f).toInt(), 14, ch.cap)
-        p.setColor(OUT); p.fillRectangle((cx - headR - 1f).toInt(), (headCY - 2f).toInt(), (headR * 2 + 2f).toInt(), 5)
-        p.setColor(mul(ch.cap, 0.82f)); p.fillRectangle((cx - headR).toInt(), (headCY + 1f).toInt(), (headR * 2).toInt(), 7)
-        p.setColor(mul(ch.cap, 1.12f)); p.fillCircle(cx.toInt(), (headCY - 80f).toInt(), 7)
+        // ── CAP — backwards dome + white panel + button + gloss ────────
+        circ(cx, headCY - 42f, headR - 12, ch.cap)
+        // dome edge band (where the folded brim would sit — backwards cap)
+        p.setColor(OUT); p.fillRectangle((cx - headR + 4f).toInt(), (headCY - 10f).toInt(), (headR * 2 - 8f).toInt(), 5)
+        p.setColor(mul(ch.cap, 0.8f)); p.fillRectangle((cx - headR + 6f).toInt(), (headCY - 6f).toInt(), (headR * 2 - 12f).toInt(), 8)
+        p.setColor(mul(ch.cap, 1.12f)); p.fillCircle(cx.toInt(), (headCY - 104f).toInt(), 8)
         if (ch.capPanel != 0) {
-            // white front panel oval on the dome (Pixmap has no fillEllipse —
-            // approximate with a stack of shrinking scanline rects)
             p.setColor(ch.capPanel)
-            for (i in 0..22) {
-                val t = i / 22f
-                val w = (34f * (1f - t * t)).toInt().coerceAtLeast(2)
-                p.fillRectangle((cx - w).toInt(), (headCY - 62f + i * 1.6f).toInt().coerceAtMost((headCY - 30f).toInt()), w * 2, 2)
+            for (i in 0..24) {
+                val t = i / 24f
+                val w = (38f * (1f - t * t)).toInt().coerceAtLeast(2)
+                p.fillRectangle((cx - w).toInt(), (headCY - 82f + i * 1.8f).toInt().coerceAtMost((headCY - 38f).toInt()), w * 2, 2)
             }
         }
-        // cap gloss
-        p.setColor(1f, 1f, 1f, 0.22f); p.fillCircle((cx - 26f).toInt(), (headCY - 50f).toInt(), 12)
+        p.setColor(1f, 1f, 1f, 0.22f); p.fillCircle((cx - 32f).toInt(), (headCY - 64f).toInt(), 14)
 
         return tex(p)
     }

@@ -223,13 +223,11 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         theme.text(batch, theme.fontSmall, "BY FSK", 0f, 1031f + bounce, Color.WHITE, Align.center, vw)
 
         // selected character preview front & center on the tracks (big SS-style hero)
+        // v4.3: portrait rebuilt at 360px w/ head in the lower 2/3 + its own
+        // in-texture ground shadow — drawn 372px, no external shadow blob
         val selIdx = CharacterDef.ALL.indexOfFirst { it.id == b.save.selectedCharacter }.coerceAtLeast(0)
         val heroBob = sin(time * 1.7f) * 7f
-        // grounding shadow so the hero doesn't float
-        batch.setColor(0f, 0f, 0f, 0.20f)
-        batch.draw(TextureGen.softShadow, vw / 2f - 160f, 686f + heroBob, 320f, 60f)
-        batch.setColor(1f, 1f, 1f, 1f)
-        drawMiniCharacter(selIdx, vw / 2f - 165f, 692f + heroBob, 330f)
+        drawMiniCharacter(selIdx, vw / 2f - 186f, 672f + heroBob, 372f)
 
         // HIGH SCORE card (periwinkle + deep slot + gold star)
         val hcW = 460f
