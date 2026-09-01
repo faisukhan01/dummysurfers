@@ -47,6 +47,25 @@ class Spawner {
         safeLane = 0
         powerupTimer = 0f
         nextPowerupIn = GameConfig.POWERUP_INTERVAL * 0.6f
+        spawnOpeningRun()
+    }
+
+    /**
+     * v3.0: a welcoming straight coin run through the safe opening zone.
+     * Previously the first 45m were completely EMPTY — the player pressed RUN
+     * and stared at bare track for ~5 seconds with nothing to do ("can't
+     * collect the coins"). Now: two juicy coin trails + a magnet taste.
+     */
+    private fun spawnOpeningRun() {
+        val lane = 0
+        var z = 6f
+        while (z < GameConfig.FIRST_SAFE_METERS - 6f) {
+            repeat(5) { i -> spawnCoin(lane, z + i * 1.6f, 0.9f) }
+            z += 5 * 1.6f + 3.4f
+        }
+        // a taste of each side lane so swiping feels rewarded immediately
+        repeat(4) { i -> spawnCoin(-1, 14f + i * 1.6f, 0.9f) }
+        repeat(4) { i -> spawnCoin(1, 26f + i * 1.6f, 0.9f) }
     }
 
     private inline fun <T> drain(list: ArrayList<T>, recycle: (T) -> Unit) {
