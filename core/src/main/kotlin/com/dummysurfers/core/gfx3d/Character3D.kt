@@ -185,10 +185,10 @@ class Human3D(
             mpb = mb.part("stache", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(0x4a3524ff.toInt()))
             mpb.cbox(0f, 0.17f, 0.265f, 0.3f, 0.07f, 0.03f)
         }
-        // ears
+        // ears — small, tucked to the skull (v4.1: were pig-like flags)
         mpb = mb.part("ears", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(mul(skin, 0.92f)))
-        mpb.cbox(-0.31f, 0.26f, 0f, 0.08f, 0.14f, 0.11f)
-        mpb.cbox(0.31f, 0.26f, 0f, 0.08f, 0.14f, 0.11f)
+        mpb.cbox(-0.295f, 0.26f, 0f, 0.055f, 0.1f, 0.08f)
+        mpb.cbox(0.295f, 0.26f, 0f, 0.055f, 0.1f, 0.08f)
         return mb.end()
     }
 
