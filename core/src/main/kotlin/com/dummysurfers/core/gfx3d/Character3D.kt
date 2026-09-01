@@ -91,12 +91,14 @@ class Human3D(
         val thighM = f.colorBox("thigh$pants", 0.21f, 0.32f, 0.24f, pants)
         val shinM = f.colorBox("shin$pants", 0.18f, 0.26f, 0.2f, pants)
         val shoeM = f.colorBox("shoe$shoes$accent", 0.19f, 0.13f, 0.36f, shoes)
-        // v4.7: slimmed 0.17x0.27x0.18 -> 0.15x0.24x0.17 — chunky arms read as slabs mid-swing
-        val upperM = f.colorBox("upper$hoodie", 0.15f, 0.24f, 0.17f, hoodie)
+        // v4.7: slimmed 0.17x0.27x0.18 -> 0.15x0.24x0.17 AND hanging (pivot at
+        // the top) — centered boxes jutted above the shoulder and read as
+        // diagonal wings whenever the torso rolled during a lane change
+        val upperM = f.colorBoxHang("upper$hoodie", 0.15f, 0.24f, 0.17f, hoodie)
         // v4.2: guard gets uniform-covered forearms (bare skin read as T-shirt
         // arms on a duty officer)
-        val foreM = f.colorBox("fore$skin$isGuard", 0.13f, 0.2f, 0.15f, if (isGuard) hoodie else skin)
-        val handM = f.colorBox("hand$skin", 0.14f, 0.13f, 0.15f, skin)
+        val foreM = f.colorBoxHang("fore$skin$isGuard", 0.13f, 0.2f, 0.15f, if (isGuard) hoodie else skin)
+        val handM = f.colorBoxHang("hand$skin", 0.14f, 0.13f, 0.15f, skin)
 
         thighL = rig.add(ModelInstance(thighM), null, -0.13f, 0.72f, 0f)
         thighR = rig.add(ModelInstance(thighM), null, 0.13f, 0.72f, 0f)

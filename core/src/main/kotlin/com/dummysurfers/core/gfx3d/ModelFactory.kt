@@ -86,6 +86,21 @@ class ModelFactory {
             }
         }
 
+    /**
+     * v4.7: limb geometry that HANGS BELOW its pivot. colorBox centers the box
+     * on the joint, so half the upper-arm poked ABOVE the shoulder — whenever
+     * the torso rolled (every lane change) that top half jutted out past the
+     * silhouette as a diagonal shoulder "wing" (the slab arms in every mid-lean
+     * QA shot). Hanging boxes rotate around the joint like real limbs.
+     */
+    fun colorBoxHang(key: String, w: Float, h: Float, d: Float, hex: Int, factor: Float = 1f): Model =
+        models.getOrPut(key) {
+            build(matColor(hex, factor)) {
+                setUVRange(0f, 0f, 1f, 1f)
+                cbox(0f, -h / 2f, 0f, w, h, d)
+            }
+        }
+
     /** Box with a texture on every face (UV repeats across each face). */
     fun texBox(key: String, w: Float, h: Float, d: Float, tex: Texture, uvU: Float = 1f, uvV: Float = 1f): Model =
         models.getOrPut(key) {
