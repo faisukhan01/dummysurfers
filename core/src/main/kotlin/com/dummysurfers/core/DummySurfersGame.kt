@@ -106,6 +106,9 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     private var dangerTimer = 0f
     private var stumbleSlowTimer = 0f
     private var guardCatch = false
+    // v4.6 post-run coin doubler gift (SS end-screen doubler; once per run)
+    private var giftClaimed = false
+    private var giftBonus = 0
     private val activePowerups = FloatArray(PowerUpType.entries.size)
     private val powerupTotal = FloatArray(PowerUpType.entries.size)
     private var displayScore = 0
@@ -824,6 +827,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         jumps = 0; slides = 0; powerupsUsed = 0; nearMisses = 0
         newBest = false; coinStreak = 0; multiplier = 1
         dangerTimer = 0f; stumbleSlowTimer = 0f; guardCatch = false
+        giftClaimed = false; giftBonus = 0 // v4.6: fresh doubler every run
         spawnGrace = GameConfig.SPAWN_GRACE_TIME // v4.5: no entity may touch the player right at RUN (QA once caught a 0m frame-1 death — "can't start new game")
         for (i in 0 until PowerUpType.entries.size) { activePowerups[i] = 0f; powerupTotal[i] = 0f }
         boardTimer = 0f; boardTotal = 0f; lastTapNanos = 0L
@@ -1020,6 +1024,19 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         override val boardTotal: Float get() = this@DummySurfersGame.boardTotal
         override val newBest: Boolean get() = this@DummySurfersGame.newBest
         override val guardCatch: Boolean get() = this@DummySurfersGame.guardCatch
+        // v4.6 post-run doubler gift
+        override val giftAvailable: Boolean get() = !giftClaimed
+        override val giftBonus: Int get() = this@DummySurfersGame.giftBonus
+        override fun claimGift() {
+            if (giftClaimed || state != GameState.GAME_OVER || runCoins <= 0) return
+            giftClaimed = true
+            this@DummySurfersGame.giftBonus = runCoins
+            save.addCoins(runCoins) // coins were already banked once in submitRun — the gift DOUBLES them
+            save.persist()
+            audio.play(GameEvent.POWERUP)
+            particles.confetti(proj.vw / 2f, proj.vh * 0.42f, 26)
+            vibrate(60)
+        }
         override val save: SaveManager get() = this@DummySurfersGame.save
         override val toFrame: (FloatArray) -> Unit
             get() = { out ->
