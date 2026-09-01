@@ -229,12 +229,14 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         // selected character preview front & center on the tracks (big SS-style hero)
         // v4.3: portrait rebuilt at 360px w/ head in the lower 2/3 + its own
         // in-texture ground shadow — drawn 372px, no external shadow blob
-        // v4.6: lifted + resized (300px @ y682) — the old 348px @ y640 planted
-        // the shoes 28px BEHIND the high-score card (drawn later = on top),
-        // cropping the runner at the ankles right above the RUN button
+        // v4.6: first lift (348@640 → 300@682) still left the shoes in the
+        // card's drop-shadow sliver — 14px of clearance is NOT clearance when
+        // the card's rounded shadow eats ~10px. Final: 264px @ y738 = the full
+        // figure + ground shadow floats clear of the card (top padding tucks
+        // harmlessly behind the BY FSK chip, which draws later anyway)
         val selIdx = CharacterDef.ALL.indexOfFirst { it.id == b.save.selectedCharacter }.coerceAtLeast(0)
         val heroBob = sin(time * 1.7f) * 7f
-        drawMiniCharacter(selIdx, vw / 2f - 150f, 682f + heroBob, 300f)
+        drawMiniCharacter(selIdx, vw / 2f - 132f, 738f + heroBob, 264f)
 
         // HIGH SCORE card (periwinkle + deep slot + gold star)
         val hcW = 460f
