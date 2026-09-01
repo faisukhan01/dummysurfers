@@ -173,6 +173,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     // DS_GOD=1      → autopilot: dodges/jumps/slides + invulnerable
     // DS_SHOT_DIR=X → save scheduled framebuffer screenshots, then exit
     private var devInit = false
+    private val devGod get() = System.getenv("DS_GOD") == "1" // QA invulnerability without blink
     private var devShotIdx = 0
     private var devT = 0f
     private val devShotTimes = floatArrayOf(0.8f, 2.5f, 4.5f, 6.5f, 8.5f, 10.5f, 12.5f, 14.5f, 16.5f, 18.5f)
@@ -214,8 +215,9 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
 
     /** Simple look-ahead autopilot used only for headless screenshot QA. */
     private fun devAutopilot(dt: Float) {
-        // 0.19 keeps the blink phase odd at draw time (decays ~0.016/frame)
-        player.invulnTimer = max(player.invulnTimer, 0.19f)
+        // invulnerability is handled by the devGod flag in handleCollisions —
+        // do NOT touch invulnTimer here (it drives the death blink flicker and
+        // made ~40% of QA shots render without the runner)
         devAiTimer -= dt
         if (player.state == PlayerState.JUMPING || player.state == PlayerState.SLIDING) return
         if (devAiTimer > 0f) return
@@ -517,6 +519,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
 
     private fun handleCollisions() {
         if (player.state == PlayerState.DEAD || player.invulnTimer > 0f) return
+        if (devGod) return // QA god mode: skip collisions WITHOUT the blink flicker
 
         // trains
         for (t in spawner.trains) {

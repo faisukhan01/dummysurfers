@@ -175,7 +175,13 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
                 var cz = zNear + GameConfig.TRAIN_CAR_LENGTH * 0.5f
                 for (car in 0 until t.cars) {
                     if (cz > zFar + 1f) break
-                    if (cz > -2.6f) {
+                    // v4.1: never render a car the camera is inside — close
+                    // dodges put the cam within the car's x/z footprint and
+                    // its interior filled the whole screen
+                    val camInFootprint =
+                        abs(cz + 4.9f) < GameConfig.TRAIN_CAR_LENGTH * 0.5f + 0.5f &&
+                        abs(lx - cam.position.x) < 1.25f
+                    if (cz > -2.6f && !camInFootprint) {
                         val inst = poolGet(carPool, ci++, "car") { ModelInstance(factory.trainCar(t.livery)) }
                         inst.transform.setToTranslation(lx, 0f, -cz)
                         frame.add(inst)
