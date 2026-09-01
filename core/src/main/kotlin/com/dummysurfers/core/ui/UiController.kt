@@ -197,9 +197,17 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         // settings gear shortcut top-left
         if (btn("gear", 24f, vh - 100f, 76f, 76f, Palette.UI_NAVY, "O", theme.fontMed)) b.openPanel(MenuPanel.SETTINGS)
 
-        // graffiti-style logo with bounce
+        // v3.0: warm sun glow behind the logo block (SS title-screen warmth)
+        val glowPulse = 0.30f + sin(time * 1.4f) * 0.05f
+        batch.setColor(1f, 0.92f, 0.55f, glowPulse)
+        batch.draw(TextureGen.glow, vw / 2f - 330f, 940f, 660f, 660f)
+        batch.setColor(1f, 1f, 1f, 1f)
+
+        // graffiti-style logo with bounce (double-draw: navy drop + main)
         val bounce = sin(time * 2.2f) * 8f
+        theme.text(batch, theme.fontHuge, "DUMMY", 4f, 1147f + bounce, Palette.UI_OUTLINE, Align.center, vw)
         theme.text(batch, theme.fontHuge, "DUMMY", 0f, 1150f + bounce, Palette.GOLD, Align.center, vw)
+        theme.text(batch, theme.fontHuge, "SURFERS", 4f, 1079f + bounce, Palette.UI_OUTLINE, Align.center, vw)
         theme.text(batch, theme.fontHuge, "SURFERS", 0f, 1082f + bounce, Color.WHITE, Align.center, vw)
         // orange "BY FSK" tag chip
         val tagW = 150f
