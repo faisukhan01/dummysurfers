@@ -416,7 +416,7 @@ object TextureGen {
             circ(x + r, y + r, r, col); circ(x + w - r, y + r, r, col)
             circ(x + r, y + h - r, r, col); circ(x + w - r, y + h - r, r, col)
         }
-        fun bare(x: Float, y: Float, w: Float, h: Float, col: Int) { p.setColor(col); p.fillRectangle(x.toInt(), y.toInt(), w.toInt(), h.toInt()) }
+        fun bare(x: Int, y: Int, w: Int, h: Int, col: Int) { p.setColor(col); p.fillRectangle(x, y, w, h) }
 
         // LEGS + SNEAKERS (drawn first, torso overlaps hips)
         val legW = 26f
@@ -503,126 +503,6 @@ object TextureGen {
         return t
     }
 
-    // ── SS-chibi character portraits (menu + shop) ─────────────────────
-    // Front-facing big-head chibi with face, cap, hoodie, straps, sneakers.
-    // Proportions: head ≈ 43% of total height (Subway Surfers DNA).
-    private fun mul(c: Int, f: Float): Int {
-        val col = Color(c)
-        return Color(col.r * f, col.g * f, col.b * f, 1f).toIntBits()
-    }
-
-    private fun characterPreview(ch: CharacterDef): Texture {
-        val s = 320
-        val p = Pixmap(s, s, Pixmap.Format.RGBA8888)
-        val cx = s / 2f
-        val OUT = 0x24316bff.toInt()
-
-        // geometry (feet at y=308)
-        val headR = 60f
-        val headCY = 92f
-        val shoulderY = 176f
-        val hipY = 248f
-        val footY = 308f
-
-        fun circ(x: Float, y: Float, r: Float, col: Int) {
-            p.setColor(OUT); p.fillCircle(x.toInt(), y.toInt(), (r + 4f).toInt())
-            p.setColor(col); p.fillCircle(x.toInt(), y.toInt(), r.toInt())
-        }
-        fun rect(x: Float, y: Float, w: Float, h: Float, col: Int) {
-            p.setColor(OUT); p.fillRectangle((x - 4f).toInt(), (y - 4f).toInt(), (w + 8f).toInt(), (h + 8f).toInt())
-            p.setColor(col); p.fillRectangle(x.toInt(), y.toInt(), w.toInt(), h.toInt())
-        }
-        fun roundRect(x: Float, y: Float, w: Float, h: Float, r: Float, col: Int) {
-            rect(x + r, y, w - r * 2, h, col)
-            rect(x, y + r, w, h - r * 2, col)
-            circ(x + r, y + r, r, col); circ(x + w - r, y + r, r, col)
-            circ(x + r, y + h - r, r, col); circ(x + w - r, y + h - r, r, col)
-        }
-        fun bare(x: Float, y: Float, w: Float, h: Float, col: Int) { p.setColor(col); p.fillRectangle(x.toInt(), y.toInt(), w.toInt(), h.toInt()) }
-
-        // LEGS + SNEAKERS (drawn first, torso overlaps hips)
-        val legW = 26f
-        for (side in intArrayOf(-1, 1)) {
-            val lx = cx + side * 17f - legW / 2
-            rect(lx, hipY, legW, footY - hipY - 10f, ch.pants)
-            // knee patch hint
-            bare((lx + 5f).toInt(), (hipY + 26f).toInt(), (legW - 10f).toInt(), 8, mul(ch.pants, 1.18f))
-            // chunky sneaker: rounded + white sole + lace hint
-            roundRect(cx + side * 17f - 20f, footY - 22f, 40f, 16f, 8f, ch.shoes)
-            bare((cx + side * 17f - 20f).toInt(), (footY - 8f).toInt(), 40, 8, 0xf7f7f7ff.toInt())
-            bare((cx + side * 17f - 8f).toInt(), (footY - 18f).toInt(), 16, 5, mul(ch.shoes, 0.75f))
-        }
-
-        // TORSO — hoodie with rounded shoulders
-        roundRect(cx - 52f, shoulderY, 104f, hipY - shoulderY + 14f, 26f, ch.hoodie)
-        // hoodie hem band
-        bare((cx - 52f).toInt(), (hipY - 2f).toInt(), 104, 12, mul(ch.hoodie, 0.82f))
-        // front pocket
-        roundRect(cx - 30f, hipY - 14f, 60f, 26f, 9f, mul(ch.hoodie, 0.88f))
-        // zipper
-        bare((cx - 2f).toInt(), (shoulderY + 14f).toInt(), 4, 62, mul(ch.hoodie, 0.62f))
-        bare((cx - 5f).toInt(), (shoulderY + 40f).toInt(), 10, 14, 0xffc93cff.toInt())
-
-        // BACKPACK STRAPS over the shoulders + chest strap
-        for (side in intArrayOf(-1, 1)) {
-            roundRect(cx + side * 34f - 8f, shoulderY + 4f, 16f, hipY - shoulderY - 8f, 7f, mul(ch.backpack, 0.9f))
-        }
-        roundRect(cx - 26f, shoulderY + 30f, 52f, 10f, 5f, mul(ch.backpack, 1.1f))
-
-        // ARMS — capsule sleeves + hands
-        for (side in intArrayOf(-1, 1)) {
-            val shoulderX = cx + side * 52f
-            // sleeve: 3 overlapping circles → capsule angled out-down
-            circ(shoulderX + side * 4f, shoulderY + 18f, 15f, ch.hoodie)
-            circ(shoulderX + side * 12f, shoulderY + 44f, 13f, ch.hoodie)
-            circ(shoulderX + side * 17f, shoulderY + 66f, 11f, mul(ch.hoodie, 0.92f))
-            circ(shoulderX + side * 18f, shoulderY + 80f, 10f, ch.skin)
-        }
-
-        // HEAD — hair base, ears, then face
-        for (side in intArrayOf(-1, 1)) circ(cx + side * (headR - 2f), headCY + 6f, 11f, ch.skin)
-        circ(cx, headCY, headR, ch.hair)
-        // face plate (skin) covering lower 2/3 of head
-        p.setColor(OUT); p.fillCircle(cx.toInt(), (headCY + 8f).toInt(), (headR - 6f + 4f).toInt())
-        p.setColor(ch.skin); p.fillCircle(cx.toInt(), (headCY + 8f).toInt(), (headR - 6f).toInt())
-        // hair fringe poking under the cap brim
-        for (i in 0..5) {
-            val fx = cx - 44f + i * 17.6f
-            p.setColor(ch.hair); p.fillCircle(fx.toInt(), (headCY - 26f).toInt(), 9)
-        }
-
-        // FACE — big cartoon eyes, brows, nose, smile, blush
-        for (side in intArrayOf(-1, 1)) {
-            val ex = cx + side * 26f
-            p.setColor(0xffffffff.toInt()); p.fillCircle(ex.toInt(), (headCY + 12f).toInt(), 15)
-            p.setColor(0x5a3a1fff.toInt()); p.fillCircle(ex.toInt(), (headCY + 13f).toInt(), 10)
-            p.setColor(0x24160aff.toInt()); p.fillCircle(ex.toInt(), (headCY + 14f).toInt(), 5)
-            p.setColor(0xffffffff.toInt()); p.fillCircle((ex - 4f).toInt(), (headCY + 8f).toInt(), 4)
-            // brow
-            bare((ex - 15f).toInt(), (headCY - 10f).toInt(), 30, 7, mul(ch.hair, 0.7f))
-            // blush
-            p.setColor(0.95f, 0.55f, 0.5f, 0.4f); p.fillCircle((cx + side * 44f).toInt(), (headCY + 26f).toInt(), 8)
-        }
-        // nose
-        p.setColor(mul(ch.skin, 0.9f)); p.fillCircle(cx.toInt(), (headCY + 24f).toInt(), 5)
-        // grin — crescent (dark circle masked by skin circle)
-        p.setColor(0x5e2c1dff.toInt()); p.fillCircle(cx.toInt(), (headCY + 34f).toInt(), 14)
-        p.setColor(ch.skin); p.fillCircle(cx.toInt(), (headCY + 39f).toInt(), 12)
-        p.setColor(0xffffffff.toInt()); p.fillRectangle((cx - 8f).toInt(), (headCY + 26f).toInt(), 16, 5)
-
-        // CAP — dome + brim + top button
-        circ(cx, headCY - 24f, headR - 2, ch.cap)
-        bare((cx - headR + 2f).toInt(), (headCY - 24f).toInt(), (headR * 2 - 4f).toInt(), 20, ch.cap) // dome lower edge
-        p.setColor(OUT); p.fillRectangle((cx - headR - 1f).toInt(), (headCY - 6f).toInt(), (headR * 2 + 2f).toInt(), 6)
-        p.setColor(mul(ch.cap, 0.82f)); p.fillRectangle((cx - headR).toInt(), (headCY - 4f).toInt(), (headR * 2).toInt(), 10) // brim band
-        p.setColor(mul(ch.cap, 1.12f).coerceAtMost(0xffffffff.toInt())); p.fillCircle(cx.toInt(), (headCY - 74f).toInt(), 7) // button
-        // cap side shine
-        p.setColor(1f, 1f, 1f, 0.22f); p.fillCircle((cx - 26f).toInt(), (headCY - 42f).toInt(), 12)
-
-        return tex(p)
-    }
-
-    /** SS "New High Score" backdrop: 4 conic rainbow wedges + warm core. */
     private fun burst(size: Int): Texture {
         val p = Pixmap(size, size, Pixmap.Format.RGBA8888)
         val half = size / 2f
