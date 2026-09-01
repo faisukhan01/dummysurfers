@@ -472,6 +472,7 @@ class EntityRenderer(
     private val pc1 = Color()
     private val pc2 = Color()
     private val pc3 = Color()
+    private val pc4 = Color()
 
     private fun player(p: Player, ch: CharacterDef, sx: Float, sy: Float, blink: Boolean, shieldOn: Boolean, boostOn: Boolean, boardOn: Boolean) {
         val x = proj.screenX(p.x, 0f) + sx
@@ -558,7 +559,7 @@ class EntityRenderer(
             // chunky sneaker with white sole + heel tab
             sr.setColor(OUT); sr.ellipse(fx + 0.04f * u, fy - 0.015f * u, 0.145f * u, 0.085f * u)
             sr.setColor(shoes); sr.ellipse(fx + 0.04f * u, fy - 0.005f * u, 0.125f * u, 0.065f * u)
-            sr.setColor(0xf7f7f7ff.toInt()); sr.ellipse(fx + 0.04f * u, fy - 0.038f * u, 0.115f * u, 0.032f * u)
+            sr.setColor(pc4.set(0xf7f7f7ff.toInt())); sr.ellipse(fx + 0.04f * u, fy - 0.038f * u, 0.115f * u, 0.032f * u)
         }
         leg(-1f, swing)
         leg(1f, swing2)
@@ -726,7 +727,7 @@ class EntityRenderer(
             sr.setColor(OUT); sr.rectLine(hipX, hipY, kx, ky, legW + 0.05f * u); sr.rectLine(kx, ky, fx, fy, legW * 0.85f + 0.05f * u)
             sr.setColor(pants); sr.rectLine(hipX, hipY, kx, ky, legW); sr.rectLine(kx, ky, fx, fy, legW * 0.85f)
             sr.setColor(OUT); sr.ellipse(fx + 0.04f * u, fy - 0.015f * u, 0.14f * u, 0.085f * u)
-            sr.setColor(0x1d2530ff.toInt()); sr.ellipse(fx + 0.04f * u, fy - 0.005f * u, 0.12f * u, 0.065f * u)
+            sr.setColor(pc4.set(0x1d2530ff.toInt())); sr.ellipse(fx + 0.04f * u, fy - 0.005f * u, 0.12f * u, 0.065f * u)
         }
         leg(-1f, swing)
         leg(1f, swing2)
@@ -758,17 +759,17 @@ class EntityRenderer(
         sr.rect(-0.27f * u, hipY - 0.05f * u, 0.54f * u, shoulderY - hipY + 0.14f * u)
         sr.circle(0f, shoulderY + 0.02f * u, 0.24f * u)
         // belt
-        sr.setColor(0x1d2530ff.toInt())
+        sr.setColor(pc4.set(0x1d2530ff.toInt()))
         sr.rect(-0.27f * u, hipY + 0.02f * u, 0.54f * u, 0.05f * u)
         sr.setColor(Palette.GOLD); sr.rect(0.02f * u, hipY + 0.03f * u, 0.05f * u, 0.03f * u) // buckle
         // head + skin
         sr.setColor(Color(0xd9975fff.toInt()))
         sr.circle(0f, headCY, headR)
         // police cap: dome + brim + gold badge
-        sr.setColor(0x22304aff.toInt())
+        sr.setColor(pc4.set(0x22304aff.toInt()))
         sr.circle(0f, headCY + headR * 0.38f, headR * 0.90f)
         sr.rect(-headR * 0.95f, headCY + headR * 0.16f, headR * 1.9f, headR * 0.24f)
-        sr.setColor(0x1a2436ff.toInt())
+        sr.setColor(pc4.set(0x1a2436ff.toInt()))
         sr.rect(-headR * 0.97f, headCY + headR * 0.04f, headR * 1.94f, headR * 0.14f)
         sr.setColor(Palette.GOLD)
         sr.circle(0f, headCY + headR * 0.50f, 0.045f * u)
@@ -776,7 +777,7 @@ class EntityRenderer(
         // waving baton in the trailing hand
         val bx = 0.34f * u + swing2 * 0.06f * u
         sr.setColor(OUT); sr.rectLine(bx, shoulderY + 0.05f * u, bx + 0.06f * u, shoulderY + 0.38f * u, 0.075f * u)
-        sr.setColor(0x2b2118ff.toInt()); sr.rectLine(bx, shoulderY + 0.05f * u, bx + 0.06f * u, shoulderY + 0.38f * u, 0.055f * u)
+        sr.setColor(pc4.set(0x2b2118ff.toInt())); sr.rectLine(bx, shoulderY + 0.05f * u, bx + 0.06f * u, shoulderY + 0.38f * u, 0.055f * u)
 
         sr.identity()
     }
