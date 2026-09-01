@@ -327,7 +327,15 @@ class Spawner {
 
     private fun spawnTrain(lanes: IntArray, cars: Int, kind: Int, speed: Float): Train {
         val t = trainPool.removeLastOrNull() ?: Train()
-        t.reset(lanes, frontier, cars, kind, speed, rng.nextInt(6))
+        // v4.5 hard clearance: a train's BODY extends BACKWARD from its front (z),
+        // so a long train spawned near the frontier could historically stretch its
+        // tail over the spawn point — the QA loop once caught that as a 0m frame-1
+        // death ("can't start new game"). Never again: push the front out so the
+        // tail stays TRAIN_SPAWN_CLEARANCE ahead of the runner.
+        var z = frontier
+        val tail = z - cars * GameConfig.TRAIN_CAR_LENGTH
+        if (tail < GameConfig.TRAIN_SPAWN_CLEARANCE) z += GameConfig.TRAIN_SPAWN_CLEARANCE - tail
+        t.reset(lanes, z, cars, kind, speed, rng.nextInt(6))
         trains.add(t)
         lastAction = 'd'; lastActionZ = frontier
         return t

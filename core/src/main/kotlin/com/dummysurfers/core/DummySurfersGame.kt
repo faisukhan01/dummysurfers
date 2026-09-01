@@ -187,6 +187,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     private var devT = 0f
     private val devShotTimes = floatArrayOf(0.8f, 2.5f, 4.5f, 6.5f, 8.5f, 10.5f, 12.5f, 14.5f, 16.5f, 18.5f)
     private var devAiTimer = 0f
+    private var spawnGrace = 0f // v4.5: brief post-RUN window where collisions are ignored
     private var prevJetOn = false
     private var jetCoinTimer = 0f
 
@@ -321,6 +322,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
 
     private fun updateRun(dt: Float, tutorial: Boolean) {
         menuDim = 0f
+        if (spawnGrace > 0f) spawnGrace -= dt
         val speed = if (tutorial) 5f else Difficulty.speed(distance) * (if (activePowerups[3] > 0f) GameConfig.BOOST_SPEED_MULT else 1f) *
                 (if (stumbleSlowTimer > 0f) GameConfig.STUMBLE_SLOW_MULT else 1f)
 
@@ -578,6 +580,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     private fun handleCollisions() {
         if (player.state == PlayerState.DEAD || player.invulnTimer > 0f) return
         if (devGod) return // QA god mode: skip collisions WITHOUT the blink flicker
+        if (spawnGrace > 0f) return // v4.5 spawn grace: the opening 1.4s can never kill you
         if (activePowerups[5] > 0f) return // jetpack: nothing up here can hit you
 
         // trains
@@ -693,6 +696,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         state = GameState.DYING
         dyingTimer = 0f
         guardCatch = caughtByGuard
+        if (System.getenv("DS_QA") == "1") println("[QA-FATAL] dist=$distance score=$score coins=$runCoins glancing=$glancing guard=$caughtByGuard devT=$devT")
         if (caughtByGuard) {
             chaser.beginCatch()
             audio.play(GameEvent.WHISTLE)
@@ -796,9 +800,11 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     // ── Run lifecycle ──────────────────────────────────────────────────
     private fun startRunInternal() {
         score = 0; displayScore = 0; runCoins = 0; distance = 0f
+        if (System.getenv("DS_QA") == "1") println("[QA-START] run starting, devT=$devT")
         jumps = 0; slides = 0; powerupsUsed = 0; nearMisses = 0
         newBest = false; coinStreak = 0; multiplier = 1
         dangerTimer = 0f; stumbleSlowTimer = 0f; guardCatch = false
+        spawnGrace = GameConfig.SPAWN_GRACE_TIME // v4.5: no entity may touch the player right at RUN (QA once caught a 0m frame-1 death — "can't start new game")
         for (i in 0 until PowerUpType.entries.size) { activePowerups[i] = 0f; powerupTotal[i] = 0f }
         boardTimer = 0f; boardTotal = 0f; lastTapNanos = 0L
         player.reset()
@@ -845,6 +851,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
 
     private fun finalizeRun() {
         if (!save.tutorialDone) save.markTutorialDone()
+        if (System.getenv("DS_QA") == "1") println("[QA-END] score=$score dist=$distance coins=$runCoins best-raw=$newBest")
         newBest = save.submitRun(score, runCoins, distance.toInt(), jumps, slides, powerupsUsed, nearMisses)
         displayScore = 0
         state = GameState.GAME_OVER

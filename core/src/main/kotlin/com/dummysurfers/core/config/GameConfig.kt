@@ -38,6 +38,8 @@ object GameConfig {
     // ── Spawning / world ───────────────────────────────────────────────
     const val SEGMENT_LENGTH = 25f
     const val FIRST_SAFE_METERS = 45f
+    const val SPAWN_GRACE_TIME = 1.4f     // v4.5: collisions ignored this long after RUN (anti spawn-kill insurance)
+    const val TRAIN_SPAWN_CLEARANCE = 8f  // v4.5: a train BODY may never spawn closer than this to the player
     const val SLEEPER_SPACING = 1.7f
     const val POWERUP_INTERVAL = 26f
     const val MIN_REACTION_GAP = 0.62f
