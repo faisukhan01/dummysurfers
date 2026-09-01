@@ -16,6 +16,7 @@ import com.dummysurfers.core.entities.Player
 import com.dummysurfers.core.state.PlayerState
 import com.dummysurfers.core.entities.PowerUpPickup
 import com.dummysurfers.core.entities.Train
+import com.dummysurfers.core.gfx.FaceBatch
 import com.dummysurfers.core.gfx.Palette
 import com.dummysurfers.core.gfx.TextureGen
 import com.dummysurfers.core.particles.Particles
@@ -58,6 +59,9 @@ class EntityRenderer(
     private val items = Array(700) { DrawItem() }
     private var itemCount = 0
 
+    /** Textured face renderer (renderer v2) — shares the batch. */
+    private val fb = FaceBatch(proj, batch)
+
     private fun item(): DrawItem {
         val it = items[itemCount % items.size]
         itemCount++
@@ -81,7 +85,10 @@ class EntityRenderer(
     ) {
         itemCount = 0
         for (d in world.decos) {
-            if (d.z > GameConfig.VIEW_DISTANCE + 6f || d.z < -14f) continue
+            // cull once a deco passes just behind the player: nearer than that
+            // it would z-sort after the player and its clamped near face can
+            // paint over the whole run lane (the invisible-player bug)
+            if (d.z > GameConfig.VIEW_DISTANCE + 6f || d.z < -1.4f) continue
             val it = item(); it.z = d.z; it.type = 0; it.deco = d
         }
         for (t in spawner.trains) { val it = item(); it.z = t.z; it.type = 1; it.train = t }
@@ -89,16 +96,28 @@ class EntityRenderer(
         for (c in spawner.coins) { if (!c.collected && c.z < GameConfig.VIEW_DISTANCE) { val it = item(); it.z = c.z; it.type = 3; it.coin = c } }
         for (p in spawner.powerups) { if (!p.taken) { val it = item(); it.z = p.z; it.type = 4; it.powerup = p } }
         if (chaser.active) { val it = item(); it.z = GameConfig.CHASER_Z; it.type = 6 }
-        { val it = item(); it.z = 0f; it.type = 5 }
+        // v2.0 CRITICAL FIX: this was a bare `{ ... }` block — Kotlin parses a
+        // standalone brace block as a lambda literal that is NEVER invoked, so
+        // the player draw item was silently never added (invisible runner since
+        // v1.0!). Wrap in run{} so it actually executes.
+        run { val pit = item(); pit.z = 0f; pit.type = 5 }
 
         // far → near
+        fb.ox = shakeX; fb.oy = shakeY
         val order = (0 until itemCount).sortedByDescending { items[it].z }
         for (idx in order) {
             val it = items[idx]
-            val wantBatch = it.type == 3 || it.type == 4
+            val wantBatch = when (it.type) {
+                1, 2, 3, 4 -> true
+                0 -> it.deco!!.kind == DecoKind.BUILDING || it.deco!!.kind == DecoKind.SKYSCRAPER
+                else -> false
+            }
             setMode(wantBatch)
             when (it.type) {
-                0 -> DecoRenderer.draw(it.deco!!, sr, proj, shakeX, shakeY)
+                0 -> {
+                    if (wantBatch) DecoRenderer.buildingTextured(it.deco!!, fb, proj, shakeX, shakeY)
+                    else DecoRenderer.draw(it.deco!!, sr, proj, shakeX, shakeY)
+                }
                 1 -> train(it.train!!, shakeX, shakeY)
                 2 -> obstacle(it.obstacle!!, shakeX, shakeY)
                 3 -> coin(it.coin!!, shakeX, shakeY)
@@ -176,252 +195,146 @@ class EntityRenderer(
         sr.rect(xlF, ytF, xrF - xlF, ybF - ytF)
     }
 
-    // ── Trains ─────────────────────────────────────────────────────────
+    // ── Trains — FaceBatch textured (renderer v2) ──────────────────────
     private fun train(t: Train, sx: Float, sy: Float) {
-        val livery = Palette.TRAIN_LIVERIES[t.livery % Palette.TRAIN_LIVERIES.size]
-        val base = tmpC2.set(Color(livery[0]))
         val carLen = GameConfig.TRAIN_CAR_LENGTH
         val w = GameConfig.TRAIN_WIDTH
         val h = GameConfig.TRAIN_HEIGHT
+        val camWx = proj.camX
+        val livery = t.livery % Palette.TRAIN_LIVERIES.size
+        val sideTex = TextureGen.trainSides[livery]
+        val frontTex = TextureGen.trainFronts[livery]
+        val rearTex = TextureGen.trainRears[livery]
 
         for (car in t.cars - 1 downTo 0) {
             val zF = t.z - car * carLen
             val zB = zF - carLen + 0.55f // coupling gap
             if (zB > GameConfig.VIEW_DISTANCE + 4f || zF < -10f) continue
-            val zFrontC = zF.coerceAtLeast(-9f)
-            fogged(tmpC, base, zF)
-            // SS look: bright yellow cab on the leading car, livery body behind
-            val isLeadCar = car == 0
-            val sideC = tmpC.cpy().mul(0.72f)
-            val roofC = Color(Palette.TRAIN_ROOF); fogged(roofC, Palette.TRAIN_ROOF, zF)
-            val topC = roofC
-            val front = if (isLeadCar) {
-                val fc = Color(Palette.TRAIN_FRONT); fogged(fc, Palette.TRAIN_FRONT, zF); fc
-            } else Color(tmpC)
+            val zFn = zF.coerceAtLeast(-9f)
+            val zBn = zB.coerceAtLeast(-9f)
+            val isLead = car == 0
 
-            // undercarriage shadow
-            val sF = proj.scale(zFrontC)
-            sr.setColor(0f, 0f, 0f, 0.3f)
-            val shW = w * proj.ppu * sF * 0.6f
-            for (lane in t.lanes) {
-                val lx = proj.screenX(lane * GameConfig.LANE_WIDTH.toFloat(), zFrontC) + sx
-                sr.rect(lx - shW / 2, proj.groundY(zFrontC) + sy - 2f, shW, 5f * sF + 2f)
-            }
+            // fog tints: neutral base pulled toward the warm horizon haze
+            fogged(tmpC, whiteC, (zFn + zBn) * 0.5f)
+            pc1.set(tmpC)                  // front tint
+            pc2.set(tmpC).mul(0.78f)       // side shade
+            pc3.set(tmpC).mul(1.08f)       // top light
 
             for (lane in t.lanes) {
                 val wx = lane * GameConfig.LANE_WIDTH.toFloat()
-                box3D(wx, w, h, zFrontC, zB.coerceAtLeast(-9f), front, sideC, topC, sx, sy)
-                trainDetails(t, wx, zFrontC, zB, w, h, livery, isLeadCar, sx, sy)
+
+                // ground shadow quad (soft dark, fades with fog)
+                pc4.set(0f, 0f, 0f, 0.30f * (1f - proj.fog(zFn)))
+                fb.faceTop(TextureGen.white, 0.02f, wx - w / 2f + 0.1f, wx + w / 2f - 0.1f, zFn - 0.35f, zBn + 0.1f, pc4)
+
+                // roof
+                fb.faceTop(TextureGen.trainRoofTex, h, wx - w / 2f, wx + w / 2f, zFn, zBn, pc3)
+
+                // visible side face (whichever edge the camera can see)
+                if (camWx < wx - w / 2f) {
+                    fb.faceSide(sideTex, wx - w / 2f, zFn, zBn, 0.06f, h - 0.05f, pc2)
+                } else if (camWx > wx + w / 2f) {
+                    fb.faceSide(sideTex, wx + w / 2f, zFn, zBn, 0.06f, h - 0.05f, pc2)
+                }
+
+                // end face: lead car wears the yellow cab, trailers show their rear
+                if (isLead) {
+                    fb.faceFront(frontTex, zFn, wx - w / 2f, wx + w / 2f, 0.06f, h - 0.05f, pc1)
+                } else {
+                    pc4.set(pc1).mul(0.72f)
+                    fb.faceFront(rearTex, zFn, wx - w / 2f, wx + w / 2f, 0.06f, h - 0.05f, pc4)
+                }
+            }
+
+            // approaching train: headlight bloom over the cab
+            if (isLead && t.kind == 2 && zF < 42f) {
+                val s = proj.scale(zFn)
+                val gx = proj.screenX(t.lanes[0] * GameConfig.LANE_WIDTH.toFloat(), zFn) + sx
+                val gy = proj.groundY(zFn) + sy - h * 0.45f * proj.ppu * s
+                val gr = w * proj.ppu * s * 1.35f
+                batch.setColor(1f, 0.95f, 0.72f, 0.30f)
+                batch.draw(TextureGen.glow, gx - gr, gy - gr, gr * 2f, gr * 2f)
+                batch.setColor(1f, 1f, 1f, 1f)
             }
         }
     }
 
-    private fun trainDetails(t: Train, wx: Float, zF: Float, zB: Float, w: Float, h: Float, livery: IntArray, isLeadCar: Boolean, sx: Float, sy: Float) {
-        if (zF > GameConfig.VIEW_DISTANCE * 0.92f || zF < -8f) return
-        val s = proj.scale(zF)
-        val xl = proj.screenX(wx - w / 2f, zF) + sx
-        val xr = proj.screenX(wx + w / 2f, zF) + sx
-        val yb = proj.groundY(zF) + sy
-        val yt = yb - h * proj.ppu * s
+    private val whiteC = Color(1f, 1f, 1f, 1f)
 
-        // signature SS white band along the upper body (front face + roofline)
-        sr.setColor(fogged(tmpC, Color(livery[2]), zF))
-        sr.rect(xl, yb - h * 0.72f * proj.ppu * s, xr - xl, h * 0.1f * proj.ppu * s)
-        // darker skirt along the bottom
-        sr.setColor(fogged(tmpC, Color(livery[1]), zF))
-        sr.rect(xl, yb - h * 0.22f * proj.ppu * s, xr - xl, h * 0.1f * proj.ppu * s)
-
-        // front face details on the leading car
-        val isFront = isLeadCar && abs(zF - t.z) < 0.1f
-        if (isFront) {
-            // windshield — dark navy w/ light-blue reflection streak
-            sr.setColor(fogged(tmpC, Color(0x1e2a4aff.toInt()), zF))
-            sr.rect(xl + (xr - xl) * 0.15f, yb - h * 0.82f * proj.ppu * s, (xr - xl) * 0.7f, h * 0.3f * proj.ppu * s)
-            sr.setColor(fogged(tmpC, Color(0x9adcf0ff.toInt()), zF))
-            sr.rect(xl + (xr - xl) * 0.2f, yb - h * 0.6f * proj.ppu * s, (xr - xl) * 0.22f, h * 0.05f * proj.ppu * s)
-            // headlights
-            val glowCol = if (t.kind == 2) 1f else 0.75f
-            sr.setColor(fogged(tmpC, Color(1f, 0.95f, 0.7f, 1f), zF))
-            sr.circle(xl + (xr - xl) * 0.16f, yb - h * 0.3f * proj.ppu * s, 4.5f * s)
-            sr.circle(xl + (xr - xl) * 0.84f, yb - h * 0.3f * proj.ppu * s, 4.5f * s)
-            if (t.kind == 2) {
-                // approaching: headlight beam glow
-                sr.setColor(1f, 0.95f, 0.75f, 0.16f)
-                sr.circle(xl + (xr - xl) * 0.5f, yb - h * 0.4f * proj.ppu * s, (xr - xl) * 0.75f)
-            }
-            // number plate
-            sr.setColor(fogged(tmpC, Color(0xfff2dcff.toInt()), zF))
-            sr.rect(xl + (xr - xl) * 0.42f, yb - h * 0.5f * proj.ppu * s, (xr - xl) * 0.16f, h * 0.09f * proj.ppu * s)
-        } else {
-            // side windows (visible on side face) — dark navy + reflections
-            val camWx = proj.camX
-            val leftSide = camWx < wx - w / 2f
-            val sxE = proj.screenX(if (leftSide) wx - w / 2f else wx + w / 2f, zF) + sx
-            val sxE2 = proj.screenX(if (leftSide) wx - w / 2f else wx + w / 2f, zB) + sx
-            val ybE = proj.groundY(zF) + sy
-            val ytE = ybE - h * proj.ppu * s
-            sr.setColor(fogged(tmpC, Color(0x22324cff.toInt()), zF))
-            val winN = 4
-            for (i in 0 until winN) {
-                val ft0 = (i + 0.15f) / winN
-                val ft1 = (i + 0.85f) / winN
-                val wx0 = sxE + (sxE2 - sxE) * ft0
-                val wx1 = sxE + (sxE2 - sxE) * ft1
-                val wy0 = ybE - h * 0.78f * proj.ppu * s + (proj.groundY(zB) + sy - h * proj.ppu * proj.scale(zB) - (ybE - h * 0.78f * proj.ppu * s)) * ft0
-                sr.rect(wx0.coerceAtLeast(wx1), wy0, abs(wx1 - wx0), h * 0.24f * proj.ppu * s)
-            }
-            // door
-            sr.setColor(fogged(tmpC, Color(livery[1]).mul(0.9f), zF))
-            val dx = sxE + (sxE2 - sxE) * 0.02f
-            sr.rect(dx.coerceAtLeast(sxE2 * 0.99f + sxE * 0.01f), ybE - h * 0.62f * proj.ppu * s, abs(sxE2 - sxE) * 0.12f, h * 0.5f * proj.ppu * s)
-        }
-
-        // graffiti pieces (original street art): fat rounded blobs + outline
-        if (t.seed % 3 == 0 && !isFront) {
-            val rng = Random(t.seed + (zF * 10).toInt())
-            val cols = arrayOf(Color(0xffd24aff.toInt()), Color(0x37b8a8ff.toInt()), Color(0xe2493bff.toInt()), Color(0xd8578aff.toInt()))
-            val n = 2 + rng.nextInt(2)
-            for (g in 0 until n) {
-                val col = cols[rng.nextInt(cols.size)]
-                val gx = xl + (xr - xl) * (0.15f + rng.nextFloat() * 0.6f)
-                val gy = yb - h * (0.3f + rng.nextFloat() * 0.3f) * proj.ppu * s
-                val gr = (3.5f + rng.nextFloat() * 5f) * s
-                sr.setColor(fogged(tmpC, Color(0x2b2622ff.toInt()), zF))
-                sr.circle(gx, gy, gr + 1.8f * s)
-                sr.setColor(fogged(tmpC, col, zF))
-                sr.circle(gx, gy, gr)
-            }
-        }
-    }
-
-    // ── Obstacles ──────────────────────────────────────────────────────
+    // ── Obstacles — FaceBatch textured (renderer v2) ───────────────────
     private fun obstacle(o: Obstacle, sx: Float, sy: Float) {
-        val s = proj.scale(o.z)
         if (o.z > GameConfig.VIEW_DISTANCE || o.z < -8f) return
         when (o.kind) {
-            ObstacleKind.LOW_BARRIER -> lowBarrier(o, sx, sy, s)
-            ObstacleKind.HIGH_BARRIER -> highBarrier(o, sx, sy, s)
-            ObstacleKind.GATE -> gate(sx, sy, s)
-            ObstacleKind.FENCE_FULL -> fenceFull(sx, sy, s)
-            ObstacleKind.BLOCKADE -> blockade(o, sx, sy, s)
+            ObstacleKind.LOW_BARRIER -> lowBarrier(o)
+            ObstacleKind.HIGH_BARRIER -> highBarrier(o)
+            ObstacleKind.GATE -> gate(o)
+            ObstacleKind.FENCE_FULL -> fenceFull(o)
+            ObstacleKind.BLOCKADE -> blockade(o)
         }
     }
 
-    private fun stripeBoard(xl: Float, xr: Float, y: Float, hpx: Float, variant: Int, yellowBlack: Boolean = true) {
-        // SS hazard: yellow/black chevrons; blockade uses red/white
-        val n = 6
-        val w = xr - xl
-        for (i in 0 until n) {
-            val segW = w / n
-            val even = (i + variant) % 2 == 0
-            sr.setColor(
-                when {
-                    yellowBlack && even -> Palette.HAZARD_YELLOW
-                    yellowBlack -> Palette.HAZARD_BLACK
-                    even -> Color(0xe2493bff.toInt())
-                    else -> Color(0xfff2dcff.toInt())
-                }
-            )
-            sr.rect(xl + i * segW, y, segW + 0.5f, hpx)
-        }
+    /** Fogged neutral tint shaded by [mul] for flat quads at depth [z]. */
+    private fun flatTint(z: Float, mul: Float, out: Color): Color {
+        fogged(out, whiteC, z)
+        return out.mul(mul)
     }
 
-    private fun lowBarrier(o: Obstacle, sx: Float, sy: Float, s: Float) {
+    private fun metalPost(z: Float, wx: Float, yLo: Float, yHi: Float, width: Float) {
+        fb.faceFront(TextureGen.white, z, wx - width / 2f, wx + width / 2f, yLo, yHi, flatTint(z, 0.42f, pc1))
+    }
+
+    private fun lowBarrier(o: Obstacle) {
         val wx = o.lane * GameConfig.LANE_WIDTH.toFloat()
-        val xl = proj.screenX(wx - 1.0f, o.z) + sx
-        val xr = proj.screenX(wx + 1.0f, o.z) + sx
-        val yb = proj.groundY(o.z) + sy
-        val hpx = 0.95f * proj.ppu * s
-        // legs
-        sr.setColor(fogged(tmpC, Color(0x555049ff.toInt()), o.z))
-        sr.rect(xl + (xr - xl) * 0.08f, yb - hpx, 5f * s, hpx * 0.55f)
-        sr.rect(xr - (xr - xl) * 0.08f - 5f * s, yb - hpx, 5f * s, hpx * 0.55f)
-        // striped board
-        stripeBoard(xl, xr, yb - hpx, hpx * 0.45f, o.variant)
-        sr.setColor(fogged(tmpC, Color(0x2b2b2bff.toInt()), o.z))
-        sr.rect(xl, yb - hpx, xr - xl, 2.2f * s)
+        val z = o.z
+        metalPost(z, wx - 0.8f, 0f, 0.55f, 0.10f)
+        metalPost(z, wx + 0.8f, 0f, 0.55f, 0.10f)
+        fb.faceFront(TextureGen.hazardTex, z, wx - 1.0f, wx + 1.0f, 0.5f, 0.95f, flatTint(z, 1f, pc2))
+        fb.faceFront(TextureGen.white, z, wx - 1.03f, wx + 1.03f, 0.93f, 0.97f, flatTint(z, 0.35f, pc3))
+        fb.faceFront(TextureGen.white, z, wx - 1.03f, wx + 1.03f, 0.47f, 0.51f, flatTint(z, 0.35f, pc3))
     }
 
-    private fun highBarrier(o: Obstacle, sx: Float, sy: Float, s: Float) {
+    private fun highBarrier(o: Obstacle) {
         val wx = o.lane * GameConfig.LANE_WIDTH.toFloat()
-        val xl = proj.screenX(wx - 1.1f, o.z) + sx
-        val xr = proj.screenX(wx + 1.1f, o.z) + sx
-        val yb = proj.groundY(o.z) + sy
-        // supports from ground to 1.15u (slide gap below)
-        sr.setColor(fogged(tmpC, Color(0x555049ff.toInt()), o.z))
-        sr.rect(xl, yb - 1.2f * proj.ppu * s, 6f * s, 1.2f * proj.ppu * s)
-        sr.rect(xr - 6f * s, yb - 1.2f * proj.ppu * s, 6f * s, 1.2f * proj.ppu * s)
-        // overhead signboard 1.2u..2.2u — teal = slide action (cool color)
-        val boardY = yb - 2.3f * proj.ppu * s
-        val boardH = 1.05f * proj.ppu * s
-        sr.setColor(fogged(tmpC, Color(0x2fa08bff.toInt()), o.z))
-        sr.rect(xl, boardY, xr - xl, boardH)
-        sr.setColor(fogged(tmpC, Color(0x8ff2e2ff.toInt()), o.z))
-        // down-arrow marks (slide cue)
-        val cx = (xl + xr) / 2
-        val n = 3
-        for (i in 0 until n) {
-            val ax = xl + (xr - xl) * (0.3f + i * 0.2f)
-            sr.rect(ax - 2.5f * s, boardY + boardH * 0.3f, 5f * s, boardH * 0.4f)
-            sr.rect(ax - 6f * s, boardY + boardH * 0.22f, 12f * s, 3.5f * s)
-        }
-        sr.setColor(0f, 0f, 0f, 0.25f)
-        sr.rect(xl, boardY, xr - xl, 2.5f * s)
+        val z = o.z
+        metalPost(z, wx - 0.95f, 0f, 1.3f, 0.12f)
+        metalPost(z, wx + 0.95f, 0f, 1.3f, 0.12f)
+        fb.faceFront(TextureGen.signTealTex, z, wx - 1.1f, wx + 1.1f, 1.25f, 2.25f, flatTint(z, 1f, pc2))
+        fb.faceFront(TextureGen.white, z, wx - 1.13f, wx + 1.13f, 2.21f, 2.27f, flatTint(z, 0.3f, pc3))
     }
 
-    private fun gate(sx: Float, sy: Float, s: Float) {
-        val xl = proj.screenX(-GameConfig.LANE_WIDTH * 1.5f - 0.4f, GameConfig.MIN_PATTERN_GAP.coerceAtMost(10f)) + sx
-        val z = proj.camX // unused guard
-        val zNow = proj.groundY(0f)
-        val xL = proj.screenX(-GameConfig.LANE_WIDTH * 1.5f - 0.5f, 10f) + sx
-        val xR = proj.screenX(GameConfig.LANE_WIDTH * 1.5f + 0.5f, 10f) + sx
-        val yb = proj.groundY(10f) + sy
-        // posts
-        sr.setColor(fogged(tmpC, Color(0x555049ff.toInt()), 10f))
-        sr.rect(xL - 7f * s, yb - 2.4f * proj.ppu * proj.scale(10f), 14f * s, 2.4f * proj.ppu * proj.scale(10f))
-        sr.rect(xR - 7f * s, yb - 2.4f * proj.ppu * proj.scale(10f), 14f * s, 2.4f * proj.ppu * proj.scale(10f))
-        val boardY = yb - 2.35f * proj.ppu * proj.scale(10f)
-        val boardH = 1.1f * proj.ppu * proj.scale(10f)
-        sr.setColor(fogged(tmpC, Color(0x2fa08bff.toInt()), 10f))
-        sr.rect(xL - 7f * s, boardY, (xR - xL) + 14f * s, boardH)
-        sr.setColor(fogged(tmpC, Color(0x8ff2e2ff.toInt()), 10f))
-        var i = 0
-        val n = 8
-        while (i < n) {
-            val ax = xL + (xR - xL) * (0.08f + i * 0.12f)
-            sr.rect(ax - 2.2f * s, boardY + boardH * 0.28f, 4.4f * s, boardH * 0.42f)
-            sr.rect(ax - 5.5f * s, boardY + boardH * 0.2f, 11f * s, 3f * s)
-            i++
-        }
+    private fun gate(o: Obstacle) {
+        val z = o.z
+        val lo = -GameConfig.LANE_WIDTH * 1.5f - 0.25f
+        val hi = GameConfig.LANE_WIDTH * 1.5f + 0.25f
+        metalPost(z, lo, 0f, 2.35f, 0.14f)
+        metalPost(z, hi, 0f, 2.35f, 0.14f)
+        fb.faceFront(TextureGen.signTealTex, z, lo - 0.05f, hi + 0.05f, 1.25f, 2.3f, flatTint(z, 1f, pc2))
+        fb.faceFront(TextureGen.white, z, lo - 0.08f, hi + 0.08f, 2.26f, 2.32f, flatTint(z, 0.3f, pc3))
     }
 
-    private fun fenceFull(sx: Float, sy: Float, s: Float) {
-        val xL = proj.screenX(-GameConfig.LANE_WIDTH * 1.5f - 0.5f, 10f) + sx
-        val xR = proj.screenX(GameConfig.LANE_WIDTH * 1.5f + 0.5f, 10f) + sx
-        val yb = proj.groundY(10f) + sy
-        val hpx = 0.95f * proj.ppu * proj.scale(10f)
-        sr.setColor(fogged(tmpC, Color(0x555049ff.toInt()), 10f))
-        sr.rect(xL, yb - hpx, 6f * s, hpx)
-        sr.rect(xR - 6f * s, yb - hpx, 6f * s, hpx)
-        sr.setColor(fogged(tmpC, Color(0xf2b03cff.toInt()), 10f))
-        sr.rect(xL, yb - hpx, xR - xL, hpx * 0.5f)
-        sr.setColor(fogged(tmpC, Color(0xfff2dcff.toInt()), 10f))
-        sr.rect(xL, yb - hpx * 0.5f, xR - xL, hpx * 0.18f)
+    private fun fenceFull(o: Obstacle) {
+        val z = o.z
+        val lo = -GameConfig.LANE_WIDTH * 1.5f - 0.2f
+        val hi = GameConfig.LANE_WIDTH * 1.5f + 0.2f
+        metalPost(z, lo, 0f, 1.0f, 0.12f)
+        metalPost(z, hi, 0f, 1.0f, 0.12f)
+        fb.faceFront(TextureGen.hazardTex, z, lo - 0.05f, hi + 0.05f, 0.1f, 1.0f, flatTint(z, 1f, pc2))
+        fb.faceFront(TextureGen.white, z, lo - 0.08f, hi + 0.08f, 0.96f, 1.0f, flatTint(z, 0.3f, pc3))
     }
 
-    private fun blockade(o: Obstacle, sx: Float, sy: Float, s: Float, redWhite: Boolean = false) {
+    private fun blockade(o: Obstacle) {
         val wx = o.lane * GameConfig.LANE_WIDTH.toFloat()
-        box3D(
-            wx, 2.0f, 2.4f, o.z, o.z + 1.2f,
-            fogged(tmpC, Palette.CONTAINER_RED, o.z),
-            fogged(tmpC, Palette.CONTAINER_RED, o.z).mul(0.72f),
-            fogged(tmpC, Palette.CONTAINER_RED, o.z).mul(1.15f), sx, sy
-        )
-        val xl = proj.screenX(wx - 1f, o.z) + sx
-        val xr = proj.screenX(wx + 1f, o.z) + sx
-        val yb = proj.groundY(o.z) + sy
-        stripeBoard(xl, xr, yb - 2.1f * proj.ppu * s, 0.5f * proj.ppu * s, o.variant, yellowBlack = !redWhite)
+        val zF = o.z.coerceAtLeast(-8f)
+        val zB = (o.z + 1.2f).coerceAtMost(72f)
+        fogged(tmpC, whiteC, (zF + zB) * 0.5f)
+        pc1.set(tmpC); pc2.set(tmpC).mul(0.75f); pc3.set(tmpC).mul(1.08f)
+        val camWx = proj.camX
+        fb.faceTop(TextureGen.white, 2.4f, wx - 1f, wx + 1f, zF, zB, pc3)
+        if (camWx < wx - 1f) fb.faceSide(TextureGen.containerTex, wx - 1f, zF, zB, 0f, 2.4f, pc2)
+        else if (camWx > wx + 1f) fb.faceSide(TextureGen.containerTex, wx + 1f, zF, zB, 0f, 2.4f, pc2)
+        fb.faceFront(TextureGen.containerTex, zF, wx - 1f, wx + 1f, 0f, 2.4f, pc1)
     }
+
 
     // ── Coins & power-ups (SpriteBatch) ────────────────────────────────
     private fun coin(c: Coin, sx: Float, sy: Float) {
@@ -477,7 +390,8 @@ class EntityRenderer(
     private fun player(p: Player, ch: CharacterDef, sx: Float, sy: Float, blink: Boolean, shieldOn: Boolean, boostOn: Boolean, boardOn: Boolean) {
         val x = proj.screenX(p.x, 0f) + sx
         val groundY = proj.groundY(0f) + sy
-        val u = proj.ppu
+        // SS chibis read BIG on screen (~30% of height) — visual-only scale
+        val u = proj.ppu * 1.30f
 
         // soft blob shadow
         val shadowScale = Mathz.clamp01(1f - p.jumpY / 5f)
@@ -691,7 +605,7 @@ class EntityRenderer(
         val s = proj.scale(z)
         val x = proj.screenX(playerCharOffsetX(), z) + sx
         val groundY = proj.groundY(z) + sy
-        val u = proj.ppu * s
+        val u = proj.ppu * s * 1.30f * GameConfig.CHASER_VISUAL_SCALE
 
         sr.setColor(0f, 0f, 0f, 0.3f)
         sr.ellipse(x - u * 0.45f, groundY - 5f, u * 0.9f, u * 0.15f)
