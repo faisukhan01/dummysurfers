@@ -254,6 +254,9 @@ class UiController(val theme: UiTheme) : InputAdapter() {
             val x = 24f + i * (tabW + 12f)
             hits.add(HitRect(id, x, tabY, tabW, 128f) {})
             theme.button(batch, x, tabY, tabW, 128f, Palette.UI_NAVY, pressedId == id)
+            // v4.5: white glyph above the label — the bare navy tiles read blank
+            batch.setColor(1f, 1f, 1f, 1f)
+            batch.draw(TextureGen.navIcons[i], x + tabW / 2f - 27f, tabY + 56f, 54f, 54f)
             theme.text(batch, theme.fontSmall, label, x, tabY + 38f, Color.WHITE, Align.center, tabW)
             when (id) {
                 "chars" -> if (clickId == id) b.openPanel(MenuPanel.CHARACTERS)

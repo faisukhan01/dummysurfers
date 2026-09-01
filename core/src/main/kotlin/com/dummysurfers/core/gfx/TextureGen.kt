@@ -97,6 +97,7 @@ object TextureGen {
     lateinit var rainbowBurst: Texture // conic rainbow for NEW BEST celebration
     lateinit var coinFrames: Array<Texture>
     lateinit var powerIcons: Array<Texture> // magnet,x2,shield,boost,superjump
+    lateinit var navIcons: Array<Texture>   // v4.5 menu tab glyphs: person,bag,tasks,gear
     lateinit var panelNine: NinePatch
     lateinit var buttonNine: NinePatch
     lateinit var white: Texture
@@ -141,6 +142,7 @@ object TextureGen {
         rainbowBurst = burst(512)
         coinFrames = Array(10) { coin(72, it, 10) }
         powerIcons = arrayOf(magnetIcon(), starIcon(), shieldIcon(), boltIcon(), springIcon(), rocketIcon())
+        navIcons = arrayOf(navPerson(), navBag(), navTasks(), navGear())
         previews = Array(CharacterDef.ALL.size) { characterPreview(CharacterDef.ALL[it]) }
         panelNine = roundedNine(64, 18, Color(1f, 1f, 1f, 1f), border = false)
         buttonNine = roundedNine(64, 18, Color(1f, 1f, 1f, 1f), border = true)
@@ -168,6 +170,7 @@ object TextureGen {
             trainRoofTex, hazardTex, signTealTex, containerTex, glassTex).forEach { it.dispose() }
         coinFrames.forEach { it.dispose() }
         powerIcons.forEach { it.dispose() }
+        navIcons.forEach { it.dispose() }
         previews.forEach { it.dispose() }
         trainSides.forEach { it.dispose() }
         trainFronts.forEach { it.dispose() }
@@ -454,6 +457,59 @@ object TextureGen {
     private fun iconBase(size: Int): Pixmap {
         val p = Pixmap(size, size, Pixmap.Format.RGBA8888)
         return p
+    }
+
+    // ── v4.5 menu tab glyphs (flat white, drawn on the navy tab tiles) ────
+    private fun navPerson(): Texture {
+        val s = 96
+        val p = iconBase(s)
+        p.setColor(Color.WHITE)
+        p.fillCircle(s / 2, (s * 0.32f).toInt(), (s * 0.18f).toInt())
+        fillEllipse(p, s / 2f, s * 0.82f, s * 0.3f, s * 0.22f)
+        return tex(p)
+    }
+
+    private fun navBag(): Texture {
+        val s = 96
+        val p = iconBase(s)
+        p.setColor(Color.WHITE)
+        // shopping-bag handle arch + body
+        p.fillRectangle((s * 0.36f).toInt(), (s * 0.28f).toInt(), (s * 0.07f).toInt(), (s * 0.16f).toInt())
+        p.fillRectangle((s * 0.57f).toInt(), (s * 0.28f).toInt(), (s * 0.07f).toInt(), (s * 0.16f).toInt())
+        p.fillRectangle((s * 0.36f).toInt(), (s * 0.28f).toInt(), (s * 0.28f).toInt(), (s * 0.06f).toInt())
+        p.fillRectangle((s * 0.24f).toInt(), (s * 0.42f).toInt(), (s * 0.52f).toInt(), (s * 0.42f).toInt())
+        return tex(p)
+    }
+
+    private fun navTasks(): Texture {
+        val s = 96
+        val p = iconBase(s)
+        p.setColor(Color.WHITE)
+        // clipboard: clip + board + navy text lines
+        p.fillRectangle((s * 0.4f).toInt(), (s * 0.14f).toInt(), (s * 0.2f).toInt(), (s * 0.1f).toInt())
+        p.fillRectangle((s * 0.26f).toInt(), (s * 0.2f).toInt(), (s * 0.48f).toInt(), (s * 0.62f).toInt())
+        p.setColor(Palette.UI_NAVY)
+        p.fillRectangle((s * 0.34f).toInt(), (s * 0.34f).toInt(), (s * 0.32f).toInt(), (s * 0.06f).toInt())
+        p.fillRectangle((s * 0.34f).toInt(), (s * 0.48f).toInt(), (s * 0.32f).toInt(), (s * 0.06f).toInt())
+        p.fillRectangle((s * 0.34f).toInt(), (s * 0.62f).toInt(), (s * 0.2f).toInt(), (s * 0.06f).toInt())
+        return tex(p)
+    }
+
+    private fun navGear(): Texture {
+        val s = 96
+        val p = iconBase(s)
+        p.setColor(Color.WHITE)
+        p.fillCircle(s / 2, s / 2, (s * 0.2f).toInt())
+        for (i in 0 until 8) {
+            val ang = i * PI.toFloat() / 4f
+            p.fillCircle((s / 2f + cos(ang) * s * 0.3f).toInt(), (s / 2f + kotlin.math.sin(ang) * s * 0.3f).toInt(), (s * 0.1f).toInt())
+        }
+        // punch a transparent axle hole through the middle
+        p.setBlending(Pixmap.Blending.None)
+        p.setColor(0f, 0f, 0f, 0f)
+        p.fillCircle(s / 2, s / 2, (s * 0.09f).toInt())
+        p.setBlending(Pixmap.Blending.SourceOver)
+        return tex(p)
     }
 
     private fun magnetIcon(): Texture {
