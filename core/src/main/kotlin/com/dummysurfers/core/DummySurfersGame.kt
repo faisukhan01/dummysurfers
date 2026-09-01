@@ -202,6 +202,17 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             // death-path QA: no autopilot, no invulnerability → run into hazards
             player.invulnTimer = 0f
         } else if (System.getenv("DS_GOD") == "1" && state == GameState.PLAYING) devAutopilot(rawDt)
+        // v4.5 guard QA: DS_CHASE keeps the guard+dog sprinting close behind the
+        // runner for the whole batch (he otherwise only appears after stumbles —
+        // the user explicitly wants the "police officer chasing Jack" on camera);
+        // DS_CATCH scripts a stumble → guard-grab CAUGHT sequence at fixed times
+        if (System.getenv("DS_CHASE") == "1" && state == GameState.PLAYING) {
+            if (!chaser.active || chaser.timer < 1.5f) chaser.triggerClose(6f)
+        }
+        if (System.getenv("DS_CATCH") == "1" && state == GameState.PLAYING) {
+            if (devT >= 6f && dangerTimer <= 0f && state == GameState.PLAYING) onHit(player.x, glancing = true)
+            if (devT >= 9f && dangerTimer > 0f) onHit(player.x, glancing = true) // second clip inside the danger window = guard grab
+        }
         val dir = System.getenv("DS_SHOT_DIR") ?: return
         devT += rawDt
         if (devShotIdx < devShotTimes.size && devT >= devShotTimes[devShotIdx]) {
@@ -936,20 +947,24 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         batch.end()
 
         // boost screen-edge speed glow (spec 9: BOOST — screen edge blur, SS-warm)
+        // v4.5: edgeVignette — the old center-dark radial painted an orange EGG
+        // over the middle of the screen; a speed glow belongs at the edges
         if (activePowerups[3] > 0f) {
             batch.begin()
             batch.setColor(1f, 0.62f, 0.25f, 0.5f)
-            batch.draw(TextureGen.vignette, 0f, 0f, proj.vw, proj.vh)
+            batch.draw(TextureGen.edgeVignette, 0f, 0f, proj.vw, proj.vh)
             batch.setColor(1f, 1f, 1f, 1f)
             batch.end()
         }
 
         // v3.0: DANGER vignette — red edge pulse while the guard is in grab range
+        // v4.5: same edgeVignette swap — with the guard close for long stretches
+        // the old radial read as a giant translucent grey egg over the frame
         if (chaser.close && state == GameState.PLAYING) {
-            val pulse = 0.22f + (sin(time * 9f) * 0.10f) + (dangerTimer / GameConfig.DANGER_TIME) * 0.10f
+            val pulse = 0.35f + (sin(time * 9f) * 0.12f) + (dangerTimer / GameConfig.DANGER_TIME) * 0.15f
             batch.begin()
             batch.setColor(1f, 0.18f, 0.12f, pulse)
-            batch.draw(TextureGen.vignette, 0f, 0f, proj.vw, proj.vh)
+            batch.draw(TextureGen.edgeVignette, 0f, 0f, proj.vw, proj.vh)
             batch.setColor(1f, 1f, 1f, 1f)
             batch.end()
         }

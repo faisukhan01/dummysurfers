@@ -95,6 +95,7 @@ object TextureGen {
     lateinit var skylineFar: Texture
     lateinit var skylineNear: Texture
     lateinit var vignette: Texture
+    lateinit var edgeVignette: Texture       // v4.5 transparent center / dark EDGES (danger + boost pulses)
     lateinit var rainbowBurst: Texture // conic rainbow for NEW BEST celebration
     lateinit var coinFrames: Array<Texture>
     lateinit var powerIcons: Array<Texture> // magnet,x2,shield,boost,superjump
@@ -140,6 +141,7 @@ object TextureGen {
         skylineFar = skyline(1024, 190, 5L, dark = 0xaebbe8, alpha = 0.8f, dense = false)
         skylineNear = skyline(1024, 240, 11L, dark = 0x8b9cdd, alpha = 0.9f, dense = true)
         vignette = radial(256, Color(0f, 0f, 0f, 0.5f), 0.72f)
+        edgeVignette = edgeVignette(256)
         rainbowBurst = burst(512)
         coinFrames = Array(10) { coin(72, it, 10) }
         powerIcons = arrayOf(magnetIcon(), starIcon(), shieldIcon(), boltIcon(), springIcon(), rocketIcon())
@@ -167,7 +169,7 @@ object TextureGen {
     }
 
     fun dispose() {
-        listOf(glow, softShadow, sky, fog, cloudA, cloudB, skylineFar, skylineNear, vignette, rainbowBurst, white, disc, hazeBand, jetFlame,
+        listOf(glow, softShadow, sky, fog, cloudA, cloudB, skylineFar, skylineNear, vignette, edgeVignette, rainbowBurst, white, disc, hazeBand, jetFlame,
             trainRoofTex, hazardTex, signTealTex, containerTex, glassTex).forEach { it.dispose() }
         coinFrames.forEach { it.dispose() }
         powerIcons.forEach { it.dispose() }
@@ -326,6 +328,26 @@ object TextureGen {
             val a = if (d <= coreCut) 0f else (1f - (d - coreCut) / (1f - coreCut)).coerceIn(0f, 1f)
             val aa = a * a * (3f - 2f * a)
             p.setColor(c.r, c.g, c.b, c.a * aa)
+            p.drawPixel(x, y)
+        }
+        val t = Texture(p); p.dispose(); return t
+    }
+
+    /** v4.5 inverse radial: fully transparent through 62% of the radius, then a
+     *  smooth darkening to the corners — a real EDGE vignette. The old danger/
+     *  boost pulses reused the center-dark radial and read as a giant grey EGG
+     *  smeared over the whole screen whenever the guard stayed close (DS_CHASE QA). */
+    private fun edgeVignette(size: Int): Texture {
+        val p = Pixmap(size, size, Pixmap.Format.RGBA8888)
+        val half = size / 2f
+        for (y in 0 until size) for (x in 0 until size) {
+            val dx = (x - half) / half
+            val dy = (y - half) / half
+            // corners are at d≈1.41 — normalize so the frame edges sit at ~0.86
+            val d = kotlin.math.sqrt(dx * dx + dy * dy) / 1.41f * 2f
+            val a = ((d - 0.62f) / 0.38f).coerceIn(0f, 1f)
+            val aa = a * a * (3f - 2f * a)
+            p.setColor(0f, 0f, 0f, aa)
             p.drawPixel(x, y)
         }
         val t = Texture(p); p.dispose(); return t
