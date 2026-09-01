@@ -81,7 +81,8 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
     private var guard: Human3D? = null
     private val dog = Dog3D(factory)
 
-    private val boardModel by lazy { factory.colorBox("hoverboard", 0.62f, 0.09f, 1.5f, 0x2fd0bfff.toInt()) }
+    // v4.2: proper hoverboard model (stripe + fins) replaces the plain slab
+    private val boardModel by lazy { factory.hoverboard() }
     private val boardGlow by lazy { factory.glowBillboard(1.2f, TextureGen.glow) }
     private val jetFlameInstance by lazy { ModelInstance(factory.glowBillboard(1.1f, TextureGen.jetFlame)) }
     private val jetCoreInstance by lazy { ModelInstance(factory.glowBillboard(0.9f, TextureGen.glow)) }

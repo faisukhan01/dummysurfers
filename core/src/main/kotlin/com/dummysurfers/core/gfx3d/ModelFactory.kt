@@ -428,6 +428,36 @@ class ModelFactory {
     }
 
     /**
+     * v4.2 HOVERBOARD v2 — proper SS-style board: chamfered teal deck,
+     * yellow racing stripe, griptape nose/tail, angled fins at both ends,
+     * dark undercarriage. Replaces the plain teal slab.
+     */
+    fun hoverboard(): Model = models.getOrPut("hoverboard2") {
+        mb.begin()
+        var mpb = mb.part("deck", GL20.GL_TRIANGLES, ATTRS, matColor(0x2fd0bfff.toInt()))
+        mpb.setUVRange(0f, 0f, 1f, 1f)
+        mpb.cbox(0f, 0.045f, 0f, 0.6f, 0.05f, 1.44f)
+        // top deck slightly narrower (chamfer illusion)
+        mpb = mb.part("deckTop", GL20.GL_TRIANGLES, ATTRS, matColor(0x3ee2cfff.toInt()))
+        mpb.cbox(0f, 0.08f, 0f, 0.52f, 0.04f, 1.3f)
+        // yellow racing stripe down the middle
+        mpb = mb.part("stripe", GL20.GL_TRIANGLES, ATTRS, matColor(0xffd23eff.toInt()))
+        mpb.cbox(0f, 0.105f, 0f, 0.13f, 0.015f, 1.26f)
+        // griptape nose + tail pads
+        mpb = mb.part("grip", GL20.GL_TRIANGLES, ATTRS, matColor(0x223038ff.toInt()))
+        mpb.cbox(0f, 0.105f, 0.56f, 0.4f, 0.015f, 0.22f)
+        mpb.cbox(0f, 0.105f, -0.56f, 0.4f, 0.015f, 0.22f)
+        // angled fins (nose up-kick, tail up-kick)
+        mpb = mb.part("fins", GL20.GL_TRIANGLES, ATTRS, matColor(0x1fb89fff.toInt()))
+        mpb.cbox(0f, 0.12f, 0.72f, 0.5f, 0.05f, 0.14f)
+        mpb.cbox(0f, 0.12f, -0.72f, 0.5f, 0.05f, 0.14f)
+        // dark undercarriage + skid rails
+        mpb = mb.part("under", GL20.GL_TRIANGLES, ATTRS, matColor(0x243038ff.toInt()))
+        mpb.cbox(0f, 0.015f, 0f, 0.42f, 0.03f, 1.2f)
+        mb.end()
+    }
+
+    /**
      * v4.2 TUNNEL LIGHTING PASS — ceiling tube lamp: dark bracket + bright
      * warm tube + a second inner "burning filament" box so the tube reads lit
      * even with no point lights in the default shader.
