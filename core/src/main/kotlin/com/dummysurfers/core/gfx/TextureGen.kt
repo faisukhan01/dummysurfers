@@ -728,11 +728,12 @@ object TextureGen {
             bare((ex - 18f).toInt(), (headCY - 12f).toInt(), 36, 8, mul(ch.hair, 0.7f))
             p.setColor(0.95f, 0.55f, 0.5f, 0.4f); p.fillCircle((cx + side * 58f).toInt(), (headCY + 34f).toInt(), 9)
         }
-        p.setColor(mul(ch.skin, 0.9f)); p.fillCircle(cx.toInt(), (headCY + 30f).toInt(), 6)
-        // grin — crescent + teeth
-        p.setColor(0x5e2c1dff.toInt()); p.fillCircle(cx.toInt(), (headCY + 44f).toInt(), 17)
-        p.setColor(ch.skin); p.fillCircle(cx.toInt(), (headCY + 50f).toInt(), 15)
-        p.setColor(0xffffffff.toInt()); p.fillRectangle((cx - 10f).toInt(), (headCY + 34f).toInt(), 20, 6)
+        p.setColor(mul(ch.skin, 0.9f)); p.fillCircle(cx.toInt(), (headCY + 27f).toInt(), 5)
+        // grin — dark band w/ white teeth INSIDE it (old mask left a bare dark
+        // bar above the teeth that read as a moustache)
+        p.setColor(0x5e2c1dff.toInt()); p.fillCircle(cx.toInt(), (headCY + 41f).toInt(), 15)
+        p.setColor(ch.skin); p.fillCircle(cx.toInt(), (headCY + 46f).toInt(), 13)
+        p.setColor(0xffffffff.toInt()); p.fillRectangle((cx - 9f).toInt(), (headCY + 30f).toInt(), 18, 5)
 
         // ── CAP — backwards dome + white panel + button + gloss ────────
         // v4.3b: dome shrunk (r 70→60, raised) — the old dome's bottom arc
@@ -744,11 +745,14 @@ object TextureGen {
         p.setColor(OUT); p.fillRectangle((cx - 17f).toInt(), (headCY + 1f).toInt(), 34, 2)
         p.setColor(mul(ch.cap, 1.12f)); p.fillCircle(cx.toInt(), (headCY - 110f).toInt(), 8)
         if (ch.capPanel != 0) {
+            // proper OVAL panel — widest mid-height (old cone/V shape read as
+            // a white arrow on the cap)
             p.setColor(ch.capPanel)
             for (i in 0..24) {
                 val t = i / 24f
-                val w = (28f * (1f - t * t)).toInt().coerceAtLeast(2)
-                p.fillRectangle((cx - w).toInt(), (headCY - 88f + i * 1.3f).toInt().coerceAtMost((headCY - 56f).toInt()), w * 2, 2)
+                val k = t * 2f - 1f
+                val w = (30f * kotlin.math.sqrt(1f - k * k)).toInt().coerceAtLeast(2)
+                p.fillRectangle((cx - w).toInt(), (headCY - 90f + i * 1.4f).toInt(), w * 2, 2)
             }
         }
         p.setColor(1f, 1f, 1f, 0.22f); p.fillCircle((cx - 28f).toInt(), (headCY - 76f).toInt(), 11)

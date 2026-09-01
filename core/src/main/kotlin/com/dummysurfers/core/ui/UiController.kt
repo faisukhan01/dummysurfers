@@ -217,17 +217,17 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         theme.text(batch, theme.fontHuge, "DUMMY", 0f, 1150f + bounce, Palette.GOLD, Align.center, vw)
         theme.text(batch, theme.fontHuge, "SURFERS", 4f, 1079f + bounce, Palette.UI_OUTLINE, Align.center, vw)
         theme.text(batch, theme.fontHuge, "SURFERS", 0f, 1082f + bounce, Color.WHITE, Align.center, vw)
-        // orange "BY FSK" tag chip (raised — clear of the hero's cap)
+        // orange "BY FSK" tag chip (in the gap between logo and hero cap)
         val tagW = 150f
-        theme.button(batch, vw / 2f - tagW / 2f, 1026f + bounce, tagW, 44f, Palette.UI_ORANGE, false)
-        theme.text(batch, theme.fontSmall, "BY FSK", 0f, 1055f + bounce, Color.WHITE, Align.center, vw)
+        theme.button(batch, vw / 2f - tagW / 2f, 996f + bounce, tagW, 44f, Palette.UI_ORANGE, false)
+        theme.text(batch, theme.fontSmall, "BY FSK", 0f, 1025f + bounce, Color.WHITE, Align.center, vw)
 
         // selected character preview front & center on the tracks (big SS-style hero)
         // v4.3: portrait rebuilt at 360px w/ head in the lower 2/3 + its own
         // in-texture ground shadow — drawn 372px, no external shadow blob
         val selIdx = CharacterDef.ALL.indexOfFirst { it.id == b.save.selectedCharacter }.coerceAtLeast(0)
         val heroBob = sin(time * 1.7f) * 7f
-        drawMiniCharacter(selIdx, vw / 2f - 182f, 660f + heroBob, 364f)
+        drawMiniCharacter(selIdx, vw / 2f - 174f, 640f + heroBob, 348f)
 
         // HIGH SCORE card (periwinkle + deep slot + gold star)
         val hcW = 460f
