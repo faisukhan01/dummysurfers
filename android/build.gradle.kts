@@ -20,8 +20,8 @@ android {
         applicationId = "com.fsk.dummysurfers"
         minSdk = 24
         targetSdk = 34
-        versionCode = 12
-        versionName = "4.0.0"
+        versionCode = 13
+        versionName = "4.1.0"
     }
 
     signingConfigs {
