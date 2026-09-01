@@ -289,7 +289,7 @@ class EntityRenderer(
         val z = o.z
         metalPost(z, wx - 0.8f, 0f, 0.55f, 0.10f)
         metalPost(z, wx + 0.8f, 0f, 0.55f, 0.10f)
-        fb.faceFront(TextureGen.hazardTex, z, wx - 1.0f, wx + 1.0f, 0.5f, 0.95f, flatTint(z, 1f, pc2))
+        fb.faceFront(TextureGen.barrierRedTex, z, wx - 1.0f, wx + 1.0f, 0.5f, 0.95f, flatTint(z, 1f, pc2))
         fb.faceFront(TextureGen.white, z, wx - 1.03f, wx + 1.03f, 0.93f, 0.97f, flatTint(z, 0.35f, pc3))
         fb.faceFront(TextureGen.white, z, wx - 1.03f, wx + 1.03f, 0.47f, 0.51f, flatTint(z, 0.35f, pc3))
     }
@@ -319,7 +319,7 @@ class EntityRenderer(
         val hi = GameConfig.LANE_WIDTH * 1.5f + 0.2f
         metalPost(z, lo, 0f, 1.0f, 0.12f)
         metalPost(z, hi, 0f, 1.0f, 0.12f)
-        fb.faceFront(TextureGen.hazardTex, z, lo - 0.05f, hi + 0.05f, 0.1f, 1.0f, flatTint(z, 1f, pc2))
+        fb.faceFront(TextureGen.barrierRedTex, z, lo - 0.05f, hi + 0.05f, 0.1f, 1.0f, flatTint(z, 1f, pc2))
         fb.faceFront(TextureGen.white, z, lo - 0.08f, hi + 0.08f, 0.96f, 1.0f, flatTint(z, 0.3f, pc3))
     }
 

@@ -106,6 +106,7 @@ object TextureGen {
     lateinit var trainRears: Array<Texture>   // per-livery carriage rear (taillights)
     lateinit var trainRoofTex: Texture        // tileable grey roof w/ vents
     lateinit var hazardTex: Texture           // yellow/black chevron plate (tileable U)
+    lateinit var barrierRedTex: Texture       // v3.0: SS red/white barrier stripes
     lateinit var signTealTex: Texture         // slide-sign: teal board w/ white arrows
     lateinit var containerTex: Texture        // red container blockade
     lateinit var facades: Array<Texture>      // building facades w/ baked windows
@@ -134,6 +135,7 @@ object TextureGen {
         trainRears = Array(Palette.TRAIN_LIVERIES.size) { trainRear(it) }
         trainRoofTex = trainRoof()
         hazardTex = hazardStripes()
+        barrierRedTex = barrierStripes()
         signTealTex = signTeal()
         containerTex = containerBox()
         facades = arrayOf(
@@ -691,6 +693,26 @@ object TextureGen {
                 if (x + 1 in 0 until s) p.drawPixel(x + 1, k)
             }
             i += 16
+        }
+        return tex(p)
+    }
+
+    /** v3.0: SS-style red/white 45° barrier stripes (jump/slide barriers). */
+    private fun barrierStripes(): Texture {
+        val s = 64
+        val p = Pixmap(s, s, Pixmap.Format.RGBA8888)
+        p.setColor(0xe83a30ff.toInt()); p.fillRectangle(0, 0, s, s)
+        p.setColor(0xf6f2ecff.toInt())
+        var i = -s
+        while (i < s * 2) {
+            for (k in 0 until s) {
+                val x = i + k
+                if (x in 0 until s) p.drawPixel(x, k)
+                if (x + 1 in 0 until s) p.drawPixel(x + 1, k)
+                if (x + 2 in 0 until s) p.drawPixel(x + 2, k)
+                if (x + 3 in 0 until s) p.drawPixel(x + 3, k)
+            }
+            i += 18
         }
         return tex(p)
     }
