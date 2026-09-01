@@ -484,9 +484,10 @@ class EntityRenderer(
         val loArm = H * 0.15f
         fun arm(side: Float, phase: Float) {
             val shX = side * 0.24f * u; val shY = shoulderY + 0.02f * u
-            val a = if (isJump) -2.35f else -phase * 0.9f
+            // softer swing keeps the arms pumping at the sides (SS runners don't T-pose)
+            val a = if (isJump) -2.35f else -phase * 0.62f
             val ex = shX + sin(a) * upArm; val ey = shY - cos(a) * upArm
-            val a2 = a + side * 0.6f
+            val a2 = a + side * 0.9f
             val hx = ex + sin(a2) * loArm; val hy = ey - cos(a2) * loArm
             sr.setColor(OUT); sr.rectLine(shX, shY, ex, ey, armW + 0.05f * u); sr.rectLine(ex, ey, hx, hy, armW * 0.85f + 0.05f * u)
             sr.setColor(hoodieDark); sr.rectLine(shX, shY, ex, ey, armW); sr.rectLine(ex, ey, hx, hy, armW * 0.85f)
@@ -651,9 +652,9 @@ class EntityRenderer(
         val loArm = H * 0.15f
         fun arm(side: Float, phase: Float) {
             val shX = side * 0.24f * u; val shY = shoulderY + 0.02f * u
-            val a = -phase * 0.9f
+            val a = -phase * 0.62f
             val ex = shX + sin(a) * upArm; val ey = shY - cos(a) * upArm
-            val a2 = a + side * 0.6f
+            val a2 = a + side * 0.9f
             val hx = ex + sin(a2) * loArm; val hy = ey - cos(a2) * loArm
             sr.setColor(OUT); sr.rectLine(shX, shY, ex, ey, armW + 0.05f * u); sr.rectLine(ex, ey, hx, hy, armW * 0.85f + 0.05f * u)
             sr.setColor(uniformDark); sr.rectLine(shX, shY, ex, ey, armW); sr.rectLine(ex, ey, hx, hy, armW * 0.85f)
