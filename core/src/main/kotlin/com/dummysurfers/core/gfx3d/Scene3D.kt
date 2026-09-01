@@ -25,6 +25,7 @@ import com.dummysurfers.core.world.DecoKind
 import com.dummysurfers.core.world.WorldGenerator
 import com.dummysurfers.core.state.PlayerState
 import kotlin.math.abs
+import kotlin.math.max
 import kotlin.math.sin
 
 /**
@@ -131,8 +132,11 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
         val followX = player.x * 0.58f
         val bob = if (player.state == PlayerState.RUNNING || player.state == PlayerState.LANE_SWITCH)
             sin(player.runPhase * 2f) * 0.035f else 0f
-        cam.position.set(followX + shakeX * 0.012f, 2.62f + bob + shakeY * 0.01f, 4.9f)
-        cam.lookAt(player.x * 0.8f, 1.12f + player.jumpY * 0.32f, -7f)
+        // v4.1: camera rides up with jetpack/high flight so the runner stays
+        // framed with the track visible far below (SS jetpack framing)
+        val airLift = max(0f, player.jumpY - 1.6f)
+        cam.position.set(followX + shakeX * 0.012f, 2.62f + bob + airLift * 0.62f + shakeY * 0.01f, 4.9f)
+        cam.lookAt(player.x * 0.8f, 1.12f + player.jumpY * 0.34f + airLift * 0.42f, -7f)
         cam.update()
 
         // ── scrolling ground strips ────────────────────────────────────
@@ -260,16 +264,18 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
         // ── characters ─────────────────────────────────────────────────
         val h = getHuman(character)
         if (!blinkHide) {
-            // v4.1 CRITICAL FIX: mesh must lift with jumpY (was supportY-only →
-            // the runner never visually left the ground on jumps/falls)
-            m.setToTranslation(player.x, player.supportY + player.jumpY, 0f)
+            // v4.1 FIX: jumpY is the ABSOLUTE altitude (mirrors supportY on
+            // roofs, arcs during jumps) — mesh y is jumpY alone. The old
+            // supportY-only transform ground-locked jumps; adding supportY
+            // double-lifts roof/jet flight out of frame.
+            m.setToTranslation(player.x, player.jumpY, 0f)
             h.animate(m, player.state, player.runPhase, player.stateTime, player.lean,
                 player.stateTime / player.curJumpDuration, stumbleOn, time, time, guardCatchFlag(chaser))
             for (p in h.rig.parts) frame.add(p.instance)
             // v4.1 jetpack thruster glow under the flyer
             if (jetOn) {
                 val flicker = 0.75f + sin(time * 31f) * 0.2f
-                val fy = player.supportY + player.jumpY - 0.32f
+                val fy = player.jumpY - 0.32f
                 val f = jetFlameInstance
                 billboard(f, player.x, fy, 0.12f, 0.85f * flicker)
                 frame.add(f)
@@ -280,11 +286,11 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
             // hoverboard under the feet
             if (boardOn) {
                 val b = boardInstance
-                b.transform.setToTranslation(player.x, player.supportY + 0.12f + player.jumpY, 0.1f)
+                b.transform.setToTranslation(player.x, player.jumpY + 0.12f, 0.1f)
                 b.transform.rotate(Vector3(0f, 0f, 1f), -player.lean * 14f)
                 frame.add(b)
                 val g = boardGlowInstance
-                billboard(g, player.x, player.supportY + player.jumpY + 0.05f, 0.15f, 0.7f)
+                billboard(g, player.x, player.jumpY + 0.05f, 0.15f, 0.7f)
                 frame.add(g)
             }
         }

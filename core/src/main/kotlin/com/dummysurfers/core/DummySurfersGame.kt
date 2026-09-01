@@ -98,7 +98,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     private var stumbleSlowTimer = 0f
     private var guardCatch = false
     private val activePowerups = FloatArray(PowerUpType.entries.size)
-    private val powerupTotal = FloatArray(5)
+    private val powerupTotal = FloatArray(PowerUpType.entries.size)
     private var displayScore = 0
     private var newBest = false
     private var coinStreak = 0
