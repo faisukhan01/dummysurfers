@@ -11,6 +11,7 @@ import com.badlogic.gdx.InputAdapter
 class SwipeDetector(private val listener: Listener) : InputAdapter() {
     interface Listener {
         fun onSwipe(dir: Direction)
+        fun onTap() {}   // quick touch without movement (double-tap = hoverboard)
     }
 
     enum class Direction { LEFT, RIGHT, UP, DOWN }
@@ -38,7 +39,11 @@ class SwipeDetector(private val listener: Listener) : InputAdapter() {
         val dy = screenY - startY
         val dist = kotlin.math.sqrt(dx * dx + dy * dy)
         val dtSec = (System.nanoTime() - startNanos) / 1e9f
-        if (dist < deadZone || dtSec > maxDuration) return true
+        if (dist < deadZone) {
+            if (dtSec <= 0.28f) listener.onTap()
+            return true
+        }
+        if (dtSec > maxDuration) return true
         if (kotlin.math.abs(dx) > kotlin.math.abs(dy)) {
             listener.onSwipe(if (dx > 0) Direction.RIGHT else Direction.LEFT)
         } else {

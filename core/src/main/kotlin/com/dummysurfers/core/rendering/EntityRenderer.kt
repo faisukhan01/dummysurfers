@@ -76,7 +76,8 @@ class EntityRenderer(
         particlesFx: Particles,
         invulnBlink: Boolean,
         shieldOn: Boolean,
-        boostOn: Boolean
+        boostOn: Boolean,
+        boardOn: Boolean
     ) {
         itemCount = 0
         for (d in world.decos) {
@@ -102,7 +103,7 @@ class EntityRenderer(
                 2 -> obstacle(it.obstacle!!, shakeX, shakeY)
                 3 -> coin(it.coin!!, shakeX, shakeY)
                 4 -> powerup(it.powerup!!, shakeX, shakeY)
-                5 -> this.player(player, character, shakeX, shakeY, invulnBlink, shieldOn, boostOn)
+                5 -> this.player(player, character, shakeX, shakeY, invulnBlink, shieldOn, boostOn, boardOn)
                 6 -> this.chaser(chaser, shakeX, shakeY)
             }
         }
@@ -468,7 +469,7 @@ class EntityRenderer(
     }
 
     // ── Player (procedural runner, seen from behind) ───────────────────
-    private fun player(p: Player, ch: CharacterDef, sx: Float, sy: Float, blink: Boolean, shieldOn: Boolean, boostOn: Boolean) {
+    private fun player(p: Player, ch: CharacterDef, sx: Float, sy: Float, blink: Boolean, shieldOn: Boolean, boostOn: Boolean, boardOn: Boolean) {
         val s = 1f
         val x = proj.screenX(p.x, 0f) + sx
         val groundY = proj.groundY(0f) + sy
@@ -489,6 +490,22 @@ class EntityRenderer(
 
         val cx = x
         val by = groundY - p.jumpY * u
+
+        // hoverboard under the feet — SS 2nd-chance machine
+        if (boardOn) {
+            val boardY = by - u * 0.05f
+            // teal thruster glow
+            sr.setColor(0.22f, 0.72f, 0.66f, 0.30f)
+            sr.ellipse(cx, boardY - u * 0.055f, u * 0.46f, u * 0.085f)
+            // navy deck with rounded nose/tail
+            sr.setColor(0.16f, 0.19f, 0.34f, 1f)
+            sr.rect(cx - u * 0.36f, boardY, u * 0.72f, u * 0.075f)
+            sr.circle(cx - u * 0.36f, boardY + u * 0.037f, u * 0.037f)
+            sr.circle(cx + u * 0.36f, boardY + u * 0.037f, u * 0.037f)
+            // gold racing stripe
+            sr.setColor(Palette.GOLD)
+            sr.rect(cx - u * 0.36f, boardY + u * 0.026f, u * 0.72f, u * 0.022f)
+        }
 
         if (isSlide) {
             drawSlidePose(p, ch, cx, by, u)

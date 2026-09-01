@@ -68,6 +68,12 @@ object GameConfig {
     val POWERUP_DURATIONS = floatArrayOf(18f, 22f, 12f, 10f, 15f) // magnet,x2,shield,boost,superjump
     val POWERUP_LABELS = arrayOf("MAGNET", "SCORE x2", "SHIELD", "BOOST", "SUPER JUMP")
 
+    // ── Hoverboard (2nd chance) ────────────────────────────────────────
+    const val HOVERBOARD_DURATION = 15f     // seconds of crash immunity while riding
+    const val HOVERBOARD_SAVE_INVULN = 1.6f // invulnerability after the board shatters
+    const val HOVERBOARD_COST = 300         // coins per board in the shop
+    const val HOVERBOARD_MAX = 9            // rack capacity
+
     // ── Trains ─────────────────────────────────────────────────────────
     const val TRAIN_CAR_LENGTH = 6.4f
     const val TRAIN_WIDTH = 2.05f

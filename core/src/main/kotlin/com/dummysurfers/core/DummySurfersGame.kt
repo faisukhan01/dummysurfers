@@ -67,6 +67,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     private val particles = Particles(340)
     private val swipe = SwipeDetector(object : SwipeDetector.Listener {
         override fun onSwipe(dir: SwipeDetector.Direction) = handleSwipe(dir)
+        override fun onTap() = handleTap()
     })
 
     private val rng = Random(System.nanoTime())
@@ -91,6 +92,9 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     private var coinStreak = 0
     private var coinStreakTimer = 0f
     private var multiplier = 1
+    private var boardTimer = 0f        // hoverboard ride time left (0 = not riding)
+    private var boardTotal = 0f        // ride duration for the HUD bar
+    private var lastTapNanos = 0L      // double-tap window tracking
 
     // ── FX state ───────────────────────────────────────────────────────
     private var shake = 0f
@@ -153,6 +157,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
 
     private fun update(dt: Float) {
         swipe.pollKeyboard()
+        if (state == GameState.PLAYING && Gdx.input.isKeyJustPressed(Input.Keys.B)) activateBoard()
         ui.update(dt)
         particles.update(dt)
 
@@ -224,6 +229,9 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
                 if (activePowerups[i] <= 0f) activePowerups[i] = 0f
             }
         }
+
+        // hoverboard ride timer
+        if (boardTimer > 0f) boardTimer = max(0f, boardTimer - dt)
 
         // chaser behavior
         chaser.update(dt, speed)
@@ -347,6 +355,28 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         }
     }
 
+    /** Double-tap anywhere during a run = hop on the hoverboard. */
+    private fun handleTap() {
+        if (state != GameState.PLAYING) return
+        val now = System.nanoTime()
+        val doubleTap = now - lastTapNanos < 350_000_000L
+        lastTapNanos = now
+        if (doubleTap) activateBoard()
+    }
+
+    private fun activateBoard() {
+        if (state != GameState.PLAYING || boardTimer > 0f) return
+        if (!save.consumeHoverboard()) {
+            audio.play(GameEvent.GAME_OVER)
+            return
+        }
+        boardTimer = GameConfig.HOVERBOARD_DURATION
+        boardTotal = boardTimer
+        audio.play(GameEvent.POWERUP)
+        vibrate(50)
+        particles.burst(proj.screenX(player.x, 0f), proj.groundY(0f) + 20f, 18, Color(0x37b8a8ff.toInt()), 300f, 6f, life = 0.6f)
+    }
+
     private fun playerOverlaps(boxX: Float, boxHalfW: Float, zNear: Float, zFar: Float, yLo: Float, yHi: Float): Boolean {
         val px = player.x
         if (abs(px - boxX) > GameConfig.PLAYER_HALF_WIDTH + boxHalfW) return false
@@ -426,6 +456,16 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             particles.burst(proj.screenX(player.x, 0f), proj.groundY(0f) - player.jumpY * proj.ppu + 120f, 16, Color(0x2dd4bfff.toInt()), 320f, 6f, shape = 1)
             return
         }
+        if (boardTimer > 0f) {
+            // hoverboard saves the run — board shatters, brief invulnerability
+            boardTimer = 0f
+            player.invulnTimer = GameConfig.HOVERBOARD_SAVE_INVULN
+            audio.play(GameEvent.SHIELD_BREAK)
+            vibrate(80)
+            particles.text(proj.vw / 2f, proj.vh * 0.55f, "SAVED!", Color(0x37b8a8ff.toInt()), 26f)
+            particles.burst(proj.screenX(player.x, 0f), proj.groundY(0f) - player.jumpY * proj.ppu + 60f, 24, Color(0x37b8a8ff.toInt()), 380f, 7f, shape = 1)
+            return
+        }
         player.state = PlayerState.DEAD
         player.deadTimer = 0f
         state = GameState.DYING
@@ -494,6 +534,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         jumps = 0; slides = 0; powerupsUsed = 0; nearMisses = 0
         newBest = false; coinStreak = 0; multiplier = 1
         for (i in 0 until 5) { activePowerups[i] = 0f; powerupTotal[i] = 0f }
+        boardTimer = 0f; boardTotal = 0f; lastTapNanos = 0L
         player.reset()
         chaser.active = false
         particles.clear()
@@ -585,7 +626,8 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         worldRenderer.time = time
         worldRenderer.render(distance, Difficulty.speed(distance), shakeX, shakeY, tunnelDark)
         entityRenderer.render(world, spawner, player, chaser, character, shakeX, shakeY, particles,
-            invulnBlink = player.invulnTimer > 0f, shieldOn = activePowerups[2] > 0f, boostOn = activePowerups[3] > 0f)
+            invulnBlink = player.invulnTimer > 0f, shieldOn = activePowerups[2] > 0f, boostOn = activePowerups[3] > 0f,
+            boardOn = boardTimer > 0f)
 
         // boost screen-edge speed glow (spec 9: BOOST — screen edge blur, SS-warm)
         if (activePowerups[3] > 0f) {
@@ -643,6 +685,8 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         override val multiplier: Int get() = this@DummySurfersGame.multiplier
         override val powerupRemaining: FloatArray get() = activePowerups
         override val powerupTotal: FloatArray get() = this@DummySurfersGame.powerupTotal
+        override val boardTimer: Float get() = this@DummySurfersGame.boardTimer
+        override val boardTotal: Float get() = this@DummySurfersGame.boardTotal
         override val newBest: Boolean get() = this@DummySurfersGame.newBest
         override val save: SaveManager get() = this@DummySurfersGame.save
         override val toFrame: (FloatArray) -> Unit
@@ -684,6 +728,16 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
                 audio.play(GameEvent.POWERUP)
             } else {
                 ui.toast("NOT ENOUGH COINS")
+                audio.play(GameEvent.GAME_OVER)
+            }
+        }
+        override fun activateBoard() = this@DummySurfersGame.activateBoard()
+        override fun buyHoverboard() {
+            if (save.buyHoverboard(GameConfig.HOVERBOARD_COST, GameConfig.HOVERBOARD_MAX)) {
+                ui.toast("HOVERBOARD +1!")
+                audio.play(GameEvent.POWERUP)
+            } else {
+                ui.toast(if (save.hoverboards >= GameConfig.HOVERBOARD_MAX) "BOARD RACK FULL" else "NOT ENOUGH COINS")
                 audio.play(GameEvent.GAME_OVER)
             }
         }

@@ -44,6 +44,7 @@ straight over the previous one (no uninstall needed).
 | Obstacles: low barriers (jump), high barriers + gates (slide), blockades, full fences | ✅ |
 | Coins: 10-frame spin, glow, bob, arcs/lines/zigzags guiding the safe path, rising-pitch ding | ✅ |
 | Power-ups: Magnet / Score ×2 / Shield / Boost / Super Jump (+3s per upgrade level) | ✅ |
+| Hoverboard: consumable 2nd chance — tap chip or double-tap to ride, crash shatters the board instead of the run (shop: 300c, rack of 9) | ✅ |
 | Chaser (security guard) pressure system | ✅ |
 | Near-miss scoring (+25, shake, floating text) | ✅ |
 | Difficulty curve `base + (max−base)(1−e^(−d·k))` with 5 phases | ✅ |

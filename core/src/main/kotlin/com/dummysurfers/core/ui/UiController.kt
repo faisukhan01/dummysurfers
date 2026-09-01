@@ -49,6 +49,8 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         val multiplier: Int
         val powerupRemaining: FloatArray // 5
         val powerupTotal: FloatArray     // 5
+        val boardTimer: Float            // hoverboard ride time left (0 = not riding)
+        val boardTotal: Float            // hoverboard ride duration
         val newBest: Boolean
         val save: com.dummysurfers.core.state.SaveManager
         val toFrame: (FloatArray) -> Unit // converts screen touch to virtual coords
@@ -63,6 +65,8 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         fun selectCharacter(id: String)
         fun buyCharacter(id: String)
         fun buyUpgrade(name: String)
+        fun buyHoverboard()
+        fun activateBoard()
         fun buyTrail(index: Int)
         fun claimMission(index: Int)
         fun setMusic(on: Boolean)
@@ -102,7 +106,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
             val v = FloatArray(2)
             b.toFrame(v)
             touchVirtualX = v[0]; touchVirtualY = v[1]
-            val hit = hits.lastOrNull { it.id == "pause" && inside(it, touchVirtualX, touchVirtualY) }
+            val hit = hits.lastOrNull { (it.id == "pause" || it.id == "board") && inside(it, touchVirtualX, touchVirtualY) }
             if (hit != null) { pressedId = hit.id; return true }
             return false
         }
@@ -215,6 +219,8 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         batch.draw(TextureGen.powerIcons[1], hcX + 22f, 648f, 48f, 48f)
         theme.text(batch, theme.fontTiny, "HIGH SCORE", hcX + 80f, 706f, Palette.UI_MUTED)
         theme.text(batch, theme.fontMed, "${b.save.best}", hcX + 80f, 684f, Palette.GOLD)
+        // hoverboard rack count
+        theme.text(batch, theme.fontTiny, "HOVERBOARDS x${b.save.hoverboards}", 0f, 600f, Palette.UI_MUTED, Align.center, vw)
 
         // giant gold RUN button
         if (btn("play", vw / 2 - 210f, 452f, 420f, 136f, Palette.UI_GOLD_BTN, "RUN", theme.fontLarge)) {
@@ -298,6 +304,45 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         sr.rect(pauseX + 20f, pauseY + 17f, 8f, 34f)
         sr.rect(pauseX + 40f, pauseY + 17f, 8f, 34f)
         sr.end()
+
+        // hoverboard chip — bottom-right: tap it (or double-tap anywhere) to ride
+        val boards = b.save.hoverboards
+        val bt = b.boardTimer
+        if (boards > 0 || bt > 0f) {
+            val chipW = 110f
+            val chipH = 92f
+            val chipX = vw - chipW - 24f
+            val chipY = 30f
+            hits.add(HitRect("board", chipX, chipY, chipW, chipH) {})
+            val active = bt > 0f
+            theme.button(batch, chipX, chipY, chipW, chipH, if (active) Palette.UI_ACCENT2 else Palette.UI_NAVY, pressedId == "board")
+            val ix = chipX + chipW / 2f
+            val iy = chipY + chipH / 2f + 8f
+            sr.begin(ShapeRenderer.ShapeType.Filled)
+            sr.setColor(if (active) Color.WHITE else Palette.UI_ACCENT2)
+            sr.rect(ix - 32f, iy - 7f, 64f, 14f)
+            sr.circle(ix - 32f, iy, 7f)
+            sr.circle(ix + 32f, iy, 7f)
+            sr.setColor(Palette.GOLD)
+            sr.rect(ix - 32f, iy - 2f, 64f, 4f)
+            sr.end()
+            if (active) {
+                val t = if (b.boardTotal > 0f) (bt / b.boardTotal).coerceIn(0f, 1f) else 0f
+                sr.begin(ShapeRenderer.ShapeType.Filled)
+                sr.setColor(Palette.UI_PANEL_DEEP)
+                sr.rect(chipX + 12f, chipY + 14f, chipW - 24f, 10f)
+                sr.setColor(Color.WHITE)
+                sr.rect(chipX + 12f, chipY + 14f, (chipW - 24f) * t, 10f)
+                sr.end()
+            } else {
+                theme.text(batch, theme.fontTiny, "x$boards", chipX, chipY + 12f, Color.WHITE, Align.center, chipW)
+            }
+            if (clickId == "board" && !active) b.activateBoard()
+            // first-runs hint
+            if (!active && boards > 0 && b.save.stats.runs < 3 && b.distance < 80f) {
+                theme.text(batch, theme.fontTiny, "TAP BOARD = 2ND CHANCE (OR DOUBLE-TAP)", 0f, 14f, Color.WHITE, Align.center, vw)
+            }
+        }
 
         // active power-ups — SS hoverboard-style segmented meter, bottom-center
         var activeCount = 0
@@ -539,29 +584,52 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         var y = vh - 300f - scrollY
         for ((i, name) in com.dummysurfers.core.state.SaveManager.Companion.POWERUP_NAMES.withIndex()) {
             if (y < 150f) break
-            if (y > vh) { y -= 190f; continue }
+            if (y > vh) { y -= 165f; continue }
             val lvl = b.save.upgradeLevel(name)
-            theme.panel(batch, 24f, y, vw - 48f, 170f, Palette.UI_PANEL_LIGHT)
+            theme.panel(batch, 24f, y, vw - 48f, 148f, Palette.UI_PANEL_LIGHT)
             batch.setColor(1f, 1f, 1f, 1f)
-            batch.draw(TextureGen.powerIcons[i], 44f, y + 45f, 80f, 80f)
-            theme.text(batch, theme.fontSmall, GameConfig.POWERUP_LABELS[i], 150f, y + 120f, Palette.UI_TEXT)
+            batch.draw(TextureGen.powerIcons[i], 44f, y + 38f, 72f, 72f)
+            theme.text(batch, theme.fontSmall, GameConfig.POWERUP_LABELS[i], 142f, y + 106f, Palette.UI_TEXT)
             // level pips
             for (p in 0 until 3) {
                 sr.begin(ShapeRenderer.ShapeType.Filled)
                 sr.setColor(if (p < lvl) Palette.GOLD else Palette.UI_PANEL_DEEP)
-                sr.circle(160f + p * 34f, y + 85f, 12f)
+                sr.circle(152f + p * 32f, y + 76f, 11f)
                 sr.end()
             }
             val costText = if (lvl >= 3) "MAXED" else "+3s  ${GameConfig.UPGRADE_COSTS[i][lvl]} C"
-            theme.text(batch, theme.fontTiny, costText, 150f, y + 50f, Palette.UI_MUTED)
+            theme.text(batch, theme.fontTiny, costText, 142f, y + 42f, Palette.UI_MUTED)
             if (lvl < 3) {
                 val id = "upg_$name"
-                if (btn(id, vw - 260f, y + 50f, 210f, 70f, Palette.UI_GOLD_BTN, "UPGRADE", theme.fontSmall)) b.buyUpgrade(name)
+                if (btn(id, vw - 260f, y + 40f, 210f, 68f, Palette.UI_GOLD_BTN, "UPGRADE", theme.fontSmall)) b.buyUpgrade(name)
             } else {
-                theme.panel(batch, vw - 260f, y + 50f, 210f, 70f, Palette.UI_PANEL_DEEP)
-                theme.text(batch, theme.fontTiny, "MAX", vw - 260f, y + 80f, Palette.UI_MUTED, Align.center, 210f)
+                theme.panel(batch, vw - 260f, y + 40f, 210f, 68f, Palette.UI_PANEL_DEEP)
+                theme.text(batch, theme.fontTiny, "MAX", vw - 260f, y + 62f, Palette.UI_MUTED, Align.center, 210f)
             }
-            y -= 190f
+            y -= 165f
+        }
+        // hoverboard consumable — the SS 2nd-chance machine
+        if (y >= 150f) {
+            theme.panel(batch, 24f, y, vw - 48f, 148f, Palette.UI_PANEL_LIGHT)
+            val ix = 80f
+            val iy = y + 74f
+            sr.begin(ShapeRenderer.ShapeType.Filled)
+            sr.setColor(Palette.UI_ACCENT2)
+            sr.rect(ix - 34f, iy - 8f, 68f, 16f)
+            sr.circle(ix - 34f, iy, 8f)
+            sr.circle(ix + 34f, iy, 8f)
+            sr.setColor(Palette.GOLD)
+            sr.rect(ix - 34f, iy - 2f, 68f, 4f)
+            sr.end()
+            theme.text(batch, theme.fontSmall, "HOVERBOARD", 142f, y + 106f, Palette.UI_TEXT)
+            val full = b.save.hoverboards >= GameConfig.HOVERBOARD_MAX
+            theme.text(batch, theme.fontTiny, "x${b.save.hoverboards} · SAVES FROM ONE CRASH · DOUBLE-TAP TO RIDE", 142f, y + 74f, Palette.UI_MUTED)
+            if (full) {
+                theme.panel(batch, vw - 260f, y + 40f, 210f, 68f, Palette.UI_PANEL_DEEP)
+                theme.text(batch, theme.fontTiny, "RACK FULL", vw - 260f, y + 62f, Palette.UI_MUTED, Align.center, 210f)
+            } else {
+                if (btn("buy_board", vw - 260f, y + 40f, 210f, 68f, Palette.UI_GOLD_BTN, "${GameConfig.HOVERBOARD_COST} C", theme.fontSmall)) b.buyHoverboard()
+            }
         }
     }
 
