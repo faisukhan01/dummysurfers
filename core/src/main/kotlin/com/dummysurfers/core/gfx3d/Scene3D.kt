@@ -58,6 +58,9 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
     private val obstaclePool = ArrayList<ModelInstance>(28)
     private val powerPool = ArrayList<ModelInstance>(8)
     private val shadowPool = ArrayList<ModelInstance>(16)
+    private val lampPool = ArrayList<ModelInstance>(8)
+    private val lampPoolR = ArrayList<ModelInstance>(8)
+    private val lampGlowPool = ArrayList<ModelInstance>(12)
     private val decoMap = HashMap<Deco, DecoInst>(160)
 
     /** Cached instance + the deco shape it was built for (Deco objects are pooled & repurposed). */
@@ -171,6 +174,37 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
         // occasional cleanup of stale entries
         if ((time * 60f).toInt() % 300 == 0 && world.decos.isNotEmpty()) {
             decoMap.keys.removeAll { k -> world.decos.none { it === k } }
+        }
+
+        // ── tunnel interior lighting pass (v4.2) ─────────────────────
+        // Warm tube lamps every 8u along each tunnel + soft halos — tunnels
+        // used to be a flat dark box with nothing to look at.
+        // (per-side pools: a pooled instance is welded to its model/side)
+        var liL = 0; var liR = 0
+        val lampModelL by lazy { factory.tunnelLamp(-1) }
+        val lampModelR by lazy { factory.tunnelLamp(1) }
+        for (r in world.tunnelRanges) {
+            if (r[1] < 0f || r[0] > 80f) continue
+            var z = (r[0] + 3f)
+            while (z < r[1] - 1f) {
+                if (z > -1f) {
+                    val gz = -z
+                    val side = if (((z / 8f).toInt() % 2 == 0)) -1 else 1
+                    if (side < 0) {
+                        val inst = poolGet(lampPool, liL++, "tlampL") { ModelInstance(lampModelL) }
+                        inst.transform.setToTranslation(0f, 0f, gz)
+                        frame.add(inst)
+                    } else {
+                        val inst = poolGet(lampPoolR, liR++, "tlampR") { ModelInstance(lampModelR) }
+                        inst.transform.setToTranslation(0f, 0f, gz)
+                        frame.add(inst)
+                    }
+                    val glow = poolGet(lampGlowPool, liL + liR - 1, "tglow") { ModelInstance(factory.glowBillboard(2.6f, TextureGen.glow)) }
+                    billboard(glow, side * 4.35f, 5.2f, gz, 0.5f)
+                    frame.add(glow)
+                }
+                z += 8f
+            }
         }
 
         // ── trains (+ramps) ────────────────────────────────────────────

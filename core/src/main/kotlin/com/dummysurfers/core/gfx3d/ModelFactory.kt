@@ -427,6 +427,23 @@ class ModelFactory {
         }
     }
 
+    /**
+     * v4.2 TUNNEL LIGHTING PASS — ceiling tube lamp: dark bracket + bright
+     * warm tube + a second inner "burning filament" box so the tube reads lit
+     * even with no point lights in the default shader.
+     */
+    fun tunnelLamp(side: Int): Model = models.getOrPut("tlamp$side") {
+        mb.begin()
+        var mpb = mb.part("bracket", GL20.GL_TRIANGLES, ATTRS, matColor(0x33312eff.toInt()))
+        mpb.setUVRange(0f, 0f, 1f, 1f)
+        mpb.cbox(side * 4.55f, 5.55f, 0f, 0.9f, 0.12f, 0.3f)
+        mpb = mb.part("tube", GL20.GL_TRIANGLES, ATTRS, matColor(0xfff3c4ff.toInt()))
+        mpb.cbox(side * 4.35f, 5.45f, 0f, 1.7f, 0.16f, 0.22f)
+        mpb = mb.part("filament", GL20.GL_TRIANGLES, ATTRS, matColor(0xffffffbf.toInt()))
+        mpb.cbox(side * 4.35f, 5.36f, 0f, 1.5f, 0.05f, 0.14f)
+        mb.end()
+    }
+
     /** Bridge girder lattice (length along z). */
     fun girder(): Model = models.getOrPut("girder") {
         build(matColor(0x8a4a3aff.toInt())) {
