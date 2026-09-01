@@ -67,7 +67,9 @@ object Palette {
         intArrayOf(0x43b45cff.toInt(), 0x2e8a44ff.toInt(), 0xeaf7dcff.toInt()), // green metro
         intArrayOf(0xd94a38ff.toInt(), 0xa83326ff.toInt(), 0xffe2c8ff.toInt()), // red express
         intArrayOf(0xf7d23eff.toInt(), 0xdbae1dff.toInt(), 0x3a3f6bff.toInt()), // yellow metro, navy band
-        intArrayOf(0x8a55c9ff.toInt(), 0x6a3da3ff.toInt(), 0xf2e2ffff.toInt())  // violet graffiti
+        intArrayOf(0x8a55c9ff.toInt(), 0x6a3da3ff.toInt(), 0xf2e2ffff.toInt()), // violet graffiti
+        intArrayOf(0x2fa8a0ff.toInt(), 0x1f7a74ff.toInt(), 0xfff6e8ff.toInt()), // v4.2: teal harbor line
+        intArrayOf(0x9aa4b2ff.toInt(), 0x525c68ff.toInt(), 0xffd23eff.toInt())  // v4.2: graphite night express, gold band
     )
     val TRAIN_ROOF = Color(0x9aa0a8ff.toInt())
     val TRAIN_FRONT = Color(0xf7d23eff.toInt())
