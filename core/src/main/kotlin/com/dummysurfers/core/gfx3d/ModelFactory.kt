@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute
 import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder
+import com.badlogic.gdx.math.Matrix4
 import com.badlogic.gdx.math.Vector3
 import com.dummysurfers.core.gfx.TextureGen
 
@@ -204,19 +205,39 @@ class ModelFactory {
         mpb.setUVRange(0f, 0f, 1f, 1f)
         mpb.rect(Vector3(hw, y0, -hl), Vector3(-hw, y0, -hl), Vector3(-hw, y1, -hl), Vector3(hw, y1, -hl),
             Vector3(0f, 0f, -1f))
-        // skirt + wheels (shared dark material) + roof vents (v4.2: the vents
-        // shared the dark skirt material — from the roof they read as tar slabs;
-        // SS roof pods are light silver AC units)
-        mpb = mb.part("dark", GL20.GL_TRIANGLES, ATTRS, matColor(0x2a2d33ff.toInt()))
+        // skirt + bogies + wheels + roof pods.
+        // v4.4 REWORK: the old skirt was a 1.95×5.9 near-black slab under the
+        // whole car — from the chase cam its top face read as a giant charcoal
+        // plain eating the adjacent lane (QA shot-7/8). Now: slim inset skirt
+        // + two bogies with visible wheels (SS trains read as trains from the
+        // side). The v4.2 "roof vents" were also spawned at y=0.17 — UNDER the
+        // car, poking out as silver tabs at the ends; deleted (the roof
+        // texture already bakes vents + AC pod).
+        mpb = mb.part("dark", GL20.GL_TRIANGLES, ATTRS, matColor(0x363b44ff.toInt()))
         mpb.setUVRange(0f, 0f, 1f, 1f)
-        mpb.cbox(0f, y0 / 2f, 0f, W - 0.1f, y0, L - 0.5f)
-        mpb = mb.part("vents", GL20.GL_TRIANGLES, ATTRS, matColor(0xaeb6c0ff.toInt()))
+        mpb.cbox(0f, y0 / 2f, 0f, W - 0.55f, y0, L - 1.3f)
+        // bogies (heavier iron) at the car ends
+        mpb = mb.part("bogie", GL20.GL_TRIANGLES, ATTRS, matColor(0x22262cff.toInt()))
         mpb.setUVRange(0f, 0f, 1f, 1f)
-        for (zz in floatArrayOf(-hl + 1.4f, hl - 1.4f)) {
-            for (xx in floatArrayOf(-0.72f, 0.72f)) {
-                mpb.cbox(xx, 0.17f, zz, 0.56f, 0.3f, 0.56f)
+        for (zz in floatArrayOf(-hl + 1.15f, hl - 1.15f)) {
+            mpb.cbox(0f, 0.17f, zz, W - 0.75f, 0.3f, 1.5f)
+        }
+        // wheels: 8 steel discs (2 axles per bogie × 2 sides), upright —
+        // cylinder axis is Y, so rotate the vertex transform 90° around Z
+        mpb = mb.part("wheels", GL20.GL_TRIANGLES, ATTRS, matColor(0x8d949eff.toInt()))
+        mpb.setUVRange(0f, 0f, 1f, 1f)
+        val wheelXf = Matrix4()
+        for (zz in floatArrayOf(-hl + 0.7f, -hl + 1.6f, hl - 1.6f, hl - 0.7f)) {
+            for (xx in floatArrayOf(-(W / 2f - 0.24f), W / 2f - 0.24f)) {
+                wheelXf.setToTranslation(xx, 0.3f, zz).rotate(Vector3(0f, 0f, 1f), 90f)
+                mpb.setVertexTransform(wheelXf)
+                mpb.cylinder(0.3f, 0.1f, 0.3f, 10)
             }
         }
+        mpb.setVertexTransform(null)
+        // roof pods (on the roof, these are fine — AC units along the spine)
+        mpb = mb.part("vents", GL20.GL_TRIANGLES, ATTRS, matColor(0xaeb6c0ff.toInt()))
+        mpb.setUVRange(0f, 0f, 1f, 1f)
         mpb.cbox(0f, y1 + 0.07f, -1.4f, 1.0f, 0.15f, 1.5f)
         mpb.cbox(0f, y1 + 0.07f, 1.4f, 1.0f, 0.15f, 1.5f)
         mb.end()
