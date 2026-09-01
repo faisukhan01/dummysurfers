@@ -42,6 +42,14 @@ class ModelFactory {
 
     fun matColor(hex: Int, factor: Float = 1f): Material {
         val key = "c$hex-$factor"
+        if (System.getenv("DS_QA") == "1" && !materials.containsKey(key)) {
+            val c = mul(Color(hex), factor)
+            println("[MAT] $key -> (${(c.r * 255).toInt()},${(c.g * 255).toInt()},${(c.b * 255).toInt()})")
+            if (c.r > 0.9f && c.g < 0.4f && c.b > 0.4f) {
+                println("[MAT-PINK] key=$key from:")
+                Thread.currentThread().stackTrace.take(8).forEach { println("    at $it") }
+            }
+        }
         return materials.getOrPut(key) { Material(ColorAttribute.createDiffuse(mul(Color(hex), factor))) }
     }
 

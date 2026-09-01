@@ -257,7 +257,13 @@ class Human3D(
 
     private fun mul(hex: Int, fac: Float): Int {
         val c = com.badlogic.gdx.graphics.Color(hex)
-        return com.badlogic.gdx.graphics.Color(c.r * fac, c.g * fac, c.b * fac, 1f).toIntBits()
+        // v4.5 FIX: Color.toIntBits() packs ALPHA into the high byte (GL/ABGR
+        // order) while Color(int)/matColor read RED from the high byte — the old
+        // round-trip scrambled the channels (amber pack × 0.8 rendered MAGENTA;
+        // the old white pack's flap was pinkish-white for the same reason).
+        // Pack explicitly in RGBA8888 (red = high byte) like every hex literal.
+        fun ch(v: Float) = ((v * fac).coerceIn(0f, 1f) * 255f).toInt().coerceIn(0, 255)
+        return (ch(c.r) shl 24) or (ch(c.g) shl 16) or (ch(c.b) shl 8) or (hex and 0xFF)
     }
 
     /**

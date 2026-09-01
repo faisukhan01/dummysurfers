@@ -687,7 +687,11 @@ object TextureGen {
     // Proportions: head ≈ 43% of total height (Subway Surfers DNA).
     private fun mul(c: Int, f: Float): Int {
         val col = Color(c)
-        return Color(col.r * f, col.g * f, col.b * f, 1f).toIntBits()
+        // v4.5 FIX: same ABGR/RGBA round-trip pitfall as Character3D.mul —
+        // Color.toIntBits() puts ALPHA in the high byte; Color(int) reads RED
+        // from it. Pack RGBA8888 explicitly so preview shades stay true.
+        fun ch(v: Float) = ((v * f).coerceIn(0f, 1f) * 255f).toInt().coerceIn(0, 255)
+        return (ch(col.r) shl 24) or (ch(col.g) shl 16) or (ch(col.b) shl 8) or (c and 0xFF)
     }
 
     /**
