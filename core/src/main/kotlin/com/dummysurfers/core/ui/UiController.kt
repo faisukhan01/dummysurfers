@@ -303,6 +303,15 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         // distance under score
         theme.text(batch, theme.fontSmall, "${b.distance.toInt()}m", 0f, vh - 118f, Color.WHITE, Align.center, vw)
 
+        // v3.0: live "BEST!" flag the moment the current run passes the record
+        if (!b.newBest && b.save.best > 0 && b.score > b.save.best) {
+            val bob = sin(time * 6f) * 4f
+            val bw = 150f
+            val bx = vw / 2f - bw / 2f
+            theme.button(batch, bx, vh - 200f + bob, bw, 54f, Palette.UI_GREEN, false)
+            theme.text(batch, theme.fontSmall, "★ BEST!", bx, vh - 163f + bob, Color.WHITE, Align.center, bw)
+        }
+
         // pause button — orange rounded square, white bars (top-right)
         val pauseX = vw - 92f
         val pauseY = vh - 96f
