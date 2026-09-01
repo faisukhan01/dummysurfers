@@ -8,6 +8,24 @@ procedurally generated art & audio (zero external assets).
 
 ---
 
+## 🆕 v3.0.0 — "JACK + THE CHASE" (biggest update yet)
+
+- **JACK** — Jake-inspired hero (100% original art): white hoodie + red tee, denim vest,
+  blue jeans, white-red backwards cap, brown spikes. Repainted in-game AND on the menu.
+- **THE POLICE CHASE, for real**: the guard + his **police dog** sprint behind you from
+  meter zero (whistle + all). Stumble on a barrier and he sprints into grab range —
+  red danger vignette, "!" rage mark, 5.5s to redeem yourself. Get caught twice and
+  it's the guard-grab slow-motion busted sequence.
+- **PLAYABLE IN 1 SECOND**: no forced tutorial — press RUN and you're running. New-player
+  hint chips guide the first 90m, then vanish forever.
+- **Swipes fixed for real phones**: actions fire the instant your finger crosses the
+  threshold mid-gesture, any duration (the old 300ms cap ate slow swipes = "game won't respond").
+- **Coins from the first second**: the opening run is lined with gold.
+- **Screen-wide white slab bug — FIXED** (uncollected powerups exploded behind the camera).
+- Gray SS-style ballast, steel rails, concrete slabs, brighter trains.
+
+---
+
 ## 📲 Download & play
 
 Every push to `main` triggers GitHub Actions, which builds a **signed release APK** and
@@ -22,6 +40,7 @@ https://github.com/faisukhan01/dummysurfers/releases/latest/download/DummySurfer
 1. Open the link on your phone (or scan the QR code on the project landing page).
 2. Allow "install unknown apps" for your browser.
 3. Install **DummySurfers.apk** → play.
+4. **Verify you got v3.0.0**: Android Settings → Apps → Dummy Surfers → version `3.0.0`.
 
 The APK is signed with the committed project keystore, so every new release installs
 straight over the previous one (no uninstall needed).
