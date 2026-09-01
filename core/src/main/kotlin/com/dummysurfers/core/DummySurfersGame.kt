@@ -507,8 +507,8 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
 
     private fun performSwipe(dir: SwipeDetector.Direction) {
         when (dir) {
-            SwipeDetector.Direction.LEFT -> { player.switchLane(-1); audio.play(GameEvent.LANE) }
-            SwipeDetector.Direction.RIGHT -> { player.switchLane(1); audio.play(GameEvent.LANE) }
+            SwipeDetector.Direction.LEFT -> { player.switchLane(-1); audio.play(GameEvent.LANE); laneDust() }
+            SwipeDetector.Direction.RIGHT -> { player.switchLane(1); audio.play(GameEvent.LANE); laneDust() }
             SwipeDetector.Direction.UP -> {
                 if (player.startJump(activePowerups[4] > 0f)) {
                     jumps++
@@ -550,6 +550,17 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         if (abs(px - boxX) > GameConfig.PLAYER_HALF_WIDTH + boxHalfW) return false
         if (player.jumpY > yHi || player.jumpY + player.height < yLo) return false
         return 0.5f >= zNear && -0.5f <= zFar
+    }
+
+    /** v4.1: skid dust kicked up on lane changes (SS has a puff under each swap). */
+    private fun laneDust() {
+        repeat(6) {
+            particles.burst(
+                proj.screenX(player.x, 0f) + rng.nextFloat() * 26f - 13f,
+                proj.groundY(0f) - player.jumpY * proj.ppu + rng.nextFloat() * 10f,
+                1, Color(0xd8c9b0ff.toInt()), 150f, 4f, grav = 260f, life = 0.4f
+            )
+        }
     }
 
     private fun handleCollisions() {
