@@ -264,16 +264,54 @@ class Chaser {
     var runPhase = 0f
     var lean = 0f
 
+    /** v3.0: true while the guard has sprinted into grab range (after a stumble). */
+    var close = false
+
+    /** v3.0: 0..1 rush-in animation for the guard-grab death sequence. */
+    var catchT = 0f
+
+    /** v3.0: grab pose blend 0..1 once the guard reaches the player. */
+    var grabbed = false
+
+    /** v3.0: the guard's dog — sprinting beside him, own run cycle. */
+    var dogPhase = 0f
+
     fun trigger(duration: Float) {
         active = true
         timer = duration
     }
 
+    /** Stumble pressure: guard sprints up close for [duration] seconds. */
+    fun triggerClose(duration: Float) {
+        trigger(duration)
+        close = true
+    }
+
+    fun beginCatch() {
+        active = true
+        close = true
+        grabbed = false
+        catchT = 0f
+    }
+
+    fun reset() {
+        active = false; timer = 0f; close = false; grabbed = false; catchT = 0f
+    }
+
     fun update(dt: Float, speed: Float) {
         if (!active) return
+        if (catchT > 0f) {
+            // death sequence: rush toward the player then hold the grab
+            if (catchT < 1f) catchT = (catchT + dt * 1.6f).coerceAtMost(1f)
+            else grabbed = true
+            runPhase += dt * 16f
+            dogPhase += dt * 18f
+            return
+        }
         timer -= dt
-        if (timer <= 0f) active = false
+        if (timer <= 0f) { active = false; close = false }
         runPhase += dt * speed * 1.4f
+        dogPhase += dt * speed * 1.7f
         lean = kotlin.math.sin(runPhase * 0.5f) * 0.08f
     }
 }
