@@ -185,13 +185,20 @@ class Human3D(
         mpb.cbox(0f, 0.4f, -0.18f, 0.3f, 0.3f, 0.02f)
         // backpack + flap + straps (ON THE BACK = +z, faces the chase cam —
         // v4.2 fix: the pack used to hang on the chest, invisible in-game)
+        // v4.5: pack deepened (0.16→0.2) so it reads as a BULKY spray pack in
+        // silhouette, not a flat apron; dark cross-band + top handle give the
+        // chase-cam view some hardware (SS packs always show a strap)
         if (!isGuard) {
             mpb = mb.part("pack", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(backpack))
             mpb.setUVRange(0f, 0f, 1f, 1f)
-            mpb.cbox(0f, 0.3f, 0.24f, 0.42f, 0.46f, 0.16f)
+            mpb.cbox(0f, 0.31f, 0.26f, 0.44f, 0.5f, 0.2f)
             mpb = mb.part("packFlap", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(mul(backpack, 0.8f)))
             mpb.setUVRange(0f, 0f, 1f, 1f)
-            mpb.cbox(0f, 0.44f, 0.33f, 0.42f, 0.14f, 0.05f)
+            mpb.cbox(0f, 0.46f, 0.35f, 0.44f, 0.14f, 0.05f)
+            mpb = mb.part("packBand", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(mul(backpack, 0.5f)))
+            mpb.cbox(0f, 0.33f, 0.355f, 0.46f, 0.1f, 0.04f)
+            mpb = mb.part("packHandle", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(mul(backpack, 0.62f)))
+            mpb.cbox(0f, 0.575f, 0.3f, 0.16f, 0.05f, 0.08f)
             mpb = mb.part("straps", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(mul(backpack, 0.7f)))
             mpb.cbox(-0.16f, 0.42f, 0.19f, 0.07f, 0.34f, 0.02f)
             mpb.cbox(0.16f, 0.42f, 0.19f, 0.07f, 0.34f, 0.02f)
