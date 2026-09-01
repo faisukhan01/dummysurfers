@@ -4,7 +4,7 @@ import com.dummysurfers.core.config.GameConfig
 import com.dummysurfers.core.state.PlayerState
 import com.dummysurfers.core.utils.Mathz
 
-/** Original character definitions — procedurally drawn, unique palettes. */
+/** Original characters — SS-styled (big head, hoodie, backpack, backward cap), 100% ours. */
 class CharacterDef(
     val id: String,
     val name: String,
@@ -15,14 +15,19 @@ class CharacterDef(
     val shoes: Int,
     val cap: Int,
     val backpack: Int,
-    val accent: Int
+    val accent: Int,
+    val hair: Int = 0x3a2a1eff.toInt()
 ) {
     companion object {
         val ALL = arrayOf(
-            CharacterDef("dash", "DASH", 0, 0xf2c49bff.toInt(), 0x3f8ce0ff.toInt(), 0x35455aff.toInt(), 0xe23c3cff.toInt(), 0xe23c3cff.toInt(), 0xf2a03cff.toInt(), 0xffd24aff.toInt()),
-            CharacterDef("blaze", "BLAZE", 500, 0xd9975fff.toInt(), 0xc22f2fff.toInt(), 0x2e2320ff.toInt(), 0xf2b03cff.toInt(), 0xf28c3cff.toInt(), 0x8a2f2fff.toInt(), 0xff9c3cff.toInt()),
-            CharacterDef("volt", "VOLT", 1000, 0xc9a07aff.toInt(), 0xf2c53cff.toInt(), 0x2b2b2fff.toInt(), 0x3a3a42ff.toInt(), 0x1e1e24ff.toInt(), 0x454545ff.toInt(), 0xfff060ff.toInt()),
-            CharacterDef("nova", "NOVA", 2000, 0x8a6a52ff.toInt(), 0x2dd4bfff.toInt(), 0x1f4d47ff.toInt(), 0xf2ead0ff.toInt(), 0xf2ead0ff.toInt(), 0x25a89aff.toInt(), 0x7df2e2ff.toInt())
+            // DASH — the face of the game: red hoodie, navy cap, gold pack
+            CharacterDef("dash", "DASH", 0, 0xf2c49bff.toInt(), 0xe23c3cff.toInt(), 0x35455aff.toInt(), 0xf2f2f2ff.toInt(), 0x24316bff.toInt(), 0xffc93cff.toInt(), 0xffd24aff.toInt(), 0x3a2a1eff.toInt()),
+            // BLAZE — street artist: burnt-orange hoodie, black cap, spray-can energy
+            CharacterDef("blaze", "BLAZE", 500, 0xd9975fff.toInt(), 0xf28c1aff.toInt(), 0x2e2320ff.toInt(), 0xf2b03cff.toInt(), 0x1e1e24ff.toInt(), 0xc22f2fff.toInt(), 0xff9c3cff.toInt(), 0x1e1611ff.toInt()),
+            // VOLT — speed demon: electric-yellow hoodie, teal hair streak
+            CharacterDef("volt", "VOLT", 1000, 0xc9a07aff.toInt(), 0xf2c53cff.toInt(), 0x2b2b2fff.toInt(), 0x3a3a42ff.toInt(), 0x1e1e24ff.toInt(), 0x454545ff.toInt(), 0xfff060ff.toInt(), 0x2ec4d9ff.toInt()),
+            // NOVA — cool runner: mint hoodie, lavender hair, white cap
+            CharacterDef("nova", "NOVA", 2000, 0x8a6a52ff.toInt(), 0x2dd4bfff.toInt(), 0x1f4d47ff.toInt(), 0xf2ead0ff.toInt(), 0xf2ead0ff.toInt(), 0x25a89aff.toInt(), 0x7df2e2ff.toInt(), 0xb48ce0ff.toInt())
         )
 
         fun byId(id: String): CharacterDef = ALL.firstOrNull { it.id == id } ?: ALL[0]
