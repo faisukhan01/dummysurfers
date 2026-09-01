@@ -8,6 +8,9 @@ import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
+import com.badlogic.gdx.utils.ScreenUtils
+import com.badlogic.gdx.graphics.Pixmap
+import com.badlogic.gdx.graphics.PixmapIO
 import com.dummysurfers.core.audio.AudioManager
 import com.dummysurfers.core.camera.Projection
 import com.dummysurfers.core.config.GameConfig
@@ -157,6 +160,89 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
 
         update(dt)
         draw(rawDt)
+        devHarness(rawDt)
+    }
+
+    // ── Dev visual-QA harness (desktop) ────────────────────────────────
+    // DS_AUTORUN=1  → start a run automatically after boot (gameplay shots)
+    // DS_GOD=1      → autopilot: dodges/jumps/slides + invulnerable
+    // DS_SHOT_DIR=X → save scheduled framebuffer screenshots, then exit
+    private var devInit = false
+    private var devShotIdx = 0
+    private var devT = 0f
+    private val devShotTimes = floatArrayOf(0.8f, 2.5f, 4.5f, 6.5f, 8.5f, 10.5f)
+    private var devAiTimer = 0f
+
+    private fun devHarness(rawDt: Float) {
+        val menuFirst = System.getenv("DS_MENU_FIRST") == "1"
+        if (!devInit) {
+            devInit = true
+            if (System.getenv("DS_AUTORUN") == "1" && !menuFirst) restartRun()
+        }
+        if (System.getenv("DS_GOD") == "1" && state == GameState.PLAYING) devAutopilot(rawDt)
+        val dir = System.getenv("DS_SHOT_DIR") ?: return
+        devT += rawDt
+        if (devShotIdx < devShotTimes.size && devT >= devShotTimes[devShotIdx]) {
+            val pm: Pixmap = ScreenUtils.getFrameBufferPixmap(vpX, vpY, vpW, vpH)
+            PixmapIO.writePNG(Gdx.files.absolute("$dir/shot-${devShotIdx}.png"), pm)
+            pm.dispose()
+            devShotIdx++
+            if (menuFirst && devShotIdx == 1) restartRun() // menu captured → start the run
+            if (devShotIdx >= devShotTimes.size) Gdx.app.exit()
+        }
+    }
+
+    /** Simple look-ahead autopilot used only for headless screenshot QA. */
+    private fun devAutopilot(dt: Float) {
+        // 0.19 keeps the blink phase odd at draw time (decays ~0.016/frame)
+        player.invulnTimer = max(player.invulnTimer, 0.19f)
+        devAiTimer -= dt
+        if (player.state == PlayerState.JUMPING || player.state == PlayerState.SLIDING) return
+        if (devAiTimer > 0f) return
+        devAiTimer = 0.06f
+
+        fun blockedIn(lane: Int, zLo: Float, zHi: Float): Boolean {
+            for (t in spawner.trains) {
+                if (t.z < zLo || t.z - t.totalLength > zHi) continue
+                if (t.lanes.contains(lane)) return true
+            }
+            for (o in spawner.obstacles) {
+                if (o.z < zLo || o.z > zHi) continue
+                if (o.kind == ObstacleKind.GATE || o.kind == ObstacleKind.FENCE_FULL) continue
+                if (o.lane == lane) return true
+            }
+            return false
+        }
+        fun actionIn(lane: Int, zLo: Float, zHi: Float): Char? {
+            for (o in spawner.obstacles) {
+                if (o.z < zLo || o.z > zHi) continue
+                if (o.lane != lane && o.kind != ObstacleKind.GATE && o.kind != ObstacleKind.FENCE_FULL) continue
+                return when (o.kind) {
+                    ObstacleKind.LOW_BARRIER, ObstacleKind.FENCE_FULL -> 'j'
+                    ObstacleKind.HIGH_BARRIER, ObstacleKind.GATE -> 's'
+                    else -> null
+                }
+            }
+            return null
+        }
+
+        val lane = player.lane
+        // 1) imminent action?
+        when (actionIn(lane, 3.5f, 7f)) {
+            'j' -> { player.startJump(false); return }
+            's' -> { player.startSlide(); return }
+        }
+        // 2) blocked ahead? sidestep to a free lane
+        if (blockedIn(lane, 4f, 26f)) {
+            val options = listOf(-1, 1, -1, 0, 1).sortedBy { abs(it - lane) }
+            for (cand in options) {
+                val target = (lane + cand).coerceIn(-1, 1)
+                if (target != lane && !blockedIn(target, 4f, 26f)) {
+                    player.switchLane(target)
+                    return
+                }
+            }
+        }
     }
 
     private fun update(dt: Float) {

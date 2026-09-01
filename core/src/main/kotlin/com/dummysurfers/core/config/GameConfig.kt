@@ -85,7 +85,8 @@ object GameConfig {
     // ── Chaser ─────────────────────────────────────────────────────────
     const val CHASER_START_TIME = 4.5f
     const val CHASER_NEARMISS_TIME = 2.8f
-    const val CHASER_Z = -3.4f
+    const val CHASER_Z = -2.2f          // just behind the runner — nearer z renders
+    const val CHASER_VISUAL_SCALE = 0.7f // bigger with proximity; shrink to SS size
 
     // ── Economy ────────────────────────────────────────────────────────
     val UPGRADE_COSTS = arrayOf(intArrayOf(300, 700, 1500), intArrayOf(300, 700, 1500), intArrayOf(250, 600, 1300), intArrayOf(250, 600, 1300), intArrayOf(350, 800, 1600))
