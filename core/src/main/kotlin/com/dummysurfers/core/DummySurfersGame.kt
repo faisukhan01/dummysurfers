@@ -432,6 +432,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             handleCollisions()
             handleCoins(dt)
             handlePowerups()
+            checkLiveMissions()
         } else {
             handleCoins(dt)
         }
@@ -720,6 +721,35 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
                 val sy = proj.groundY(p.z) - 1.35f * proj.ppu * proj.scale(p.z)
                 particles.burst(sx, sy, 20, powerColor(idx), 340f, 6f, life = 0.7f)
                 particles.text(sx, sy + 30f, GameConfig.POWERUP_LABELS[idx], powerColor(idx), 22f)
+            }
+        }
+    }
+
+    /**
+     * v4.1: live mission tracking — SS pops "MISSION COMPLETE!" the moment the
+     * run's contribution pushes a mission over its goal (submitRun only lands
+     * at run end, so completions used to be invisible until game over).
+     */
+    private val missionShown = BooleanArray(3)
+    private fun checkLiveMissions() {
+        for (i in 0 until min(3, save.missions.size)) {
+            val m = save.missions[i]
+            if (m.claimed || missionShown[i]) continue
+            val contrib = when (m.type) {
+                MissionType.DISTANCE -> distance.toInt()
+                MissionType.COINS -> runCoins
+                MissionType.JUMPS -> jumps
+                MissionType.SLIDES -> slides
+                MissionType.POWERUPS -> powerupsUsed
+                MissionType.SCORE -> score
+                MissionType.NEAR_MISS -> nearMisses
+            }
+            if (m.progress < m.goal && m.progress + contrib >= m.goal) {
+                missionShown[i] = true
+                ui.showMissionPopup(m.reward)
+                audio.play(GameEvent.NEW_BEST)
+                vibrate(60)
+                particles.text(proj.vw / 2f, proj.vh * 0.56f, "MISSION COMPLETE!", Palette.GOLD, 26f)
             }
         }
     }

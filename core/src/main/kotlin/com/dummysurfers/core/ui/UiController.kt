@@ -92,6 +92,12 @@ class UiController(val theme: UiTheme) : InputAdapter() {
     var scrollY = 0f
     private var toastMsg: String? = null
     private var toastTimer = 0f
+    // v4.1 live MISSION COMPLETE celebration
+    private var missionPopT = 0f
+    private var missionPopReward = 0
+    private var lastHudTime = 0f
+
+    fun showMissionPopup(reward: Int) { missionPopT = 2.8f; missionPopReward = reward }
 
     fun toast(msg: String) {
         toastMsg = msg
@@ -381,6 +387,23 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         }
 
         drawFirstRunHints(time)
+
+        // v4.1 MISSION COMPLETE — gold banner drops in, bounces, slides away
+        val hdt = (time - lastHudTime).coerceIn(0f, 0.05f); lastHudTime = time
+        if (missionPopT > 0f) {
+            missionPopT -= hdt
+            val k = (missionPopT / 2.8f).coerceIn(0f, 1f)
+            val enter = if (k > 0.86f) 1f - ((1f - k) / 0.14f).let { it * it } else 1f
+            val leave = if (k < 0.18f) k / 0.18f else 1f
+            val yOff = (1f - enter) * 240f - (1f - leave) * 90f
+            val alpha = leave.coerceIn(0f, 1f)
+            val bw = 470f; val bx = vw / 2f - bw / 2f; val by = vh - 320f + yOff
+            batch.setColor(1f, 1f, 1f, alpha)
+            theme.button(batch, bx, by, bw, 110f, Palette.UI_GOLD_BTN, false)
+            theme.text(batch, theme.fontMed, "MISSION COMPLETE!", 0f, by + 76f, Color.WHITE, Align.center, vw)
+            theme.text(batch, theme.fontTiny, "CLAIM $missionPopReward COINS IN MISSIONS", 0f, by + 38f, Color(0xfff3d0ff.toInt()), Align.center, vw)
+            batch.setColor(1f, 1f, 1f, 1f)
+        }
     }
 
     /**
@@ -449,14 +472,27 @@ class UiController(val theme: UiTheme) : InputAdapter() {
     // ════════════════════════════════════════════════════════════════════
     fun drawPause() {
         val b = bridge!!
-        theme.panel(batch, vw / 2 - 270f, vh / 2 - 400f, 540f, 800f, Palette.UI_PANEL)
-        theme.panel(batch, vw / 2 - 240f, vh / 2 - 40f, 480f, 300f, Palette.UI_PANEL_DEEP)
-        theme.text(batch, theme.fontLarge, "PAUSED", 0f, vh / 2 + 230f, Color.WHITE, Align.center, vw)
-        theme.text(batch, theme.fontMed, "SCORE ${b.score}", 0f, vh / 2 + 130f, Palette.GOLD, Align.center, vw)
-        theme.text(batch, theme.fontSmall, "${b.distance.toInt()}m  •  ${b.runCoins} COINS", 0f, vh / 2 + 70f, Palette.UI_MUTED, Align.center, vw)
-        if (btn("resume", vw / 2 - 190f, vh / 2 - 120f, 380f, 100f, Palette.UI_GREEN, "RESUME")) b.resumeGame()
-        if (btn("restart", vw / 2 - 190f, vh / 2 - 240f, 380f, 100f, Palette.UI_GOLD_BTN, "RESTART")) b.restartRun()
-        if (btn("home", vw / 2 - 190f, vh / 2 - 360f, 380f, 100f, Palette.UI_NAVY, "HOME")) b.toMenu()
+        // v4.1 SS-style pause card: white rounded card, character portrait,
+        // stat chips, gold RESUME — reads like the SS pause overlay
+        val cx = vw / 2f
+        theme.panel(batch, cx - 300f, vh / 2 - 420f, 600f, 840f, Palette.UI_PANEL_LIGHT)
+        theme.panel(batch, cx - 268f, vh / 2 - 30f, 536f, 320f, Palette.UI_PANEL_DEEP)
+        // selected runner portrait in the stat slot
+        val selIdx = CharacterDef.ALL.indexOfFirst { it.id == b.save.selectedCharacter }
+        drawMiniCharacter(if (selIdx < 0) 0 else selIdx, cx - 90f, vh / 2 + 60f, 180f)
+        theme.text(batch, theme.fontHuge, "PAUSED", 0f, vh / 2 + 288f, Color.WHITE, Align.center, vw)
+        theme.text(batch, theme.fontMed, "SCORE ${b.score}", 0f, vh / 2 + 64f, Palette.GOLD, Align.center, vw)
+        // stat chips: distance / coins
+        theme.panel(batch, cx - 268f, vh / 2 - 160f, 258f, 110f, Palette.UI_PANEL)
+        theme.text(batch, theme.fontMed, "${b.distance.toInt()}m", cx - 268f, vh / 2 - 92f, Color.WHITE, Align.center, 258f)
+        theme.text(batch, theme.fontTiny, "DISTANCE", cx - 268f, vh / 2 - 126f, Palette.UI_MUTED, Align.center, 258f)
+        theme.panel(batch, cx + 10f, vh / 2 - 160f, 258f, 110f, Palette.UI_PANEL)
+        theme.coinIcon(batch, cx + 10f + 96f, vh / 2 - 90f, 36f)
+        theme.text(batch, theme.fontMed, "${b.runCoins}", cx + 10f, vh / 2 - 92f, Palette.GOLD, Align.center, 258f)
+        theme.text(batch, theme.fontTiny, "COINS", cx + 10f, vh / 2 - 126f, Palette.UI_MUTED, Align.center, 258f)
+        if (btn("resume", cx - 190f, vh / 2 - 300f, 380f, 104f, Palette.UI_GREEN, "RESUME", theme.fontLarge)) b.resumeGame()
+        if (btn("restart", cx - 190f, vh / 2 - 424f, 380f, 96f, Palette.UI_GOLD_BTN, "RESTART")) b.restartRun()
+        if (btn("home", cx - 190f, vh / 2 - 540f, 380f, 96f, Palette.UI_NAVY, "HOME")) b.toMenu()
     }
 
     // ════════════════════════════════════════════════════════════════════
