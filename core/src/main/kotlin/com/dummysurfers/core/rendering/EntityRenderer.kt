@@ -514,7 +514,7 @@ class EntityRenderer(
         sr.setColor(OUT)
         sr.rect(-0.27f * u - g, hipY - 0.05f * u - g, 0.54f * u + 2 * g, shoulderY - hipY + 0.14f * u + 2 * g)
         sr.circle(0f, shoulderY + 0.02f * u, 0.24f * u + g)
-        sr.rect(-0.205f * u - g, hipY - 0.08f * u - g, 0.41f * u + 2 * g, shoulderY - hipY + 0.20f * u + 2 * g)
+        sr.rect(-0.16f * u - g, hipY - 0.02f * u - g, 0.32f * u + 2 * g, shoulderY - hipY + 0.12f * u + 2 * g)
         sr.circle(-0.10f * u, shoulderY + 0.05f * u, 0.095f * u + g)
         sr.circle(0.10f * u, shoulderY + 0.05f * u, 0.095f * u + g)
         sr.circle(0f, headCY, headR + g)
@@ -527,19 +527,20 @@ class EntityRenderer(
         // hem band
         sr.setColor(hoodieDark)
         sr.rect(-0.27f * u, hipY - 0.05f * u, 0.54f * u, 0.05f * u)
-        // backpack on the back
+        // backpack on the back — v3.0: compact pack so the hoodie/vest read
+        // from behind (the old 0.41u pack swallowed the whole torso)
         sr.setColor(pack)
-        sr.rect(-0.205f * u, hipY - 0.08f * u, 0.41f * u, shoulderY - hipY + 0.20f * u)
-        // pack top flap + zipper line + side pockets
+        sr.rect(-0.16f * u, hipY - 0.02f * u, 0.32f * u, shoulderY - hipY + 0.12f * u)
+        // pack top flap + zipper line
         sr.setColor(packDark)
-        sr.rect(-0.205f * u, shoulderY + 0.02f * u, 0.41f * u, 0.05f * u)
-        sr.rect(-0.012f * u, hipY, 0.024f * u, shoulderY - hipY + 0.06f * u)
+        sr.rect(-0.16f * u, shoulderY + 0.06f * u, 0.32f * u, 0.05f * u)
+        sr.rect(-0.012f * u, hipY + 0.02f * u, 0.024f * u, shoulderY - hipY)
         sr.setColor(Palette.GOLD)
-        sr.circle(0f, shoulderY + 0.09f * u, 0.018f * u)
+        sr.circle(0f, shoulderY + 0.12f * u, 0.018f * u)
         // straps over the shoulders
         sr.setColor(packDark)
-        sr.rect(-0.155f * u, shoulderY - 0.02f * u, 0.07f * u, 0.10f * u)
-        sr.rect(0.085f * u, shoulderY - 0.02f * u, 0.07f * u, 0.10f * u)
+        sr.rect(-0.135f * u, shoulderY - 0.02f * u, 0.06f * u, 0.10f * u)
+        sr.rect(0.075f * u, shoulderY - 0.02f * u, 0.06f * u, 0.10f * u)
         // hood bunch at the neck (Jack: red undershirt hood pops against white hoodie)
         sr.setColor(if (ch.hoodLining != 0) Color(ch.hoodLining) else hoodieDark)
         sr.circle(-0.10f * u, shoulderY + 0.05f * u, 0.095f * u)
