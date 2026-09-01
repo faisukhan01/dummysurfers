@@ -124,7 +124,7 @@ class WorldGenerator {
             SegmentKind.INDUSTRIAL -> {
                 for (i in 0 until 4) {
                     val side = if (rng.nextBoolean()) -1 else 1
-                    add(DecoKind.GRAFFITI_WALL, side, side * (edgeX + 1.8f), z0 + i * segLen / 4f + 3f, 2.8f, 9f, rng.nextInt(4))
+                    add(DecoKind.GRAFFITI_WALL, side, side * (edgeX + 1.8f), z0 + i * segLen / 4f + 3f, 2.8f, 5.5f, rng.nextInt(4))
                 }
                 add(DecoKind.BUILDING, 1, edgeX + 6.5f, z0 + 8f, Mathz.rnd(rng, 5f, 9f), 6f, rng.nextInt(8), true)
                 add(DecoKind.BUILDING, -1, -(edgeX + 6.8f), z0 + 16f, Mathz.rnd(rng, 4f, 7f), 5f, rng.nextInt(8), false)
