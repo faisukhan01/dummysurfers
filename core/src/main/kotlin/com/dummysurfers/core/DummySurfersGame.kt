@@ -97,7 +97,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     private var dangerTimer = 0f
     private var stumbleSlowTimer = 0f
     private var guardCatch = false
-    private val activePowerups = FloatArray(5)
+    private val activePowerups = FloatArray(PowerUpType.entries.size)
     private val powerupTotal = FloatArray(5)
     private var displayScore = 0
     private var newBest = false
@@ -178,6 +178,8 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     private var devT = 0f
     private val devShotTimes = floatArrayOf(0.8f, 2.5f, 4.5f, 6.5f, 8.5f, 10.5f, 12.5f, 14.5f, 16.5f, 18.5f)
     private var devAiTimer = 0f
+    private var prevJetOn = false
+    private var jetCoinTimer = 0f
 
     private fun devHarness(rawDt: Float) {
         val menuFirst = System.getenv("DS_MENU_FIRST") == "1"
@@ -218,6 +220,9 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         // invulnerability is handled by the devGod flag in handleCollisions —
         // do NOT touch invulnTimer here (it drives the death blink flicker and
         // made ~40% of QA shots render without the runner)
+        if (System.getenv("DS_JET") == "1" && activePowerups[5] <= 0f) {
+            activePowerups[5] = 25f; powerupTotal[5] = 25f // keep the jet lit for the whole QA batch
+        }
         devAiTimer -= dt
         if (player.state == PlayerState.JUMPING || player.state == PlayerState.SLIDING) return
         if (devAiTimer > 0f) return
@@ -327,7 +332,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         }
 
         // footsteps synced to run cycle
-        if (player.stepParity != lastStepParity && player.state == PlayerState.RUNNING) {
+        if (player.stepParity != lastStepParity && player.state == PlayerState.RUNNING && activePowerups[5] <= 0f) {
             lastStepParity = player.stepParity
             audio.play(GameEvent.FOOTSTEP)
             if (rng.nextFloat() < 0.5f) {
@@ -351,12 +356,41 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         }
 
         // power-up timers
-        for (i in 0 until 5) {
+        for (i in 0 until PowerUpType.entries.size) {
             if (activePowerups[i] > 0f) {
                 activePowerups[i] -= dt
                 if (activePowerups[i] <= 0f) activePowerups[i] = 0f
             }
         }
+
+        // v4.1 JETPACK — the sky is the support: cruise above every hazard,
+        // rain a coin line ahead, then let roof-fall physics land the runner
+        val jetOn = activePowerups[5] > 0f
+        if (jetOn) {
+            player.supportY = GameConfig.JETPACK_HEIGHT
+            if (player.state == PlayerState.JUMPING || player.state == PlayerState.SLIDING) {
+                player.slideTimer = 0f
+                player.state = PlayerState.RUNNING
+            }
+            jetCoinTimer -= dt
+            if (jetCoinTimer <= 0f) {
+                jetCoinTimer = 0.3f
+                spawner.spawnCoin(player.lane, 26f + rng.nextFloat() * 6f,
+                    GameConfig.JETPACK_HEIGHT + 0.3f + sin(time * 2.2f) * 0.12f)
+            }
+            // thruster sparks + soft flame puffs under the pack
+            if (rng.nextFloat() < 0.6f) {
+                particles.burst(proj.screenX(player.x, 0f) + rng.nextFloat() * 14f - 7f,
+                    proj.groundY(0f) - player.jumpY * proj.ppu + 46f, 2,
+                    Color(0xf9a03aff.toInt()), 130f, 4f, grav = -220f, life = 0.3f)
+            }
+        }
+        if (!jetOn && prevJetOn && player.jumpY > 1.2f) {
+            // flame cut out high above the ground — grace for the touchdown
+            player.invulnTimer = max(player.invulnTimer, 1.0f)
+            particles.text(proj.vw / 2f, proj.vh * 0.5f, "JETPACK OUT!", Palette.UI_MUTED, 20f)
+        }
+        prevJetOn = jetOn
 
         // hoverboard ride timer
         if (boardTimer > 0f) boardTimer = max(0f, boardTimer - dt)
@@ -520,6 +554,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     private fun handleCollisions() {
         if (player.state == PlayerState.DEAD || player.invulnTimer > 0f) return
         if (devGod) return // QA god mode: skip collisions WITHOUT the blink flicker
+        if (activePowerups[5] > 0f) return // jetpack: nothing up here can hit you
 
         // trains
         for (t in spawner.trains) {
@@ -694,7 +729,8 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         1 -> Color(0xf59e0bff.toInt())
         2 -> Color(0x2dd4bfff.toInt())
         3 -> Color(0xa3e635ff.toInt())
-        else -> Color(0xf97316ff.toInt())
+        4 -> Color(0xf97316ff.toInt())
+        else -> Color(0xc084fcff.toInt())
     }
 
     // ── Run lifecycle ──────────────────────────────────────────────────
@@ -703,7 +739,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         jumps = 0; slides = 0; powerupsUsed = 0; nearMisses = 0
         newBest = false; coinStreak = 0; multiplier = 1
         dangerTimer = 0f; stumbleSlowTimer = 0f; guardCatch = false
-        for (i in 0 until 5) { activePowerups[i] = 0f; powerupTotal[i] = 0f }
+        for (i in 0 until PowerUpType.entries.size) { activePowerups[i] = 0f; powerupTotal[i] = 0f }
         boardTimer = 0f; boardTotal = 0f; lastTapNanos = 0L
         player.reset()
         chaser.reset()
@@ -800,7 +836,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         scene3d.render(distance, Difficulty.speed(distance), time, world, spawner, player, chaser, character,
             shakeX, shakeY,
             blinkHide = player.invulnTimer > 0f && sin(time * 42f) > 0.2f,
-            boardOn = boardTimer > 0f, stumbleOn = stumbleSlowTimer > 0f, shieldOn = activePowerups[2] > 0f,
+            boardOn = boardTimer > 0f, stumbleOn = stumbleSlowTimer > 0f, shieldOn = activePowerups[2] > 0f, jetOn = activePowerups[5] > 0f,
             tunnelDark = tunnelDark, menuDim = menuDim)
 
         // particle FX layer (sparks, confetti, streaks) + floating score texts

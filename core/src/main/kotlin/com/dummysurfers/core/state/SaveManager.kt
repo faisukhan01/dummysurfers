@@ -266,7 +266,7 @@ class SaveManager {
     }
 
     companion object {
-        val POWERUP_NAMES = listOf("magnet", "x2", "shield", "boost", "superjump")
+        val POWERUP_NAMES = listOf("magnet", "x2", "shield", "boost", "superjump", "jetpack")
     }
 }
 

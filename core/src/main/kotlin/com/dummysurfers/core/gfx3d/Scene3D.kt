@@ -79,6 +79,8 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
 
     private val boardModel by lazy { factory.colorBox("hoverboard", 0.62f, 0.09f, 1.5f, 0x2fd0bfff.toInt()) }
     private val boardGlow by lazy { factory.glowBillboard(1.2f, TextureGen.glow) }
+    private val jetFlameInstance by lazy { ModelInstance(factory.glowBillboard(1.1f, TextureGen.jetFlame)) }
+    private val jetCoreInstance by lazy { ModelInstance(factory.glowBillboard(0.9f, TextureGen.glow)) }
 
     // scratch
     private val m = Matrix4()
@@ -106,6 +108,7 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
         player: Player, chaser: Chaser, character: CharacterDef,
         shakeX: Float, shakeY: Float,
         blinkHide: Boolean, boardOn: Boolean, stumbleOn: Boolean, shieldOn: Boolean,
+        jetOn: Boolean = false,
         tunnelDark: Float, menuDim: Float
     ) {
         frame.clear()
@@ -263,6 +266,17 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
             h.animate(m, player.state, player.runPhase, player.stateTime, player.lean,
                 player.stateTime / player.curJumpDuration, stumbleOn, time, time, guardCatchFlag(chaser))
             for (p in h.rig.parts) frame.add(p.instance)
+            // v4.1 jetpack thruster glow under the flyer
+            if (jetOn) {
+                val flicker = 0.75f + sin(time * 31f) * 0.2f
+                val fy = player.supportY + player.jumpY - 0.32f
+                val f = jetFlameInstance
+                billboard(f, player.x, fy, 0.12f, 0.85f * flicker)
+                frame.add(f)
+                val fc = jetCoreInstance
+                billboard(fc, player.x, fy - 0.08f, 0.12f, 0.38f * flicker)
+                frame.add(fc)
+            }
             // hoverboard under the feet
             if (boardOn) {
                 val b = boardInstance

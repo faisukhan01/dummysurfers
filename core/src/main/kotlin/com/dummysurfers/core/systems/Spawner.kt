@@ -5,6 +5,7 @@ import com.dummysurfers.core.entities.Coin
 import com.dummysurfers.core.entities.Obstacle
 import com.dummysurfers.core.entities.ObstacleKind
 import com.dummysurfers.core.entities.PowerUpPickup
+import com.dummysurfers.core.state.PowerUpType
 import com.dummysurfers.core.entities.Train
 import com.dummysurfers.core.utils.Mathz
 import kotlin.random.Random
@@ -299,7 +300,7 @@ class Spawner {
 
     private fun spawnPowerup() {
         val p = powerupPool.removeLastOrNull() ?: PowerUpPickup()
-        p.reset(rng.nextInt(5), rng.nextInt(3) - 1, frontier + 6f)
+        p.reset(rng.nextInt(PowerUpType.entries.size), rng.nextInt(3) - 1, frontier + 6f)
         powerups.add(p)
         repeat(4) { i -> spawnCoin(p.lane, p.z - 2f - i * 1.6f, 1f) }
     }
@@ -338,7 +339,7 @@ class Spawner {
         obstacles.add(o)
     }
 
-    private fun spawnCoin(lane: Int, z: Float, y: Float) {
+    fun spawnCoin(lane: Int, z: Float, y: Float) {
         if (coins.size >= 140) return
         val c = coinPool.removeLastOrNull() ?: Coin()
         c.reset(lane, z, y)

@@ -100,6 +100,7 @@ object TextureGen {
     lateinit var white: Texture
     lateinit var disc: Texture            // hard-edged circle (UI pips, wheels, dots)
     lateinit var hazeBand: Texture        // symmetric horizon haze (soft both edges)
+    lateinit var jetFlame: Texture        // v4.1 warm thruster glow under jetpack flyers
     lateinit var previews: Array<Texture> // character card portraits
 
     // FaceBatch materials — textured pseudo-3D faces (renderer v2)
@@ -124,6 +125,7 @@ object TextureGen {
         white = solid(4, 4, Color.WHITE)
         disc = radial(64, Color(1f, 1f, 1f, 1f), 0.86f) // solid core, 14% feather
         hazeBand = horizonHaze(8, 256)
+        jetFlame = radial(128, Color(1f, 0.62f, 0.2f, 0.95f), 0.12f)
         glow = radial(128, Color(1f, 1f, 1f, 1f), 0f)
         softShadow = radial(128, Color(0f, 0f, 0f, 0.55f), 0.25f)
         sky = verticalGradient(8, 512, Palette.SKY_TOP, Palette.SKY_MID, Palette.SKY_LOW)
@@ -136,7 +138,7 @@ object TextureGen {
         vignette = radial(256, Color(0f, 0f, 0f, 0.5f), 0.72f)
         rainbowBurst = burst(512)
         coinFrames = Array(10) { coin(72, it, 10) }
-        powerIcons = arrayOf(magnetIcon(), starIcon(), shieldIcon(), boltIcon(), rocketIcon())
+        powerIcons = arrayOf(magnetIcon(), starIcon(), shieldIcon(), boltIcon(), springIcon(), rocketIcon())
         previews = Array(CharacterDef.ALL.size) { characterPreview(CharacterDef.ALL[it]) }
         panelNine = roundedNine(64, 18, Color(1f, 1f, 1f, 1f), border = false)
         buttonNine = roundedNine(64, 18, Color(1f, 1f, 1f, 1f), border = true)
@@ -160,7 +162,7 @@ object TextureGen {
     }
 
     fun dispose() {
-        listOf(glow, softShadow, sky, fog, cloudA, cloudB, skylineFar, skylineNear, vignette, rainbowBurst, white, disc, hazeBand,
+        listOf(glow, softShadow, sky, fog, cloudA, cloudB, skylineFar, skylineNear, vignette, rainbowBurst, white, disc, hazeBand, jetFlame,
             trainRoofTex, hazardTex, signTealTex, containerTex, glassTex).forEach { it.dispose() }
         coinFrames.forEach { it.dispose() }
         powerIcons.forEach { it.dispose() }
@@ -516,6 +518,34 @@ object TextureGen {
             (s * 0.68f).toInt() to (s * 0.08f).toInt()
         )
         for (i in 1 until poly.size - 1) p.fillTriangle(poly[0].first, poly[0].second, poly[i].first, poly[i].second, poly[i + 1].first, poly[i + 1].second)
+        return tex(p)
+    }
+
+    /** v4.1: SUPER JUMP icon — gold spring coil with a bounce arc (rocket freed for JETPACK). */
+    private fun springIcon(): Texture {
+        val s = 96
+        val p = iconBase(s)
+        val gold = Palette.GOLD
+        val cx = s / 2f
+        // coil: 3 stacked ellipse bars
+        p.setColor(gold)
+        for (i in 0 until 3) {
+            val y = s * (0.44f + i * 0.14f)
+            fillEllipse(p, cx, y, s * 0.26f, s * 0.055f)
+        }
+        // top cap (the jumper's feet plate)
+        p.setColor(Color.WHITE)
+        p.fillRectangle((s * 0.3f).toInt(), (s * 0.3f).toInt(), (s * 0.4f).toInt(), (s * 0.09f).toInt())
+        // bounce arc + dot
+        p.setColor(Color(0x9adcf0ff.toInt()))
+        for (a in 0 until 180) {
+            val ang = a * PI.toFloat() / 180f
+            val x = cx - kotlin.math.cos(ang) * s * 0.3f
+            val y = s * 0.82f - kotlin.math.sin(ang) * s * 0.22f
+            p.fillCircle(x.toInt(), y.toInt(), 2)
+        }
+        p.setColor(gold)
+        p.fillCircle(cx.toInt(), (s * 0.16f).toInt(), (s * 0.07f).toInt())
         return tex(p)
     }
 

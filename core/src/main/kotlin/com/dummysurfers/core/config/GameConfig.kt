@@ -65,8 +65,11 @@ object GameConfig {
     const val MAGNET_RANGE_Z = 24f
     const val SHIELD_INVULN = 1.5f
     const val BOOST_SPEED_MULT = 1.32f
-    val POWERUP_DURATIONS = floatArrayOf(18f, 22f, 12f, 10f, 15f) // magnet,x2,shield,boost,superjump
-    val POWERUP_LABELS = arrayOf("MAGNET", "SCORE x2", "SHIELD", "BOOST", "SUPER JUMP")
+    const val JETPACK_HEIGHT = 4.35f      // v4.1: cruising altitude over the track
+    const val JETPACK_RISE_RATE = 3.2f    // lerp speed toward cruise altitude
+    const val JET_FALL_RATE = 11f         // descent after the flame cuts out
+    val POWERUP_DURATIONS = floatArrayOf(18f, 22f, 12f, 10f, 15f, 12f) // magnet,x2,shield,boost,superjump,jetpack
+    val POWERUP_LABELS = arrayOf("MAGNET", "SCORE x2", "SHIELD", "BOOST", "SUPER JUMP", "JETPACK")
 
     // ── Hoverboard (2nd chance) ────────────────────────────────────────
     const val HOVERBOARD_DURATION = 15f     // seconds of crash immunity while riding
@@ -100,7 +103,7 @@ object GameConfig {
     const val CHASER_STUMBLE_TIME = 6.0f  // guard stays in grab range this long
 
     // ── Economy ────────────────────────────────────────────────────────
-    val UPGRADE_COSTS = arrayOf(intArrayOf(300, 700, 1500), intArrayOf(300, 700, 1500), intArrayOf(250, 600, 1300), intArrayOf(250, 600, 1300), intArrayOf(350, 800, 1600))
+    val UPGRADE_COSTS = arrayOf(intArrayOf(300, 700, 1500), intArrayOf(300, 700, 1500), intArrayOf(250, 600, 1300), intArrayOf(250, 600, 1300), intArrayOf(350, 800, 1600), intArrayOf(400, 900, 1800))
     val TRAIL_COSTS = intArrayOf(0, 200, 600, 1200) // none,gold,fire,rainbow
     val CHARACTER_COSTS = intArrayOf(0, 500, 1000, 2000)
 }

@@ -12,6 +12,7 @@ import com.dummysurfers.core.entities.CharacterDef
 import com.dummysurfers.core.gfx.Palette
 import com.dummysurfers.core.gfx.TextureGen
 import com.dummysurfers.core.state.GameEvent
+import com.dummysurfers.core.state.PowerUpType
 import com.dummysurfers.core.state.GameState
 import com.dummysurfers.core.state.MenuPanel
 import com.dummysurfers.core.state.MissionType
@@ -353,7 +354,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
 
         // active power-ups — SS hoverboard-style segmented meter, bottom-center
         var activeCount = 0
-        for (i in 0 until 5) {
+        for (i in 0 until PowerUpType.entries.size) {
             val rem = b.powerupRemaining[i]
             if (rem > 0f) {
                 activeCount++
@@ -411,7 +412,8 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         1 -> Color(0xf59e0bff.toInt())
         2 -> Color(0x2dd4bfff.toInt())
         3 -> Color(0xa3e635ff.toInt())
-        else -> Color(0xf97316ff.toInt())
+        4 -> Color(0xf97316ff.toInt())
+        else -> Color(0xc084fcff.toInt())
     }
 
     // ════════════════════════════════════════════════════════════════════
