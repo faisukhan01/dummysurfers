@@ -637,11 +637,12 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
 
     fun startRun() {
         startRunInternal()
-        state = if (save.tutorialDone) GameState.PLAYING else GameState.TUTORIAL
-        if (state == GameState.TUTORIAL) {
-            tutorialStep = 0
-            spawner.reset()
-        }
+        // v3.0: NO forced tutorial gate. SS drops you straight into the run —
+        // the old lock-step L→R→U→D tutorial (with slow-swipe-eating input)
+        // made players feel the game "can't start". First-run guidance is now
+        // a set of non-blocking hint chips drawn by the HUD instead.
+        tutorialStep = null
+        state = GameState.PLAYING
         audio.play(GameEvent.CLICK)
     }
 
@@ -666,6 +667,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     }
 
     private fun finalizeRun() {
+        if (!save.tutorialDone) save.markTutorialDone()
         newBest = save.submitRun(score, runCoins, distance.toInt(), jumps, slides, powerupsUsed, nearMisses)
         displayScore = 0
         state = GameState.GAME_OVER

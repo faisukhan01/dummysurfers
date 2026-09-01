@@ -374,6 +374,32 @@ class UiController(val theme: UiTheme) : InputAdapter() {
                 sr.end()
             }
         }
+
+        drawFirstRunHints(time)
+    }
+
+    /**
+     * v3.0: non-blocking SS-style guidance for brand-new players. A bobbing
+     * gold chip cycles the three moves over the first meters of the first two
+     * runs — it never interrupts play (the old forced tutorial did).
+     */
+    private fun drawFirstRunHints(time: Float) {
+        val b = bridge!!
+        if (b.save.stats.runs >= 2 || b.distance > 90f) return
+        val d = b.distance
+        val msg = when {
+            d < 14f -> "SWIPE LEFT / RIGHT TO CHANGE LANES"
+            d < 26f -> "SWIPE UP TO JUMP"
+            d < 38f -> "SWIPE DOWN TO ROLL"
+            d < 58f -> "GRAB THE COINS!"
+            else -> "DODGE THE TRAINS — THE COP IS CHASING!"
+        }
+        val bob = sin(time * 3.1f) * 5f
+        val w = theme.textWidth(theme.fontSmall, msg) + 64f
+        val x = vw / 2f - w / 2f
+        val y = 210f + bob
+        theme.button(batch, x, y, w, 58f, Palette.UI_GOLD_BTN, false)
+        theme.text(batch, theme.fontSmall, msg, x, y + 37f, Color.WHITE, Align.center, w)
     }
 
     private fun powerColor(i: Int): Color = when (i) {
