@@ -173,8 +173,9 @@ class Human3D(
         mpb.cbox(0f, 0.50f, -0.04f, 0.6f, 0.09f, 0.54f)
         mpb.cbox(0f, 0.44f, -0.27f, 0.44f, 0.1f, 0.04f)
         // BACK of the head — hair panel under the cap (v4.2: the uniform-skin
-        // head box read bald from the chase cam; SS heads show hair at the back)
-        mpb.cbox(0f, 0.33f, 0.26f, 0.52f, 0.3f, 0.03f)
+        // head box read bald from the chase cam; SS heads show hair at the back;
+        // spans neck → cap so no skin bands peek above/below)
+        mpb.cbox(0f, 0.29f, 0.26f, 0.52f, 0.52f, 0.03f)
         // cap dome + brim (BACKWARDS: brim points +z, at the chase camera) + ridge
         mpb = mb.part("cap", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(cap))
         mpb.cbox(0f, 0.63f, -0.01f, 0.62f, 0.16f, 0.54f)
