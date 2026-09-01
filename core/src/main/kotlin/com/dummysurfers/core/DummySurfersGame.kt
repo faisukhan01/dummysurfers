@@ -93,6 +93,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
 
     // ── Run state ──────────────────────────────────────────────────────
     private var score = 0
+    private var scoreFrac = 0f // v4.7: fractional distance-score accumulator
     private var runCoins = 0
     private var distance = 0f
     private var jumps = 0
@@ -378,7 +379,18 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
 
         // score & multiplier
         if (!tutorial) {
-            score += (scroll * GameConfig.DISTANCE_SCORE_PER_METER).toInt() * multiplier
+            // v4.7 SCORE ACCUMULATOR FIX: (scroll * 1).toInt() truncated to 0
+            // every frame (scroll is a per-frame delta ≈0.23-0.36 at 60fps) —
+            // the distance score was DEAD on most devices and the scoreboard
+            // only moved when coins landed, freezing for seconds at a time
+            // (QA sheets showed 150 flat across 6 shots / 76m). Accumulate the
+            // fraction and bank whole meters.
+            scoreFrac += scroll * GameConfig.DISTANCE_SCORE_PER_METER * multiplier
+            val whole = scoreFrac.toInt()
+            if (whole > 0) {
+                scoreFrac -= whole
+                score += whole
+            }
             val newMult = Difficulty.multiplier(distance)
             if (newMult > multiplier) {
                 // v3.0: celebrate the rank-up (SS pops a badge when the multiplier climbs)
@@ -832,7 +844,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
 
     // ── Run lifecycle ──────────────────────────────────────────────────
     private fun startRunInternal() {
-        score = 0; displayScore = 0; runCoins = 0; distance = 0f
+        score = 0; scoreFrac = 0f; displayScore = 0; runCoins = 0; distance = 0f
         if (System.getenv("DS_QA") == "1") println("[QA-START] run starting, devT=$devT")
         jumps = 0; slides = 0; powerupsUsed = 0; nearMisses = 0
         newBest = false; coinStreak = 0; multiplier = 1
