@@ -329,7 +329,14 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
             // roofs, arcs during jumps) — mesh y is jumpY alone. The old
             // supportY-only transform ground-locked jumps; adding supportY
             // double-lifts roof/jet flight out of frame.
-            m.setToTranslation(player.x, player.jumpY, 0f)
+            // v4.4: crash tumble drifts AWAY from the lens and settles to the
+            // ground (the in-place spin swung limbs right into the camera)
+            if (player.state == PlayerState.DEAD && !chaser.grabbed) {
+                val t = (player.stateTime / 0.9f).coerceIn(0f, 1f)
+                m.setToTranslation(player.x, player.jumpY * (1f - t) - 0.15f * t, -t * 0.85f)
+            } else {
+                m.setToTranslation(player.x, player.jumpY, 0f)
+            }
             h.animate(m, player.state, player.runPhase, player.stateTime, player.lean,
                 player.stateTime / player.curJumpDuration, stumbleOn, time, time, guardCatchFlag(chaser))
             for (p in h.rig.parts) frame.add(p.instance)

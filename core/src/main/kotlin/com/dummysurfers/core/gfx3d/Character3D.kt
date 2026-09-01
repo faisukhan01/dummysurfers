@@ -321,8 +321,11 @@ class Human3D(
                     torsoPitch = -0.25f
                     rootYaw = sin(time * 30f) * 0.06f
                 } else {
-                    // crash tumble
-                    rootPitch = -stateTime * 7f
+                    // crash tumble — v4.4: capped at ~half a flip and stops
+                    // (the uncapped spin threw limbs INTO the lens: giant shoe/
+                    // arm filled the frame at death, QA menu shot-1); the
+                    // settle reads as a body-slam, not a windmill
+                    rootPitch = -(stateTime * 7f).coerceAtMost(3.4f)
                     rootRoll = 0.5f
                     aArmL.x = -2.8f; aArmR.x = -2.8f
                     aArmL.z = 0.8f; aArmR.z = -0.8f
