@@ -5,6 +5,7 @@ import com.dummysurfers.core.entities.Coin
 import com.dummysurfers.core.entities.Obstacle
 import com.dummysurfers.core.entities.ObstacleKind
 import com.dummysurfers.core.entities.PowerUpPickup
+import com.dummysurfers.core.entities.Ramp
 import com.dummysurfers.core.entities.Train
 import com.dummysurfers.core.utils.Mathz
 import kotlin.random.Random
@@ -21,11 +22,13 @@ class Spawner {
     val obstacles = ArrayList<Obstacle>(40)
     val coins = ArrayList<Coin>(140)
     val powerups = ArrayList<PowerUpPickup>(6)
+    val ramps = ArrayList<Ramp>(6)
 
     private val trainPool = ArrayList<Train>(12)
     private val obstaclePool = ArrayList<Obstacle>(40)
     private val coinPool = ArrayList<Coin>(140)
     private val powerupPool = ArrayList<PowerUpPickup>(6)
+    private val rampPool = ArrayList<Ramp>(6)
 
     private var frontier = 0f
     private var lastActionZ = 0f
@@ -41,6 +44,7 @@ class Spawner {
         drain(obstacles) { o -> obstaclePool.add(o) }
         drain(coins) { c -> coinPool.add(c) }
         drain(powerups) { p -> powerupPool.add(p) }
+        drain(ramps) { r -> rampPool.add(r) }
         frontier = GameConfig.FIRST_SAFE_METERS
         lastActionZ = 0f
         lastAction = ' '
@@ -60,12 +64,18 @@ class Spawner {
         scroll(obstacles, scrollDelta) { it.z -= scrollDelta }
         scroll(coins, scrollDelta) { it.z -= scrollDelta }
         scroll(powerups, scrollDelta) { it.z -= scrollDelta }
+        scroll(ramps, scrollDelta) { it.z -= scrollDelta }
 
         // recycle behind the camera
         var i = 0
         while (i < trains.size) {
             val t = trains[i]
             if (t.z - t.totalLength < -24f) { trainPool.add(t); trains[i] = trains[trains.size - 1]; trains.removeAt(trains.size - 1) } else i++
+        }
+        i = 0
+        while (i < ramps.size) {
+            val r = ramps[i]
+            if (r.z < -14f) { rampPool.add(r); ramps[i] = ramps[ramps.size - 1]; ramps.removeAt(ramps.size - 1) } else i++
         }
         i = 0
         while (i < obstacles.size) {
@@ -150,7 +160,13 @@ class Spawner {
     private fun singleTrain() {
         val lanes = laneArrayOf()
         safeLane = pickSafe(lanes)
-        spawnTrain(lanes, cars = 3 + rng.nextInt(6), kind = 0, speed = 0f)
+        val withRoof = rng.nextFloat() < 0.45f
+        spawnTrain(lanes, cars = 3 + rng.nextInt(6), kind = 0, speed = 0f, hasRoof = withRoof)
+        if (withRoof) {
+            // ramp leads up to the roof, coins line the rooftop
+            spawnRamp(lanes[0], frontier + GameConfig.RAMP_LENGTH)
+            coinTrailTo(lanes[0], frontier + 1f, 8f, GameConfig.ROOF_COIN_Y)
+        }
         coinTrailTo(safeLane, frontier + 2f, 10f)
     }
 
@@ -158,7 +174,13 @@ class Spawner {
         val clear = rng.nextInt(3) - 1
         val lanes = (-1..1).filter { it != clear }.toIntArray()
         safeLane = clear
-        spawnTrain(lanes, cars = 3 + rng.nextInt(4), kind = 0, speed = 0f)
+        val roofLane = lanes[rng.nextInt(lanes.size)]
+        val withRoof = rng.nextFloat() < 0.4f
+        spawnTrain(lanes, cars = 3 + rng.nextInt(4), kind = 0, speed = 0f, hasRoof = withRoof)
+        if (withRoof) {
+            spawnRamp(roofLane, frontier + GameConfig.RAMP_LENGTH)
+            coinTrailTo(roofLane, frontier + 1f, 8f, GameConfig.ROOF_COIN_Y)
+        }
         coinTrailTo(clear, frontier + 2f, 12f)
     }
 
@@ -271,11 +293,18 @@ class Spawner {
         return target
     }
 
-    private fun spawnTrain(lanes: IntArray, cars: Int, kind: Int, speed: Float) {
+    private fun spawnTrain(lanes: IntArray, cars: Int, kind: Int, speed: Float, hasRoof: Boolean = false) {
         val t = trainPool.removeLastOrNull() ?: Train()
         t.reset(lanes, frontier, cars, kind, speed, rng.nextInt(6))
+        t.hasRoof = hasRoof && kind == 0
         trains.add(t)
         lastAction = 'd'; lastActionZ = frontier
+    }
+
+    private fun spawnRamp(lane: Int, z: Float) {
+        val r = rampPool.removeLastOrNull() ?: Ramp()
+        r.reset(lane, z)
+        ramps.add(r)
     }
 
     private fun spawnObstacle(kind: ObstacleKind, lane: Int) {
@@ -291,9 +320,9 @@ class Spawner {
         coins.add(c)
     }
 
-    private fun coinTrailTo(lane: Int, fromZ: Float, length: Float) {
+    private fun coinTrailTo(lane: Int, fromZ: Float, length: Float, y: Float = 0.9f) {
         var z = fromZ
-        while (z < fromZ + length) { spawnCoin(lane, z, 0.9f); z += 1.6f }
+        while (z < fromZ + length) { spawnCoin(lane, z, y); z += 1.6f }
     }
 
     private fun coinArcOver(z: Float, lane: Int) {

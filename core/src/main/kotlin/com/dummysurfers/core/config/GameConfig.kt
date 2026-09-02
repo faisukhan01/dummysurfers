@@ -9,9 +9,11 @@ object GameConfig {
     const val BASE_SPEED = 8f              // meters/second at run start
     const val MAX_SPEED = 22f
     const val ACCEL_FACTOR = 0.00028f      // speed curve exponent
-    const val LANE_WIDTH = 2.5f
+    const val LANE_WIDTH = 2.2f
     const val LANE_SWITCH_DURATION = 0.15f // seconds, ease-out
     const val JUMP_STRENGTH = 4.0f         // apex height (world units)
+    const val JUMP_VELOCITY = 8.6f         // initial vertical velocity (m/s)
+    const val GRAVITY = 24f                // m/s² downward
     const val JUMP_DURATION = 0.6f
     const val SUPERJUMP_STRENGTH_MULT = 2.1f
     const val SUPERJUMP_DURATION_MULT = 1.3f
@@ -72,6 +74,8 @@ object GameConfig {
     const val TRAIN_CAR_LENGTH = 6.4f
     const val TRAIN_WIDTH = 2.05f
     const val TRAIN_HEIGHT = 2.35f
+    const val RAMP_LENGTH = 3.6f
+    const val ROOF_COIN_Y = 2.85f
     const val MOVING_TRAIN_REL_SPEED = 4.2f
     const val APPROACH_TRAIN_SPEED = 9f
     const val TRAIN_HORN_DISTANCE = 46f

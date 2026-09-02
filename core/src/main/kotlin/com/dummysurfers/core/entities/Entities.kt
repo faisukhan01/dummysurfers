@@ -29,14 +29,14 @@ class CharacterDef(
     }
 }
 
-/**
- * The runner. Owns lane physics, jump arc, slide timing, lean, squash-stretch
- * and the run-cycle phase that drives procedural animation (and footsteps).
- */
+/** Jump arc via velocity physics — supports platforms (train roofs). */
 class Player {
     var lane = 0                        // -1, 0, +1
     var x = 0f                          // continuous world x
-    var jumpY = 0f                      // height above ground
+    var jumpY = 0f                      // height ABOVE groundY
+    var groundY = 0f                    // platform height under the player (roof = TRAIN_HEIGHT)
+    var vy = 0f                         // vertical velocity
+    var airborne = false
     var state = PlayerState.RUNNING
     var stateTime = 0f
     var runPhase = 0f                   // drives leg/arm animation
@@ -52,7 +52,7 @@ class Player {
     var toLane = 0
     var switchT = 0f
     var fastFalling = false
-    var curJumpStrength = GameConfig.JUMP_STRENGTH
+    var curJumpStrength = GameConfig.JUMP_VELOCITY
     var curJumpDuration = GameConfig.JUMP_DURATION
     var stepParity = 0
 
@@ -60,7 +60,8 @@ class Player {
         get() = if (state == PlayerState.SLIDING) GameConfig.PLAYER_HEIGHT * GameConfig.SLIDE_HEIGHT_RATIO else GameConfig.PLAYER_HEIGHT
 
     fun reset() {
-        lane = 0; x = 0f; jumpY = 0f; state = PlayerState.RUNNING; stateTime = 0f
+        lane = 0; x = 0f; jumpY = 0f; groundY = 0f; vy = 0f; airborne = false
+        state = PlayerState.RUNNING; stateTime = 0f
         runPhase = 0f; lean = 0f; squash = 0f; slideTimer = 0f; jumpBuffered = false
         bufferTimer = 0f; invulnTimer = 0f; deadTimer = 0f; deathSpin = 0f
         fastFalling = false
@@ -77,16 +78,15 @@ class Player {
         stateTime = 0f
     }
 
-    /** Jump arc: y(t) = strength * sin(PI * t / duration). Params captured at launch.
-     * @return true when a fresh jump actually started (not buffered). */
+    /** Velocity-based jump. @return true when a fresh jump started. */
     fun startJump(superJump: Boolean): Boolean {
         if (state == PlayerState.JUMPING) { jumpBuffered = true; bufferTimer = 0.1f; return false }
         if (state == PlayerState.SLIDING) state = PlayerState.RUNNING
         state = PlayerState.JUMPING
         stateTime = 0f
         fastFalling = false
-        curJumpStrength = GameConfig.JUMP_STRENGTH * if (superJump) GameConfig.SUPERJUMP_STRENGTH_MULT else 1f
-        curJumpDuration = GameConfig.JUMP_DURATION * if (superJump) GameConfig.SUPERJUMP_DURATION_MULT else 1f
+        vy = GameConfig.JUMP_VELOCITY * if (superJump) 1.45f else 1f
+        airborne = true
         return true
     }
 
@@ -124,25 +124,38 @@ class Player {
 
         when (state) {
             PlayerState.JUMPING -> {
-                val t = stateTime / curJumpDuration
-                if (fastFalling) {
-                    jumpY -= GameConfig.FAST_FALL_GRAVITY * dt
-                    if (jumpY <= 0f) { jumpY = 0f; land(); landed = true }
-                } else if (t >= 1f) {
-                    jumpY = 0f; land(); landed = true
-                } else {
-                    jumpY = curJumpStrength * Mathz.sinPi(t)
+                // velocity + gravity
+                vy -= GameConfig.GRAVITY * dt * (if (fastFalling) 2.4f else 1f)
+                jumpY += vy * dt
+                if (jumpY <= groundY && vy < 0f) {
+                    jumpY = groundY; vy = 0f; airborne = false
+                    land(); landed = true
                 }
             }
             PlayerState.SLIDING -> {
                 slideTimer -= dt
                 if (slideTimer <= 0f) { state = PlayerState.RUNNING; stateTime = 0f }
+                // sliding off a roof edge still falls
+                if (jumpY > groundY + 0.01f) {
+                    vy -= GameConfig.GRAVITY * dt
+                    jumpY += vy * dt
+                    if (jumpY <= groundY) { jumpY = groundY; vy = 0f }
+                }
             }
             PlayerState.LANDING -> {
                 squash = Mathz.clamp01(1f - stateTime / 0.12f)
                 if (stateTime >= 0.12f) { state = PlayerState.RUNNING; stateTime = 0f; squash = 0f }
+                // ground may have dropped (roof edge) while landing
+                if (jumpY > groundY + 0.01f) state = PlayerState.JUMPING
             }
             else -> {}
+        }
+
+        // support dropped away (ran off a roof): fall with gravity in any state
+        if (state != PlayerState.JUMPING && state != PlayerState.DEAD && jumpY > groundY + 0.01f) {
+            vy -= GameConfig.GRAVITY * dt
+            jumpY += vy * dt
+            if (jumpY <= groundY) { jumpY = groundY; vy = 0f; land(); landed = true }
         }
 
         if (jumpBuffered) {
@@ -171,6 +184,17 @@ class Player {
     }
 }
 
+/** Wedge ramp that lifts the runner onto a train roof. */
+class Ramp {
+    var lane = 0
+    var z = 0f                // front (low) edge
+
+    fun reset(lane: Int, z: Float) {
+        this.lane = lane
+        this.z = z
+    }
+}
+
 /** A train consist: N carriages spanning [z, z - cars*carLen]. */
 class Train {
     var lanes = intArrayOf(0)
@@ -182,6 +206,7 @@ class Train {
     var hornDone = false
     var passedNear = false
     var seed = 0
+    var hasRoof = false        // true when a ramp leads onto this train's roof
 
     val totalLength: Float get() = cars * GameConfig.TRAIN_CAR_LENGTH
 
@@ -189,6 +214,7 @@ class Train {
         this.lanes = lanes; this.z = z; this.cars = cars; this.kind = kind
         this.speed = speed; this.livery = livery; this.hornDone = kind != 2
         this.passedNear = false
+        this.hasRoof = false
         this.seed = (Math.random() * 10000).toInt()
     }
 
