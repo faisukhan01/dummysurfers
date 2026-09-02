@@ -63,17 +63,18 @@ const consoleLines = [
 
 const changelog = [
   {
-    v: 'v1.2.0', date: 'Subway Surfers Redesign — today', latest: true, items: [
-      '☀️ Daylight palette: cyan sky, cream horizon, terracotta ballast, vivid grass',
-      '🏆 SS-style HUD: gold coin pill, white outlined score, orange pause square',
-      '🔤 Chunky comic fonts: Luckiest Guy display + Fugaz One body',
-      '🚂 SS trains: white body band, yellow cab face, graffiti freight cars',
-      '🌈 NEW BEST celebration: radial rainbow burst + confetti + speed streaks',
-      '🟣 Periwinkle UI panels with deep navy slots, gold values, tabs menu',
+    v: 'v5.0.0', date: 'Playability overhaul — today', latest: true, items: [
+      '🖱️ THE menu fix: RUN/CHARS/SHOP/TASKS/SETUP were dead on touch devices — touch events now use real event coordinates (verified end-to-end by scripted taps)',
+      '🔊 Audio engine crash fix: sample-index overflow in the mixer thread + realtime pacing for weird audio devices',
+      '⚖️ Fair obstacle rules: jump→slide combos can no longer spawn closer than the jump arc allows',
+      '🖐️ Swipe quality: mid-gesture firing at ~22dp, no gesture-duration limit, flick fallback',
+      '🚫 Non-blocking first run: hint chips float over gameplay — the old lock-step tutorial trap is gone',
+      '🏷️ versionCode 20 — clearly distinct from every older download',
     ]
   },
-  { v: 'v1.1', date: 'Today', items: ['🌈 Rainbow trail now hue-cycles (was stuck teal)', '🐦 Bird flocks glide over the skyline', '🧍 Commuters wait on station platforms', '🎛️ Shop drag-scroll actually scrolls + clamps', '🎚️ Music intensity now scales live with speed', '💨 Vignette edge-blur + speed lines at top speed'] },
-  { v: 'v1.0', date: 'Initial build', items: ['Full 35-section spec implemented in Kotlin + LibGDX', 'Procedural art & PCM synth audio, zero asset files', 'CI workflow: debug APK + release APK + AAB on push'] },
+  { v: 'v4.0 – v4.7', date: 'Deep polish era', items: ['🚂 Roof-running: ramps lead up onto train roofs with rooftop coin trails', '🚨 Guard catch sequence + chase pressure tuning', '🧍 3D character rig polish: hanging limb geometry, arm pump, goggle details', '🌆 Urban canyon: walls with crowd art, teal skyline haze, moving-train headlights', '🎁 Gift doubler, mission trophy popups, hoverboard double-tap'] },
+  { v: 'v3.0', date: 'SS flow', items: ['▶️ Straight into the run — the lock-step tutorial gate removed for SS-style onboarding'] },
+  { v: 'v1.0 – v2.0', date: 'Foundation', items: ['3D engine scaffolding, trains, lanes, coins, shop/missions/settings, CI releases'] },
 ]
 
 export default function Home() {
@@ -172,7 +173,7 @@ export default function Home() {
             </a>
           ))}
           <span className="ml-auto shrink-0 rounded-full bg-[#FFC93C] px-3 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#24316B] border-2 border-white shadow-[0_2px_0_#E09B12]">
-            v1.2.0 — SS Redesign
+            v5.0.0 — Playable!
           </span>
         </div>
       </nav>
@@ -181,8 +182,9 @@ export default function Home() {
       <section id="ss-redesign" className="max-w-5xl mx-auto w-full px-4 sm:px-10 pt-10 pb-12 scroll-mt-24">
         <H2>Subway Surfers Redesign</H2>
         <p className="-mt-2 mb-6 max-w-2xl text-sm sm:text-base font-semibold text-[#3A4470]">
-          v1.2 repaints the whole game in Subway Surfers&apos; bright visual language — studied
-          from official screenshots, rebuilt 100% procedurally.
+          The whole game is painted in Subway Surfers&apos; bright visual language — studied
+          from official screenshots, rebuilt 100% procedurally, now true-3D with ramps,
+          train roofs, guard chases and hoverboards.
         </p>
 
         {/* palette swatch strip */}
@@ -247,7 +249,7 @@ export default function Home() {
                 <span className="text-2xl font-bold text-white [text-shadow:0_2px_0_rgba(36,49,107,.5)]">→</span>
                 <div className="rounded-2xl border-[3px] border-white/80 p-3 text-center" style={{ background: 'linear-gradient(180deg,#3FB8F5 0%,#8FD8F8 60%,#FFE9C2 100%)' }}>
                   <p className="text-2xl">☀️</p>
-                  <p className="mt-1 text-xs font-bold uppercase text-[#24316B]">v1.2 — daylight</p>
+                  <p className="mt-1 text-xs font-bold uppercase text-[#24316B]">v4.x — daylight</p>
                 </div>
               </div>
               <p className="mt-4 text-sm font-semibold leading-relaxed text-[#E4E8FC]">
@@ -423,7 +425,7 @@ export default function Home() {
           <p className="font-bold uppercase tracking-wide text-[#FFC93C] [text-shadow:0_2px_0_rgba(36,49,107,.8)]">
             Dummy Surfers <span className="text-white">by FSK</span>
           </p>
-          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v1.2.0 — SS Redesign</span></p>
+          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v5.0.0 — Playable!</span></p>
         </div>
       </footer>
     </main>

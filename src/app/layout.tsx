@@ -23,14 +23,14 @@ const fredoka = Fredoka({
 
 export const metadata: Metadata = {
   title: "Dummy Surfers by FSK — Kotlin + LibGDX Endless Runner",
-  description: "Premium Android endless runner built with Kotlin + LibGDX — v1.2.0 Subway Surfers redesign: daylight palette, SS HUD, chunky comic fonts. Procedural art & audio, CI builds APK/AAB on GitHub push.",
+  description: "Premium Android endless runner built with Kotlin + LibGDX — Dummy Surfers by FSK v5.0.0 — true-3D Subway-Surfers-style endless runner, now fully playable on touch. Procedural art & audio, CI builds APK/AAB on GitHub push.",
   keywords: ["Dummy Surfers", "FSK", "Kotlin", "LibGDX", "endless runner", "Android game"],
   authors: [{ name: "FSK" }],
   icons: {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
   },
   openGraph: {
-    title: "Dummy Surfers by FSK — v1.2.0 Subway Surfers Redesign",
+    title: "Dummy Surfers by FSK — Dummy Surfers v5.0.0",
     description: "Bright daylight SS-style dashboard: cyan sky, periwinkle panels, gold chunky buttons. Kotlin + LibGDX endless runner.",
     url: "https://chat.z.ai",
     siteName: "Z.ai",
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Dummy Surfers by FSK — v1.2.0 Subway Surfers Redesign",
+    title: "Dummy Surfers by FSK — Dummy Surfers v5.0.0",
     description: "Bright daylight SS-style dashboard for the Kotlin + LibGDX endless runner.",
   },
 };
