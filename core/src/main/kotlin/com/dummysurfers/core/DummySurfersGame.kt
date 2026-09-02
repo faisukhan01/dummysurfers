@@ -634,9 +634,9 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             val inLane = o.lane == player.lane || abs(o.lane * GameConfig.LANE_WIDTH - player.x) < 1.0f
             if (!inLane) continue
             when (o.kind) {
-                ObstacleKind.LOW_BARRIER -> if (o.z < react && player.state == PlayerState.RUNNING) act = SwipeDetector.Direction.UP
+                ObstacleKind.LOW_BARRIER -> if (o.z < speed * 0.36f + 1.5f && (player.state == PlayerState.RUNNING || player.state == PlayerState.LANDING)) act = SwipeDetector.Direction.UP
                 ObstacleKind.GATE, ObstacleKind.HIGH_BARRIER, ObstacleKind.FENCE_FULL ->
-                    if (o.z < react && player.state == PlayerState.RUNNING) act = SwipeDetector.Direction.DOWN
+                    if (o.z < speed * 0.3f && (player.state == PlayerState.RUNNING || player.state == PlayerState.LANDING)) act = SwipeDetector.Direction.DOWN
                 ObstacleKind.BLOCKADE -> if (o.z < react + 3f) act =
                     if (player.lane <= 0) SwipeDetector.Direction.RIGHT else SwipeDetector.Direction.LEFT
             }
