@@ -634,9 +634,9 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             .minByOrNull { it.z }
         if (nearest != null) {
             when (nearest.kind) {
-                ObstacleKind.LOW_BARRIER -> if (nearest.z < speed * 0.36f + 1.5f && (player.state == PlayerState.RUNNING || player.state == PlayerState.LANDING)) act = SwipeDetector.Direction.UP
+                ObstacleKind.LOW_BARRIER -> if (nearest.z < speed * 0.36f + 1.5f && player.state != PlayerState.JUMPING) act = SwipeDetector.Direction.UP
                 ObstacleKind.GATE, ObstacleKind.HIGH_BARRIER, ObstacleKind.FENCE_FULL ->
-                    if (nearest.z < speed * 0.3f && (player.state == PlayerState.RUNNING || player.state == PlayerState.LANDING)) act = SwipeDetector.Direction.DOWN
+                    if (nearest.z < speed * 0.3f && player.state != PlayerState.JUMPING) act = SwipeDetector.Direction.DOWN
                 ObstacleKind.BLOCKADE -> if (nearest.z < react + 3f) act =
                     if (player.lane <= 0) SwipeDetector.Direction.RIGHT else SwipeDetector.Direction.LEFT
             }
@@ -664,14 +664,18 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             }
         }
 
-        // coin seeking when nothing threatens
+        // coin seeking when nothing threatens (never lane-change into danger)
         if (act == null && botTimer <= 0f) {
             botTimer = 0.6f + rng.nextFloat() * 0.7f
             val target = spawner.coins
                 .filter { !it.collected && it.z in 4f..22f && abs(it.y - (player.groundY + 0.9f)) < 1.8f }
                 .minByOrNull { abs(it.x - player.x) }
             if (target != null && abs(target.x - player.x) > 0.8f) {
-                act = if (target.x > player.x) SwipeDetector.Direction.RIGHT else SwipeDetector.Direction.LEFT
+                val targetLane = ((target.x / GameConfig.LANE_WIDTH) + 0.5f).toInt().coerceIn(-1, 1)
+                val laneSafe = spawner.obstacles.none {
+                    it.z in -1f..16f && it.lane == targetLane && it.kind != ObstacleKind.LOW_BARRIER
+                } && spawner.trains.none { it.z in -1f..18f && it.lanes.contains(targetLane) && !it.hasRoof }
+                if (laneSafe) act = if (target.x > player.x) SwipeDetector.Direction.RIGHT else SwipeDetector.Direction.LEFT
             }
         }
 
