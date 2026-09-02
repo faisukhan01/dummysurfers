@@ -2,6 +2,7 @@ package com.dummysurfers.core.state
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Preferences
+import com.dummysurfers.core.entities.CharacterDef
 
 /**
  * Mission definition + progress for one active mission slot.
@@ -60,6 +61,7 @@ class SaveManager {
     var sfxOn = true; private set
     var vibrationOn = true; private set
     var tutorialDone = false; private set
+    var hoverboards: Int = 1; private set      // consumable 2nd-chance boards
     val missions = ArrayList<MissionSave>(3)
 
     private val listeners = ArrayList<(SaveManager) -> Unit>()
@@ -87,6 +89,7 @@ class SaveManager {
         sfxOn = b("sfx", true)
         vibrationOn = b("vib", true)
         tutorialDone = b("tut", false)
+        hoverboards = n("boards", 1)
 
         ownedCharacters.clear(); ownedCharacters.add("dash")
         s("owned", "dash").split("|").filter { it.isNotBlank() }.forEach { ownedCharacters.add(it) }
@@ -142,6 +145,7 @@ class SaveManager {
             append("\"sfx\":$sfxOn,")
             append("\"vib\":$vibrationOn,")
             append("\"tut\":$tutorialDone,")
+            append("\"boards\":$hoverboards,")
             append("\"stats\":$statsJson,")
             append("\"missions\":[$missionsJson]")
             append("}")
@@ -156,6 +160,23 @@ class SaveManager {
     fun spendCoins(n: Int): Boolean {
         if (totalCoins < n) return false
         totalCoins -= n
+        return true
+    }
+
+    /** Take one hoverboard out of the rack (activation). */
+    fun consumeHoverboard(): Boolean {
+        if (hoverboards <= 0) return false
+        hoverboards--
+        persist()
+        return true
+    }
+
+    /** Buy one hoverboard for the rack. */
+    fun buyHoverboard(cost: Int, max: Int): Boolean {
+        if (hoverboards >= max) return false
+        if (!spendCoins(cost)) return false
+        hoverboards++
+        persist()
         return true
     }
 
@@ -198,6 +219,15 @@ class SaveManager {
         if (ownedCharacters.contains(id)) { selectedCharacter = id; persist() }
     }
 
+    /** Desktop visual-QA only (DS_CHAR=<id>): grant + select without coins so
+     *  QA batches can capture BLAZE/VOLT/NOVA accessories on camera. */
+    fun qaForceCharacter(id: String) {
+        if (CharacterDef.ALL.none { it.id == id }) return
+        if (!ownedCharacters.contains(id)) ownedCharacters.add(id)
+        selectedCharacter = id
+        persist()
+    }
+
     fun upgradeLevel(name: String) = upgrades[name] ?: 0
 
     fun buyUpgrade(name: String, cost: Int): Boolean {
@@ -237,6 +267,7 @@ class SaveManager {
         upgrades.clear(); POWERUP_NAMES.forEach { upgrades[it] = 0 }
         trail = 0; musicOn = true; sfxOn = true; vibrationOn = true
         tutorialDone = false
+        hoverboards = 1
         stats.runs = 0; stats.bestDistance = 0; stats.totalDistance = 0; stats.totalCoins = 0
         stats.totalJumps = 0; stats.totalSlides = 0; stats.totalPowerups = 0
         stats.totalNearMisses = 0; stats.playSeconds = 0
@@ -245,7 +276,7 @@ class SaveManager {
     }
 
     companion object {
-        val POWERUP_NAMES = listOf("magnet", "x2", "shield", "boost", "superjump")
+        val POWERUP_NAMES = listOf("magnet", "x2", "shield", "boost", "superjump", "jetpack")
     }
 }
 

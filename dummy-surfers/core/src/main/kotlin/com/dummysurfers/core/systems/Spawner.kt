@@ -5,7 +5,7 @@ import com.dummysurfers.core.entities.Coin
 import com.dummysurfers.core.entities.Obstacle
 import com.dummysurfers.core.entities.ObstacleKind
 import com.dummysurfers.core.entities.PowerUpPickup
-import com.dummysurfers.core.entities.Ramp
+import com.dummysurfers.core.state.PowerUpType
 import com.dummysurfers.core.entities.Train
 import com.dummysurfers.core.utils.Mathz
 import kotlin.random.Random
@@ -22,13 +22,11 @@ class Spawner {
     val obstacles = ArrayList<Obstacle>(40)
     val coins = ArrayList<Coin>(140)
     val powerups = ArrayList<PowerUpPickup>(6)
-    val ramps = ArrayList<Ramp>(6)
 
     private val trainPool = ArrayList<Train>(12)
     private val obstaclePool = ArrayList<Obstacle>(40)
     private val coinPool = ArrayList<Coin>(140)
     private val powerupPool = ArrayList<PowerUpPickup>(6)
-    private val rampPool = ArrayList<Ramp>(6)
 
     private var frontier = 0f
     private var lastActionZ = 0f
@@ -44,13 +42,31 @@ class Spawner {
         drain(obstacles) { o -> obstaclePool.add(o) }
         drain(coins) { c -> coinPool.add(c) }
         drain(powerups) { p -> powerupPool.add(p) }
-        drain(ramps) { r -> rampPool.add(r) }
         frontier = GameConfig.FIRST_SAFE_METERS
         lastActionZ = 0f
         lastAction = ' '
         safeLane = 0
         powerupTimer = 0f
         nextPowerupIn = GameConfig.POWERUP_INTERVAL * 0.6f
+        spawnOpeningRun()
+    }
+
+    /**
+     * v3.0: a welcoming straight coin run through the safe opening zone.
+     * Previously the first 45m were completely EMPTY — the player pressed RUN
+     * and stared at bare track for ~5 seconds with nothing to do ("can't
+     * collect the coins"). Now: two juicy coin trails + a magnet taste.
+     */
+    private fun spawnOpeningRun() {
+        val lane = 0
+        var z = 6f
+        while (z < GameConfig.FIRST_SAFE_METERS - 6f) {
+            repeat(5) { i -> spawnCoin(lane, z + i * 1.6f, 0.9f) }
+            z += 5 * 1.6f + 3.4f
+        }
+        // a taste of each side lane so swiping feels rewarded immediately
+        repeat(4) { i -> spawnCoin(-1, 14f + i * 1.6f, 0.9f) }
+        repeat(4) { i -> spawnCoin(1, 26f + i * 1.6f, 0.9f) }
     }
 
     private inline fun <T> drain(list: ArrayList<T>, recycle: (T) -> Unit) {
@@ -64,18 +80,12 @@ class Spawner {
         scroll(obstacles, scrollDelta) { it.z -= scrollDelta }
         scroll(coins, scrollDelta) { it.z -= scrollDelta }
         scroll(powerups, scrollDelta) { it.z -= scrollDelta }
-        scroll(ramps, scrollDelta) { it.z -= scrollDelta }
 
         // recycle behind the camera
         var i = 0
         while (i < trains.size) {
             val t = trains[i]
             if (t.z - t.totalLength < -24f) { trainPool.add(t); trains[i] = trains[trains.size - 1]; trains.removeAt(trains.size - 1) } else i++
-        }
-        i = 0
-        while (i < ramps.size) {
-            val r = ramps[i]
-            if (r.z < -14f) { rampPool.add(r); ramps[i] = ramps[ramps.size - 1]; ramps.removeAt(ramps.size - 1) } else i++
         }
         i = 0
         while (i < obstacles.size) {
@@ -160,32 +170,50 @@ class Spawner {
     private fun singleTrain() {
         val lanes = laneArrayOf()
         safeLane = pickSafe(lanes)
-        val withRoof = rng.nextFloat() < 0.45f
-        if (withRoof) {
-            // ramp occupies [frontier, frontier+RAMP_LENGTH], train begins where it tops out
-            spawnTrain(lanes, cars = 3 + rng.nextInt(6), kind = 0, speed = 0f, hasRoof = true, zOffset = GameConfig.RAMP_LENGTH)
-            spawnRamp(lanes[0], frontier)
-            coinTrailTo(lanes[0], frontier + GameConfig.RAMP_LENGTH + 1f, 7f, GameConfig.ROOF_COIN_Y)
-        } else {
-            spawnTrain(lanes, cars = 3 + rng.nextInt(6), kind = 0, speed = 0f)
-        }
+        val t = spawnTrain(lanes, cars = 3 + rng.nextInt(6), kind = 0, speed = 0f)
         coinTrailTo(safeLane, frontier + 2f, 10f)
+        maybeRoofCoins(t)
     }
 
     private fun doubleTrain() {
         val clear = rng.nextInt(3) - 1
         val lanes = (-1..1).filter { it != clear }.toIntArray()
         safeLane = clear
-        val roofLane = lanes[rng.nextInt(lanes.size)]
-        val withRoof = rng.nextFloat() < 0.4f
-        if (withRoof) {
-            spawnTrain(lanes, cars = 3 + rng.nextInt(4), kind = 0, speed = 0f, hasRoof = true, zOffset = GameConfig.RAMP_LENGTH)
-            spawnRamp(roofLane, frontier)
-            coinTrailTo(roofLane, frontier + GameConfig.RAMP_LENGTH + 1f, 7f, GameConfig.ROOF_COIN_Y)
-        } else {
-            spawnTrain(lanes, cars = 3 + rng.nextInt(4), kind = 0, speed = 0f)
-        }
+        val t = spawnTrain(lanes, cars = 3 + rng.nextInt(4), kind = 0, speed = 0f)
         coinTrailTo(clear, frontier + 2f, 12f)
+        maybeRoofCoins(t)
+    }
+
+    /** v4 roof-running: parked trains get a ramp + a jackpot coin line on top. */
+    private fun maybeRoofCoins(t: Train) {
+        if (t.cars < 3) return
+        val zNear = t.z - t.totalLength
+        var z = zNear + 1.4f
+        while (z < t.z - 1.2f) {
+            spawnCoin(t.lanes[0], z, GameConfig.TRAIN_HEIGHT + 0.7f)
+            z += 1.7f
+        }
+    }
+
+    /**
+     * v4: ground/support height under the player — 0 on the ballast,
+     * TRAIN_HEIGHT on a train roof, interpolating up a ramp.
+     */
+    fun supportAt(lane: Int, x: Float): Float {
+        var s = 0f
+        for (t in trains) {
+            if (!t.lanes.contains(lane)) continue
+            if (t.kind == 2) continue // oncoming trains never carry you
+            val zNear = t.z - t.totalLength
+            val zFar = t.z
+            if (zNear <= 0f && zFar >= 0f) {
+                s = maxOf(s, GameConfig.TRAIN_HEIGHT)
+            } else if (t.kind == 0 && zNear > 0f && zNear < GameConfig.RAMP_LENGTH) {
+                val h = GameConfig.TRAIN_HEIGHT * (1f - zNear / GameConfig.RAMP_LENGTH)
+                s = maxOf(s, h)
+            }
+        }
+        return s
     }
 
     private fun lowBarriers() {
@@ -272,16 +300,17 @@ class Spawner {
 
     private fun spawnPowerup() {
         val p = powerupPool.removeLastOrNull() ?: PowerUpPickup()
-        p.reset(rng.nextInt(5), rng.nextInt(3) - 1, frontier + 6f)
+        p.reset(rng.nextInt(PowerUpType.entries.size), rng.nextInt(3) - 1, frontier + 6f)
         powerups.add(p)
         repeat(4) { i -> spawnCoin(p.lane, p.z - 2f - i * 1.6f, 1f) }
     }
 
     // ── Helpers ────────────────────────────────────────────────────────
-    /** Reject pattern if the last action leaves no time for this one.
-     * Jump/slide arcs take ~0.7s of travel — any jump/slide combo needs that spacing. */
+    /** Reject pattern if it repeats the last action too soon (<0.5s of travel). */
     private fun guard(action: Char): Boolean {
-        val arcZ = (GameConfig.JUMP_VELOCITY / GameConfig.GRAVITY * 2f + 0.3f) * speedHint
+        // jump/slide arcs take ~0.7s of travel — ANY jump->slide (or reverse)
+        // combo closer than that is physically impossible to clear
+        val arcZ = (GameConfig.JUMP_DURATION + 0.35f) * speedHint
         if ((action == 'j' || action == 's') && (lastAction == 'j' || lastAction == 's') &&
             frontier - lastActionZ < arcZ) return true
         if (action == lastAction && frontier - lastActionZ < GameConfig.MIN_REACTION_GAP * speedHint) return true
@@ -300,18 +329,33 @@ class Spawner {
         return target
     }
 
-    private fun spawnTrain(lanes: IntArray, cars: Int, kind: Int, speed: Float, hasRoof: Boolean = false, zOffset: Float = 0f) {
-        val t = trainPool.removeLastOrNull() ?: Train()
-        t.reset(lanes, frontier + zOffset, cars, kind, speed, rng.nextInt(6))
-        t.hasRoof = hasRoof && kind == 0
-        trains.add(t)
-        lastAction = 'd'; lastActionZ = frontier
+    // v4.6 LIVERY VARIETY: the spawner rolled rng.nextInt(6) while the palette
+    // grew to 8 liveries in v4.2 — the teal harbor line and the graphite night
+    // express were coded, textured, and NEVER seen in a run. Also anti-repeat:
+    // two consists back-to-back in the same paint read as one endless train.
+    private var lastLivery = -1
+    private fun nextLivery(): Int {
+        val n = com.dummysurfers.core.gfx.Palette.TRAIN_LIVERIES.size
+        var l = rng.nextInt(n)
+        if (l == lastLivery) l = (l + 1 + rng.nextInt(n - 1)) % n
+        lastLivery = l
+        return l
     }
 
-    private fun spawnRamp(lane: Int, z: Float) {
-        val r = rampPool.removeLastOrNull() ?: Ramp()
-        r.reset(lane, z)
-        ramps.add(r)
+    private fun spawnTrain(lanes: IntArray, cars: Int, kind: Int, speed: Float): Train {
+        val t = trainPool.removeLastOrNull() ?: Train()
+        // v4.5 hard clearance: a train's BODY extends BACKWARD from its front (z),
+        // so a long train spawned near the frontier could historically stretch its
+        // tail over the spawn point — the QA loop once caught that as a 0m frame-1
+        // death ("can't start new game"). Never again: push the front out so the
+        // tail stays TRAIN_SPAWN_CLEARANCE ahead of the runner.
+        var z = frontier
+        val tail = z - cars * GameConfig.TRAIN_CAR_LENGTH
+        if (tail < GameConfig.TRAIN_SPAWN_CLEARANCE) z += GameConfig.TRAIN_SPAWN_CLEARANCE - tail
+        t.reset(lanes, z, cars, kind, speed, nextLivery())
+        trains.add(t)
+        lastAction = 'd'; lastActionZ = frontier
+        return t
     }
 
     private fun spawnObstacle(kind: ObstacleKind, lane: Int) {
@@ -320,16 +364,16 @@ class Spawner {
         obstacles.add(o)
     }
 
-    private fun spawnCoin(lane: Int, z: Float, y: Float) {
+    fun spawnCoin(lane: Int, z: Float, y: Float) {
         if (coins.size >= 140) return
         val c = coinPool.removeLastOrNull() ?: Coin()
         c.reset(lane, z, y)
         coins.add(c)
     }
 
-    private fun coinTrailTo(lane: Int, fromZ: Float, length: Float, y: Float = 0.9f) {
+    private fun coinTrailTo(lane: Int, fromZ: Float, length: Float) {
         var z = fromZ
-        while (z < fromZ + length) { spawnCoin(lane, z, y); z += 1.6f }
+        while (z < fromZ + length) { spawnCoin(lane, z, 0.9f); z += 1.6f }
     }
 
     private fun coinArcOver(z: Float, lane: Int) {

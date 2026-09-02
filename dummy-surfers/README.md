@@ -8,6 +8,45 @@ procedurally generated art & audio (zero external assets).
 
 ---
 
+## 🆕 v3.0.0 — "JACK + THE CHASE" (biggest update yet)
+
+- **JACK** — Jake-inspired hero (100% original art): white hoodie + red tee, denim vest,
+  blue jeans, white-red backwards cap, brown spikes. Repainted in-game AND on the menu.
+- **THE POLICE CHASE, for real**: the guard + his **police dog** sprint behind you from
+  meter zero (whistle + all). Stumble on a barrier and he sprints into grab range —
+  red danger vignette, "!" rage mark, 5.5s to redeem yourself. Get caught twice and
+  it's the guard-grab slow-motion busted sequence.
+- **PLAYABLE IN 1 SECOND**: no forced tutorial — press RUN and you're running. New-player
+  hint chips guide the first 90m, then vanish forever.
+- **Swipes fixed for real phones**: actions fire the instant your finger crosses the
+  threshold mid-gesture, any duration (the old 300ms cap ate slow swipes = "game won't respond").
+- **Coins from the first second**: the opening run is lined with gold.
+- **Screen-wide white slab bug — FIXED** (uncollected powerups exploded behind the camera).
+- Gray SS-style ballast, steel rails, concrete slabs, brighter trains.
+
+---
+
+## 📲 Download & play
+
+Every push to `main` triggers GitHub Actions, which builds a **signed release APK** and
+publishes it to the [Releases page](../../releases).
+
+**Direct download (always newest):**
+
+```
+https://github.com/faisukhan01/dummysurfers/releases/latest/download/DummySurfers.apk
+```
+
+1. Open the link on your phone (or scan the QR code on the project landing page).
+2. Allow "install unknown apps" for your browser.
+3. Install **DummySurfers.apk** → play.
+4. **Verify you got v3.0.0**: Android Settings → Apps → Dummy Surfers → version `3.0.0`.
+
+The APK is signed with the committed project keystore, so every new release installs
+straight over the previous one (no uninstall needed).
+
+---
+
 ## ✅ Feature checklist (spec sections 1–35)
 
 | System | Status |
@@ -24,6 +63,7 @@ procedurally generated art & audio (zero external assets).
 | Obstacles: low barriers (jump), high barriers + gates (slide), blockades, full fences | ✅ |
 | Coins: 10-frame spin, glow, bob, arcs/lines/zigzags guiding the safe path, rising-pitch ding | ✅ |
 | Power-ups: Magnet / Score ×2 / Shield / Boost / Super Jump (+3s per upgrade level) | ✅ |
+| Hoverboard: consumable 2nd chance — tap chip or double-tap to ride, crash shatters the board instead of the run (shop: 300c, rack of 9) | ✅ |
 | Chaser (security guard) pressure system | ✅ |
 | Near-miss scoring (+25, shake, floating text) | ✅ |
 | Difficulty curve `base + (max−base)(1−e^(−d·k))` with 5 phases | ✅ |
@@ -59,9 +99,10 @@ dummy-surfers/
 │       ├── particles/Particles.kt
 │       ├── ui/                         # UiTheme (freetype fonts) + all screens
 │       └── DummySurfersGame.kt         # orchestrator / loop
-├── android/   # Android launcher + manifest + icons + assets (font)
+├── android/   # Android launcher + manifest + icons + assets (fonts)
 ├── desktop/   # LWJGL3 desktop launcher for fast iteration
-└── .github/workflows/android.yml  # CI: debug APK + release APK + AAB on every push
+├── keystore/  # release signing keystore (stable key → updates install over old builds)
+└── .github/workflows/android.yml  # CI: debug APK + signed release APK + AAB + GitHub Release
 ```
 
 ## Run / build
@@ -78,11 +119,12 @@ dummy-surfers/
 ```
 
 ### GitHub Actions
-Every push builds:
-- `dummy-surfers-debug-apk` — install directly on a phone
-- `dummy-surfers-release-apk` / `dummy-surfers-release-aab` — for Play Console
-(Add your own signing config in `android/build.gradle.kts` + secrets for a signed release.)
+Every push builds and publishes:
+- **Release** `v*` → `DummySurfers.apk` (signed release) + `DummySurfers-debug.apk` + `DummySurfers-release.aab`
+- Workflow artifacts → `dummy-surfers-build` (same three files)
+- Signing uses the committed `keystore/dummysurfers-release.keystore` (hobby project; swap in
+  your own keystore + secrets for a Play release if you prefer).
 
 ## Credits
-- Font: [Press Start 2P](https://fonts.google.com/specimen/Press+Start+2P) (OFL)
+- Fonts: [Luckiest Guy](https://fonts.google.com/specimen/Luckiest+Guy) + [Fugaz One](https://fonts.google.com/specimen/Fugaz+One) + [Fredoka](https://fonts.google.com/specimen/Fredoka) + [Baloo 2](https://fonts.google.com/specimen/Baloo+2) (OFL/Apache)
 - Everything else: 100% original procedural code — **Dummy Surfers by FSK**

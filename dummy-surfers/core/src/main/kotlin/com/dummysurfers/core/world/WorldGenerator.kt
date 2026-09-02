@@ -36,6 +36,7 @@ class WorldGenerator {
     private var rng = Random(1)
 
     val tunnelRanges = ArrayList<FloatArray>() // [zStart, zEnd]
+    private var forcedTunnels = 0
 
     fun reset(seed: Int = (System.nanoTime() and 0xffffff).toInt()) {
         rng = Random(seed)
@@ -43,6 +44,7 @@ class WorldGenerator {
         decos.clear()
         nextZ = -14f
         tunnelRanges.clear()
+        forcedTunnels = 0
         // prime the world ahead
         while (nextZ < GameConfig.VIEW_DISTANCE * 1.6f) spawnSegment()
     }
@@ -80,8 +82,14 @@ class WorldGenerator {
 
     private fun spawnSegment() {
         val z0 = nextZ
+        // v4.6 QA hook: DS_TUNNEL=1 forces the first two post-30f segments into
+        // tunnels — software-rendered QA runs only reach ~150m, too deep for
+        // the natural ~1-in-7 roll to place one on camera
         val kind = when {
             z0 < 30f -> SegmentKind.OPEN
+            System.getenv("DS_TUNNEL") == "1" && forcedTunnels < 2 && z0 < 30f + GameConfig.SEGMENT_LENGTH * 7f -> {
+                forcedTunnels++; SegmentKind.TUNNEL
+            }
             else -> {
                 val roll = rng.nextFloat()
                 when {
@@ -124,7 +132,7 @@ class WorldGenerator {
             SegmentKind.INDUSTRIAL -> {
                 for (i in 0 until 4) {
                     val side = if (rng.nextBoolean()) -1 else 1
-                    add(DecoKind.GRAFFITI_WALL, side, side * (edgeX + 1.8f), z0 + i * segLen / 4f + 3f, 2.8f, 9f, rng.nextInt(4))
+                    add(DecoKind.GRAFFITI_WALL, side, side * (edgeX + 1.8f), z0 + i * segLen / 4f + 3f, 2.8f, 5.5f, rng.nextInt(4))
                 }
                 add(DecoKind.BUILDING, 1, edgeX + 6.5f, z0 + 8f, Mathz.rnd(rng, 5f, 9f), 6f, rng.nextInt(8), true)
                 add(DecoKind.BUILDING, -1, -(edgeX + 6.8f), z0 + 16f, Mathz.rnd(rng, 4f, 7f), 5f, rng.nextInt(8), false)
@@ -161,7 +169,7 @@ class WorldGenerator {
                     val tall = rng.nextFloat() < 0.25f
                     val h = if (tall) Mathz.rnd(rng, 9f, 15f) else Mathz.rnd(rng, 3.5f, 8f)
                     val w = Mathz.rnd(rng, 4f, 7.5f)
-                    val x = side * (edgeX + 3.2f + rng.nextFloat() * 5.5f)
+                    val x = side * (edgeX + 4.4f + rng.nextFloat() * 5.5f)
                     add(if (tall) DecoKind.SKYSCRAPER else DecoKind.BUILDING, side, x, z, h, w, rng.nextInt(8), rng.nextFloat() < 0.55f)
                     if (rng.nextFloat() < 0.16f) add(DecoKind.BILLBOARD, side, side * (edgeX + 1.4f), z + 1.5f, 3.2f, 3.6f, rng.nextInt(4))
                 } else if (rng.nextFloat() < 0.5f * density) {
@@ -172,7 +180,9 @@ class WorldGenerator {
             }
             // street furniture
             if (rng.nextFloat() < 0.5f) add(DecoKind.LAMP, if (rng.nextBoolean()) -1 else 1, (if (rng.nextBoolean()) -1 else 1) * (edgeX + 1.5f), z + 1f, 3.6f, 0.4f)
-            if (rng.nextFloat() < 0.3f) add(DecoKind.SIGNAL, if (rng.nextBoolean()) -1 else 1, 0f, z, 0f, 0f, rng.nextInt(2))
+            // v4.2: signals were spawning at x=0 — dead-center in a running
+            // lane, reading as an obstacle; park them trackside instead
+            if (rng.nextFloat() < 0.3f) { val s = if (rng.nextBoolean()) -1 else 1; add(DecoKind.SIGNAL, s, s * (edgeX + 0.9f), z, 2.6f, 0.5f, rng.nextInt(2)) }
             z += Mathz.rnd(rng, 7f, 13f)
         }
         // catenary poles on a regular rhythm with wires

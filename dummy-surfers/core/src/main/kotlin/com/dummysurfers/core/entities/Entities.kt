@@ -4,7 +4,7 @@ import com.dummysurfers.core.config.GameConfig
 import com.dummysurfers.core.state.PlayerState
 import com.dummysurfers.core.utils.Mathz
 
-/** Original character definitions — procedurally drawn, unique palettes. */
+/** Original characters — SS-styled (big head, hoodie, backpack, backward cap), 100% ours. */
 class CharacterDef(
     val id: String,
     val name: String,
@@ -15,28 +15,48 @@ class CharacterDef(
     val shoes: Int,
     val cap: Int,
     val backpack: Int,
-    val accent: Int
+    val accent: Int,
+    val hair: Int = 0x3a2a1eff.toInt(),
+    /** v3.0: denim/side vest overlay color (0 = no vest) — Jack's signature layer. */
+    val vest: Int = 0,
+    /** v3.0: hood-bunch/undershirt color (0 = darker hoodie) — Jack's red tee. */
+    val hoodLining: Int = 0,
+    /** v3.0: front-panel color on a backwards cap (0 = none) — Jake DNA. */
+    val capPanel: Int = 0,
+    /** v4.2: signature accessory — 0 none, 1 spray can, 2 cap goggles, 3 headphones. */
+    val accessory: Int = 0
 ) {
     companion object {
         val ALL = arrayOf(
-            CharacterDef("dash", "DASH", 0, 0xf2c49bff.toInt(), 0x3f8ce0ff.toInt(), 0x35455aff.toInt(), 0xe23c3cff.toInt(), 0xe23c3cff.toInt(), 0xf2a03cff.toInt(), 0xffd24aff.toInt()),
-            CharacterDef("blaze", "BLAZE", 500, 0xd9975fff.toInt(), 0xc22f2fff.toInt(), 0x2e2320ff.toInt(), 0xf2b03cff.toInt(), 0xf28c3cff.toInt(), 0x8a2f2fff.toInt(), 0xff9c3cff.toInt()),
-            CharacterDef("volt", "VOLT", 1000, 0xc9a07aff.toInt(), 0xf2c53cff.toInt(), 0x2b2b2fff.toInt(), 0x3a3a42ff.toInt(), 0x1e1e24ff.toInt(), 0x454545ff.toInt(), 0xfff060ff.toInt()),
-            CharacterDef("nova", "NOVA", 2000, 0x8a6a52ff.toInt(), 0x2dd4bfff.toInt(), 0x1f4d47ff.toInt(), 0xf2ead0ff.toInt(), 0xf2ead0ff.toInt(), 0x25a89aff.toInt(), 0x7df2e2ff.toInt())
+            // JACK — the face of the game (Jake-inspired, 100% original art):
+            // red hoodie + white tee underneath, denim vest, blue jeans,
+            // red backwards cap (clean dome — a FRONT panel only exists on
+            // forward caps; the white egg it drew read as a balloon in the
+            // menu portrait), brown spiky hair, warm golden spray pack
+            // (v4.5: the old white pack read as a flat apron from behind)
+            CharacterDef("dash", "JACK", 0, 0xf2c49bff.toInt(), 0xd8322aff.toInt(), 0x3f5a83ff.toInt(), 0xf2f2f2ff.toInt(), 0xd8322aff.toInt(), 0xf2a32bff.toInt(), 0xffd24aff.toInt(), 0x5a3a22ff.toInt(), 0x7d97b8ff.toInt(), 0xf2f2f0ff.toInt(), 0),
+            // BLAZE — street artist: burnt-orange hoodie, black cap, spray-can energy
+            CharacterDef("blaze", "BLAZE", 500, 0xd9975fff.toInt(), 0xf28c1aff.toInt(), 0x2e2320ff.toInt(), 0xf2b03cff.toInt(), 0x1e1e24ff.toInt(), 0xc22f2fff.toInt(), 0xff9c3cff.toInt(), 0x1e1611ff.toInt(), accessory = 1),
+            // VOLT — speed demon: electric-yellow hoodie, teal hair streak, cap goggles
+            CharacterDef("volt", "VOLT", 1000, 0xc9a07aff.toInt(), 0xf2c53cff.toInt(), 0x2b2b2fff.toInt(), 0x3a3a42ff.toInt(), 0x1e1e24ff.toInt(), 0x454545ff.toInt(), 0xfff060ff.toInt(), 0x2ec4d9ff.toInt(), accessory = 2),
+            // NOVA — cool runner: mint hoodie, lavender hair, white cap, headphones
+            CharacterDef("nova", "NOVA", 2000, 0x8a6a52ff.toInt(), 0x2dd4bfff.toInt(), 0x1f4d47ff.toInt(), 0xf2ead0ff.toInt(), 0xf2ead0ff.toInt(), 0x25a89aff.toInt(), 0x7df2e2ff.toInt(), 0xb48ce0ff.toInt(), accessory = 3)
         )
 
         fun byId(id: String): CharacterDef = ALL.firstOrNull { it.id == id } ?: ALL[0]
     }
 }
 
-/** Jump arc via velocity physics — supports platforms (train roofs). */
+/**
+ * The runner. Owns lane physics, jump arc, slide timing, lean, squash-stretch
+ * and the run-cycle phase that drives procedural animation (and footsteps).
+ */
 class Player {
     var lane = 0                        // -1, 0, +1
     var x = 0f                          // continuous world x
-    var jumpY = 0f                      // height ABOVE groundY
-    var groundY = 0f                    // platform height under the player (roof = TRAIN_HEIGHT)
-    var vy = 0f                         // vertical velocity
-    var airborne = false
+    var jumpY = 0f                      // height above ground
+    var supportY = 0f                   // v4: ground height under the player (train roofs/ramps)
+    var jumpBase = 0f                   // v4: height the current jump started from
     var state = PlayerState.RUNNING
     var stateTime = 0f
     var runPhase = 0f                   // drives leg/arm animation
@@ -52,7 +72,7 @@ class Player {
     var toLane = 0
     var switchT = 0f
     var fastFalling = false
-    var curJumpStrength = GameConfig.JUMP_VELOCITY
+    var curJumpStrength = GameConfig.JUMP_STRENGTH
     var curJumpDuration = GameConfig.JUMP_DURATION
     var stepParity = 0
 
@@ -60,7 +80,7 @@ class Player {
         get() = if (state == PlayerState.SLIDING) GameConfig.PLAYER_HEIGHT * GameConfig.SLIDE_HEIGHT_RATIO else GameConfig.PLAYER_HEIGHT
 
     fun reset() {
-        lane = 0; x = 0f; jumpY = 0f; groundY = 0f; vy = 0f; airborne = false
+        lane = 0; x = 0f; jumpY = 0f; supportY = 0f; jumpBase = 0f
         state = PlayerState.RUNNING; stateTime = 0f
         runPhase = 0f; lean = 0f; squash = 0f; slideTimer = 0f; jumpBuffered = false
         bufferTimer = 0f; invulnTimer = 0f; deadTimer = 0f; deathSpin = 0f
@@ -78,15 +98,17 @@ class Player {
         stateTime = 0f
     }
 
-    /** Velocity-based jump. @return true when a fresh jump started. */
+    /** Jump arc: y(t) = base + strength * sin(PI * t / duration). Params captured at launch.
+     * @return true when a fresh jump actually started (not buffered). */
     fun startJump(superJump: Boolean): Boolean {
         if (state == PlayerState.JUMPING) { jumpBuffered = true; bufferTimer = 0.1f; return false }
         if (state == PlayerState.SLIDING) state = PlayerState.RUNNING
         state = PlayerState.JUMPING
         stateTime = 0f
         fastFalling = false
-        vy = GameConfig.JUMP_VELOCITY * if (superJump) 1.45f else 1f
-        airborne = true
+        jumpBase = jumpY
+        curJumpStrength = GameConfig.JUMP_STRENGTH * if (superJump) GameConfig.SUPERJUMP_STRENGTH_MULT else 1f
+        curJumpDuration = GameConfig.JUMP_DURATION * if (superJump) GameConfig.SUPERJUMP_DURATION_MULT else 1f
         return true
     }
 
@@ -105,10 +127,29 @@ class Player {
         if (state == PlayerState.DEAD) {
             deadTimer += dt
             deathSpin += dt * 9f
-            jumpY = Mathz.approach(jumpY, 0f, dt * 14f)
+            jumpY = Mathz.approach(jumpY, supportY, dt * 14f)
             return false
         }
 
+        // v4 roof-running: if the support under us dropped (ran off a train end
+        // or swiped into an empty lane) the runner FALLS back down; if support
+        // rose (ran up a ramp) the runner is carried up.
+        if (state == PlayerState.RUNNING || state == PlayerState.LANE_SWITCH) {
+            if (jumpY > supportY + 0.02f) {
+                // airborne fall
+                jumpY -= GameConfig.ROOF_FALL_GRAVITY * dt
+                if (jumpY <= supportY) {
+                    jumpY = supportY
+                    land()
+                    landed = true
+                }
+            } else if (jumpY < supportY - 0.02f) {
+                // carried up by a ramp
+                jumpY = Mathz.approach(jumpY, supportY, dt * 12f)
+            } else {
+                jumpY = supportY
+            }
+        }
         // lane interpolation with ease-out (0.15s)
         if (switchT < GameConfig.LANE_SWITCH_DURATION) {
             switchT += dt
@@ -124,38 +165,27 @@ class Player {
 
         when (state) {
             PlayerState.JUMPING -> {
-                // velocity + gravity
-                vy -= GameConfig.GRAVITY * dt * (if (fastFalling) 2.4f else 1f)
-                jumpY += vy * dt
-                if (jumpY <= groundY && vy < 0f) {
-                    jumpY = groundY; vy = 0f; airborne = false
-                    land(); landed = true
+                val t = stateTime / curJumpDuration
+                if (fastFalling) {
+                    jumpY -= GameConfig.FAST_FALL_GRAVITY * dt
+                    if (jumpY <= supportY) { jumpY = supportY; land(); landed = true }
+                } else if (t >= 1f) {
+                    jumpY = supportY; land(); landed = true
+                } else {
+                    jumpY = jumpBase + curJumpStrength * Mathz.sinPi(t)
+                    // landed early on a rising support (ramp top / train roof)
+                    if (jumpY < supportY) { jumpY = supportY; land(); landed = true }
                 }
             }
             PlayerState.SLIDING -> {
                 slideTimer -= dt
                 if (slideTimer <= 0f) { state = PlayerState.RUNNING; stateTime = 0f }
-                // sliding off a roof edge still falls
-                if (jumpY > groundY + 0.01f) {
-                    vy -= GameConfig.GRAVITY * dt
-                    jumpY += vy * dt
-                    if (jumpY <= groundY) { jumpY = groundY; vy = 0f }
-                }
             }
             PlayerState.LANDING -> {
                 squash = Mathz.clamp01(1f - stateTime / 0.12f)
                 if (stateTime >= 0.12f) { state = PlayerState.RUNNING; stateTime = 0f; squash = 0f }
-                // ground may have dropped (roof edge) while landing
-                if (jumpY > groundY + 0.01f) state = PlayerState.JUMPING
             }
             else -> {}
-        }
-
-        // support dropped away (ran off a roof): fall with gravity in any state
-        if (state != PlayerState.JUMPING && state != PlayerState.DEAD && jumpY > groundY + 0.01f) {
-            vy -= GameConfig.GRAVITY * dt
-            jumpY += vy * dt
-            if (jumpY <= groundY) { jumpY = groundY; vy = 0f; land(); landed = true }
         }
 
         if (jumpBuffered) {
@@ -184,17 +214,6 @@ class Player {
     }
 }
 
-/** Wedge ramp that lifts the runner onto a train roof. */
-class Ramp {
-    var lane = 0
-    var z = 0f                // front (low) edge
-
-    fun reset(lane: Int, z: Float) {
-        this.lane = lane
-        this.z = z
-    }
-}
-
 /** A train consist: N carriages spanning [z, z - cars*carLen]. */
 class Train {
     var lanes = intArrayOf(0)
@@ -206,7 +225,6 @@ class Train {
     var hornDone = false
     var passedNear = false
     var seed = 0
-    var hasRoof = false        // true when a ramp leads onto this train's roof
 
     val totalLength: Float get() = cars * GameConfig.TRAIN_CAR_LENGTH
 
@@ -214,7 +232,6 @@ class Train {
         this.lanes = lanes; this.z = z; this.cars = cars; this.kind = kind
         this.speed = speed; this.livery = livery; this.hornDone = kind != 2
         this.passedNear = false
-        this.hasRoof = false
         this.seed = (Math.random() * 10000).toInt()
     }
 
@@ -285,16 +302,54 @@ class Chaser {
     var runPhase = 0f
     var lean = 0f
 
+    /** v3.0: true while the guard has sprinted into grab range (after a stumble). */
+    var close = false
+
+    /** v3.0: 0..1 rush-in animation for the guard-grab death sequence. */
+    var catchT = 0f
+
+    /** v3.0: grab pose blend 0..1 once the guard reaches the player. */
+    var grabbed = false
+
+    /** v3.0: the guard's dog — sprinting beside him, own run cycle. */
+    var dogPhase = 0f
+
     fun trigger(duration: Float) {
         active = true
         timer = duration
     }
 
+    /** Stumble pressure: guard sprints up close for [duration] seconds. */
+    fun triggerClose(duration: Float) {
+        trigger(duration)
+        close = true
+    }
+
+    fun beginCatch() {
+        active = true
+        close = true
+        grabbed = false
+        catchT = 0f
+    }
+
+    fun reset() {
+        active = false; timer = 0f; close = false; grabbed = false; catchT = 0f
+    }
+
     fun update(dt: Float, speed: Float) {
         if (!active) return
+        if (catchT > 0f) {
+            // death sequence: rush toward the player then hold the grab
+            if (catchT < 1f) catchT = (catchT + dt * 1.6f).coerceAtMost(1f)
+            else grabbed = true
+            runPhase += dt * 16f
+            dogPhase += dt * 18f
+            return
+        }
         timer -= dt
-        if (timer <= 0f) active = false
+        if (timer <= 0f) { active = false; close = false }
         runPhase += dt * speed * 1.4f
+        dogPhase += dt * speed * 1.7f
         lean = kotlin.math.sin(runPhase * 0.5f) * 0.08f
     }
 }
