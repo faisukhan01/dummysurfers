@@ -51,3 +51,42 @@ jobs:
         with:
           name: dummy-surfers-release-aab
           path: android/build/outputs/bundle/release/*.aab
+
+  release:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read version name
+        id: ver
+        run: |
+          V=$(grep -o 'versionName = "[^"]*"' android/build.gradle.kts | head -1 | cut -d'"' -f2)
+          echo "version=$V" >> $GITHUB_OUTPUT
+          echo "Building release for v$V"
+
+      - name: Download release APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dummy-surfers-release-apk
+
+      - name: Rename to stable asset name
+        run: cp *.apk DummySurfers.apk
+
+      - name: Create or update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.ver.outputs.version }}
+          name: Dummy Surfers v${{ steps.ver.outputs.version }}
+          body: |
+            Dummy Surfers by FSK — v${{ steps.ver.outputs.version }} (versionCode auto)
+            True-3D endless runner. Install: download DummySurfers.apk and allow unknown sources.
+          files: DummySurfers.apk
+          overwrite_files: true
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
