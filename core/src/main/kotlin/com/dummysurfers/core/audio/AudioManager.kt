@@ -127,7 +127,7 @@ class AudioManager {
             val t = i / n.toFloat()
             val cutoff = f0 * pw(f1 / f0, t)
             val alpha = (cutoff / sampleRate).coerceIn(0.01f, 0.95f)
-            lp += alpha * (noiseBuf[(samplePos.toInt() + i) % sampleRate] - lp)
+            lp += alpha * (noiseBuf[(((samplePos + i) % sampleRate).toInt())] - lp)
             out[i] = lp * attackRelease(i, n, 0.01f, 0.5f) * gain
         }
         return out
@@ -155,7 +155,7 @@ class AudioManager {
         var lp = 0f
         for (i in 0 until n) {
             val t = i / n.toFloat()
-            lp += 0.35f * (noiseBuf[(samplePos.toInt() + i) % sampleRate] - lp)
+            lp += 0.35f * (noiseBuf[(((samplePos + i) % sampleRate).toInt())] - lp)
             val thump = sin(2f * PI.toFloat() * (110f * (1f - t * 0.7f)) * i / sampleRate) * (1f - t) * 0.9f
             out[i] = (thump + lp * 0.8f * (1f - t * t)) * attackRelease(i, n, 0.001f, 0.7f) * 0.6f
         }
@@ -224,7 +224,7 @@ class AudioManager {
         val out = FloatArray(n)
         var lp = 0f
         for (i in 0 until n) {
-            lp += 0.4f * (noiseBuf[(samplePos.toInt() + i) % sampleRate] - lp)
+            lp += 0.4f * (noiseBuf[(((samplePos + i) % sampleRate).toInt())] - lp)
             out[i] = lp * (1f - i / n.toFloat()) * 0.16f
         }
         return out
@@ -248,7 +248,7 @@ class AudioManager {
         var hp = 0f
         var prev = 0f
         for (i in 0 until n) {
-            val x = noiseBuf[(samplePos.toInt() + i) % sampleRate]
+            val x = noiseBuf[(((samplePos + i) % sampleRate).toInt())]
             hp = 0.7f * (hp + x - prev)
             prev = x
             out[i] = hp * (1f - i / n.toFloat()) * (0.16f + 0.12f * intensity)
@@ -285,6 +285,7 @@ class AudioManager {
         val chunk = 1024
         val mixBuf = FloatArray(chunk)
         val outBuf = ShortArray(chunk)
+        val clockNanos = System.nanoTime()
         // per-step synth caches
         val kickBuf = kick(); val hatC = hat(false); val hatO = hat(true)
         val bassCache = HashMap<Float, FloatArray>()
@@ -296,6 +297,13 @@ class AudioManager {
 
         while (running) {
             val dev = device ?: break
+            // realtime pacing: if a dummy/non-blocking audio device lets us run
+            // ahead of the wall clock, throttle so the sequencer stays at 1x and
+            // samplePos can't sprint into Int overflow
+            val expectedSamples = ((System.nanoTime() - clockNanos) / 1e9f * sampleRate).toLong()
+            if (samplePos > expectedSamples + sampleRate / 2) {
+                try { Thread.sleep(4) } catch (_: InterruptedException) {}
+            }
             // drain SFX queue
             var q = sfxQueue.poll()
             while (q != null) {
