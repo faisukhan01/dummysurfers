@@ -113,6 +113,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     override fun create() {
         batch = SpriteBatch()
         sr = ShapeRenderer()
+        sr.setAutoShapeType(true)
         camera.setToOrtho(false, GameConfig.VIRTUAL_WIDTH, GameConfig.VIRTUAL_HEIGHT)
         proj.setViewport(GameConfig.VIRTUAL_WIDTH, GameConfig.VIRTUAL_HEIGHT)
         TextureGen.generate()
