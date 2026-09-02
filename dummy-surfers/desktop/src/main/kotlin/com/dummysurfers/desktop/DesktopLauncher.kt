@@ -56,6 +56,7 @@ fun main() {
 
         // periodic screenshots
         Thread {
+            while (Gdx.app == null) Thread.sleep(50)
             while (true) {
                 Thread.sleep(120)
                 if (shotSec > 0f) {
@@ -71,6 +72,7 @@ fun main() {
         // scripted timeline
         if (script != null && script.isNotBlank() && script != "0") {
             Thread {
+                while (Gdx.app == null) Thread.sleep(50)
                 val t0 = System.nanoTime()
                 fun elapsed(): Float = (System.nanoTime() - t0) / 1e9f
                 for (raw in script.split(";")) {
