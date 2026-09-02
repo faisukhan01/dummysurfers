@@ -96,32 +96,37 @@ class UiController(val theme: UiTheme) : InputAdapter() {
 
     override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
         val b = bridge ?: return false
-        if (!panelOpen() && b.state != GameState.PLAYING && b.state != GameState.TUTORIAL) return false
-        if (!panelOpen() && (b.state == GameState.PLAYING || b.state == GameState.TUTORIAL)) {
-            // only the pause button steals touches during play
-            val v = FloatArray(2)
-            b.toFrame(v)
-            touchVirtualX = v[0]; touchVirtualY = v[1]
-            val hit = hits.lastOrNull { it.id == "pause" && inside(it, touchVirtualX, touchVirtualY) }
-            if (hit != null) { pressedId = hit.id; return true }
-            return false
-        }
         val v = FloatArray(2)
         b.toFrame(v)
         touchVirtualX = v[0]; touchVirtualY = v[1]
-        val hit = hits.lastOrNull { inside(it, touchVirtualX, touchVirtualY) }
-        if (hit != null) {
-            pressedId = hit.id
-            dragging = false
+        if (panelOpen()) {
+            // panels own the whole screen (buttons + scroll area)
+            val hit = hits.lastOrNull { inside(it, touchVirtualX, touchVirtualY) }
+            if (hit != null) {
+                pressedId = hit.id
+                dragging = false
+                return true
+            }
+            if (scrollable()) {
+                dragging = true
+                scrollDragStart = touchVirtualY
+                scrollDragValue = scrollY
+            }
             return true
         }
-        // start scroll drag inside scrollable content
-        if (scrollable()) {
-            dragging = true
-            scrollDragStart = touchVirtualY
-            scrollDragValue = scrollY
+        return when (b.state) {
+            GameState.PLAYING, GameState.TUTORIAL -> {
+                // only the pause button steals touches during play — everything
+                // else falls through to the swipe detector
+                val hit = hits.lastOrNull { it.id == "pause" && inside(it, touchVirtualX, touchVirtualY) }
+                if (hit != null) { pressedId = hit.id; true } else false
+            }
+            // MENU / GAME_OVER / PAUSED-without-panel: every registered button is live
+            else -> {
+                val hit = hits.lastOrNull { inside(it, touchVirtualX, touchVirtualY) }
+                if (hit != null) { pressedId = hit.id; dragging = false; true } else false
+            }
         }
-        return true
     }
 
     override fun touchDragged(screenX: Int, screenY: Int, pointer: Int): Boolean {
