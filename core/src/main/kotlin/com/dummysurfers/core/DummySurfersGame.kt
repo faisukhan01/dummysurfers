@@ -249,7 +249,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
 
         // trains: horn + approach rumble
         for (t in spawner.trains) {
-            if (t.kind == 2 && !t.hornDone && t.z - t.totalLength < GameConfig.TRAIN_HORN_DISTANCE) {
+            if (t.kind == 2 && !t.hornDone && t.z < GameConfig.TRAIN_HORN_DISTANCE) {
                 t.hornDone = true
                 audio.play(GameEvent.HORN)
             }
@@ -307,24 +307,23 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         val absBottom = player.groundY + player.jumpY
         var support = 0f
         val px = player.x
-        // ramps
+        // ramps: span [r.z, r.z + RAMP_LENGTH] rising away; player on it when r.z ∈ [-len, 0]
         for (r in spawner.ramps) {
             val rx = r.lane * GameConfig.LANE_WIDTH
             if (abs(px - rx) > GameConfig.PLAYER_HALF_WIDTH + 0.7f) continue
-            // ramp spans [r.z - RAMP_LENGTH, r.z]; low edge at r.z - len
-            if (r.z >= -0.1f && r.z <= GameConfig.RAMP_LENGTH) {
-                val f = (GameConfig.RAMP_LENGTH - r.z) / GameConfig.RAMP_LENGTH
-                val h = GameConfig.TRAIN_HEIGHT * f.coerceIn(0f, 1f)
+            if (r.z <= 0f && r.z >= -GameConfig.RAMP_LENGTH) {
+                val f = (-r.z / GameConfig.RAMP_LENGTH).coerceIn(0f, 1f)
+                val h = GameConfig.TRAIN_HEIGHT * f
                 if (h <= absBottom + 0.5f && h > support) support = h
             }
         }
-        // train roofs (only ramped parked trains are climbable)
+        // train roofs (only ramped parked trains are climbable): span [t.z, t.z + len]
         for (t in spawner.trains) {
             if (!t.hasRoof) continue
             if (!t.lanes.contains(player.lane)) continue
-            val zFar = t.z
-            val zNear = t.z - t.totalLength
-            if (0f > zNear && 0f < zFar) {
+            val zNear = t.z
+            val zFar = t.z + t.totalLength
+            if (0f >= zNear && 0f <= zFar) {
                 if (GameConfig.TRAIN_HEIGHT <= absBottom + 0.5f && GameConfig.TRAIN_HEIGHT > support) support = GameConfig.TRAIN_HEIGHT
             }
         }
@@ -383,8 +382,8 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
 
         // trains — skip the roofed train we're standing on
         for (t in spawner.trains) {
-            val zFar = t.z
-            val zNear = t.z - t.totalLength
+            val zNear = t.z                 // leading face (meets the player first)
+            val zFar = t.z + t.totalLength  // tail, extends away
             if (zNear > 0.5f || zFar < -0.5f) continue
             if (t.hasRoof && onRoof && t.lanes.contains(player.lane)) continue
             for (lane in t.lanes) {
@@ -394,7 +393,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
                     return
                 }
             }
-            if (!t.passedNear && zFar < 0.6f && zFar > 0.0f) {
+            if (!t.passedNear && zNear < 0.6f && zNear > 0.0f) {
                 t.passedNear = true
                 val minDist = t.lanes.minOf { abs(it * GameConfig.LANE_WIDTH - player.x) }
                 if (minDist < GameConfig.NEAR_MISS_DISTANCE + GameConfig.TRAIN_WIDTH / 2f && minDist > GameConfig.PLAYER_HALF_WIDTH + GameConfig.TRAIN_WIDTH / 2f - 0.12f) {

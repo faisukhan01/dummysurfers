@@ -106,7 +106,7 @@ object Assets3D {
     fun texMat(tex: Texture): Material =
         Material(TextureAttribute.createDiffuse(tex), ColorAttribute.createSpecular(0.25f, 0.25f, 0.25f, 1f), FloatAttribute.createShininess(0.15f))
 
-    private fun boxModel(color: Color): Model {
+    fun boxModel(color: Color): Model {
         builder.begin()
         builder.node()
         builder.part("b", 4, posNor().toLong(),
@@ -228,7 +228,7 @@ object Assets3D {
                 .box(2.05f, 2.0f, 0.3f)
         }
         run {
-            val n = mb.node(); n.translation.set(0f, 1.75f, -0.18f)
+            val n = mb.node(); n.translation.set(0f, 1.75f, 0.18f)
             mb.part("glass", 4, posNor().toLong(), Material(ColorAttribute.createDiffuse(Color(0x2a3057ff.toInt()))))
                 .box(1.7f, 0.7f, 0.06f)
         }
