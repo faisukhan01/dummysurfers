@@ -310,7 +310,7 @@ class Spawner {
     private fun guard(action: Char): Boolean {
         // jump/slide arcs take ~0.7s of travel — ANY jump->slide (or reverse)
         // combo closer than that is physically impossible to clear
-        val arcZ = (GameConfig.JUMP_VELOCITY / GameConfig.GRAVITY * 2f + 0.3f) * speedHint
+        val arcZ = (GameConfig.JUMP_DURATION + 0.35f) * speedHint
         if ((action == 'j' || action == 's') && (lastAction == 'j' || lastAction == 's') &&
             frontier - lastActionZ < arcZ) return true
         if (action == lastAction && frontier - lastActionZ < GameConfig.MIN_REACTION_GAP * speedHint) return true
