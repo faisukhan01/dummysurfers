@@ -109,7 +109,7 @@ object Assets3D {
     private fun boxModel(color: Color): Model {
         builder.begin()
         builder.node()
-        builder.part("b", 1, posNor().toLong(),
+        builder.part("b", 4, posNor().toLong(),
             Material(ColorAttribute.createDiffuse(color), ColorAttribute.createSpecular(0.3f, 0.3f, 0.3f, 1f), FloatAttribute.createShininess(0.2f)))
             .box(1f, 1f, 1f)
         return builder.end()
@@ -118,7 +118,7 @@ object Assets3D {
     private fun boxTexModel(w: Float, h: Float, d: Float, tex: Texture): Model {
         builder.begin()
         builder.node()
-        builder.part("b", 1, (posNor() or VertexAttributes.Usage.TextureCoordinates).toLong(), texMat(tex))
+        builder.part("b", 4, (posNor() or VertexAttributes.Usage.TextureCoordinates).toLong(), texMat(tex))
             .box(w, h, d)
         return builder.end()
     }
@@ -202,17 +202,17 @@ object Assets3D {
         mb.begin()
         run {
             val n = mb.node(); n.id = "body"; n.translation.set(0f, 1.25f, 0f)
-            mb.part("body", 1, (posNor() or VertexAttributes.Usage.TextureCoordinates).toLong(), texMat(sideTex))
+            mb.part("body", 4, (posNor() or VertexAttributes.Usage.TextureCoordinates).toLong(), texMat(sideTex))
                 .box(2.05f, 2.0f, 6.2f)
         }
         run {
             val n = mb.node(); n.id = "roof"; n.translation.set(0f, 2.42f, 0f)
-            mb.part("roof", 1, posNor().toLong(), Material(ColorAttribute.createDiffuse(ROOF_GREY)))
+            mb.part("roof", 4, posNor().toLong(), Material(ColorAttribute.createDiffuse(ROOF_GREY)))
                 .box(1.85f, 0.3f, 5.9f)
         }
         run {
             val n = mb.node(); n.id = "chassis"; n.translation.set(0f, 0.22f, 0f)
-            mb.part("chassis", 1, posNor().toLong(), Material(ColorAttribute.createDiffuse(Color(0x3a3f47ff.toInt()))))
+            mb.part("chassis", 4, posNor().toLong(), Material(ColorAttribute.createDiffuse(Color(0x3a3f47ff.toInt()))))
                 .box(1.7f, 0.44f, 5.8f)
         }
         return mb.end()
@@ -224,12 +224,12 @@ object Assets3D {
         mb.begin()
         run {
             val n = mb.node(); n.translation.set(0f, 1.25f, 0f)
-            mb.part("body", 1, posNor().toLong(), Material(ColorAttribute.createDiffuse(CAB_YELLOW)))
+            mb.part("body", 4, posNor().toLong(), Material(ColorAttribute.createDiffuse(CAB_YELLOW)))
                 .box(2.05f, 2.0f, 0.3f)
         }
         run {
             val n = mb.node(); n.translation.set(0f, 1.75f, -0.18f)
-            mb.part("glass", 1, posNor().toLong(), Material(ColorAttribute.createDiffuse(Color(0x2a3057ff.toInt()))))
+            mb.part("glass", 4, posNor().toLong(), Material(ColorAttribute.createDiffuse(Color(0x2a3057ff.toInt()))))
                 .box(1.7f, 0.7f, 0.06f)
         }
         return mb.end()
@@ -242,7 +242,7 @@ object Assets3D {
         val H = 2.35f; val L = 3.6f; val W = 2.05f
         val mat = Material(ColorAttribute.createDiffuse(Color(0xd9d2c5ff.toInt())))
         mb.node().id = "ramp"
-        val mpb = mb.part("ramp", 7, posNor().toLong(), mat)
+        val mpb = mb.part("ramp", 4, posNor().toLong(), mat)
         val p = arrayOf(
             Vector3(-W / 2, 0f, 0f), Vector3(W / 2, 0f, 0f),
             Vector3(W / 2, 0f, -L), Vector3(-W / 2, 0f, -L),
@@ -264,15 +264,15 @@ object Assets3D {
         val sign = Material(ColorAttribute.createDiffuse(Color(0xff8c3cff.toInt())))
         run {
             val n = mb.node(); n.translation.set(-1.05f, 1.05f, 0f)
-            mb.part("pl", 1, posNor().toLong(), steel).box(0.14f, 2.1f, 0.14f)
+            mb.part("pl", 4, posNor().toLong(), steel).box(0.14f, 2.1f, 0.14f)
         }
         run {
             val n = mb.node(); n.translation.set(1.05f, 1.05f, 0f)
-            mb.part("pr", 1, posNor().toLong(), steel).box(0.14f, 2.1f, 0.14f)
+            mb.part("pr", 4, posNor().toLong(), steel).box(0.14f, 2.1f, 0.14f)
         }
         run {
             val n = mb.node(); n.translation.set(0f, 1.95f, 0f)
-            mb.part("top", 1, posNor().toLong(), sign).box(2.3f, 0.8f, 0.18f)
+            mb.part("top", 4, posNor().toLong(), sign).box(2.3f, 0.8f, 0.18f)
         }
         return mb.end()
     }
@@ -284,15 +284,15 @@ object Assets3D {
         val lamp = Material(ColorAttribute.createDiffuse(Color(0xfff0b8ff.toInt())))
         run {
             val n = mb.node(); n.translation.set(0f, 2.6f, 0f)
-            mb.part("pole", 1, posNor().toLong(), steel).box(0.12f, 5.2f, 0.12f)
+            mb.part("pole", 4, posNor().toLong(), steel).box(0.12f, 5.2f, 0.12f)
         }
         run {
             val n = mb.node(); n.translation.set(0.45f, 5.1f, 0f)
-            mb.part("arm", 1, posNor().toLong(), steel).box(1f, 0.1f, 0.1f)
+            mb.part("arm", 4, posNor().toLong(), steel).box(1f, 0.1f, 0.1f)
         }
         run {
             val n = mb.node(); n.translation.set(0.9f, 4.95f, 0f)
-            mb.part("bulb", 1, posNor().toLong(), lamp).box(0.3f, 0.16f, 0.22f)
+            mb.part("bulb", 4, posNor().toLong(), lamp).box(0.3f, 0.16f, 0.22f)
         }
         return mb.end()
     }
@@ -302,17 +302,17 @@ object Assets3D {
         mb.begin()
         run {
             val n = mb.node(); n.translation.set(0f, 0.7f, 0f)
-            mb.part("trunk", 1, posNor().toLong(), Material(ColorAttribute.createDiffuse(Color(0x7a5a3aff.toInt()))))
+            mb.part("trunk", 4, posNor().toLong(), Material(ColorAttribute.createDiffuse(Color(0x7a5a3aff.toInt()))))
                 .box(0.24f, 1.4f, 0.24f)
         }
         run {
             val n = mb.node(); n.translation.set(0f, 2f, 0f)
-            mb.part("leaves", 1, posNor().toLong(), Material(ColorAttribute.createDiffuse(Color(0x3da84fff.toInt()))))
+            mb.part("leaves", 4, posNor().toLong(), Material(ColorAttribute.createDiffuse(Color(0x3da84fff.toInt()))))
                 .box(1.7f, 1.7f, 1.7f)
         }
         run {
             val n = mb.node(); n.translation.set(0f, 3.1f, 0f)
-            mb.part("leaves2", 1, posNor().toLong(), Material(ColorAttribute.createDiffuse(Color(0x4dbb5fff.toInt()))))
+            mb.part("leaves2", 4, posNor().toLong(), Material(ColorAttribute.createDiffuse(Color(0x4dbb5fff.toInt()))))
                 .box(1.1f, 1f, 1.1f)
         }
         return mb.end()
@@ -325,15 +325,15 @@ object Assets3D {
         val concrete = Material(ColorAttribute.createDiffuse(Color(0xb0a898ff.toInt())))
         run {
             val n = mb.node(); n.translation.set(0f, 3f, 0f)
-            mb.part("top", 1, posNor().toLong(), concrete).box(9f, 1.2f, 1f)
+            mb.part("top", 4, posNor().toLong(), concrete).box(9f, 1.2f, 1f)
         }
         run {
             val n = mb.node(); n.translation.set(-4f, 1.7f, 0f)
-            mb.part("left", 1, posNor().toLong(), concrete).box(1f, 3.4f, 1f)
+            mb.part("left", 4, posNor().toLong(), concrete).box(1f, 3.4f, 1f)
         }
         run {
             val n = mb.node(); n.translation.set(4f, 1.7f, 0f)
-            mb.part("right", 1, posNor().toLong(), concrete).box(1f, 3.4f, 1f)
+            mb.part("right", 4, posNor().toLong(), concrete).box(1f, 3.4f, 1f)
         }
         return mb.end()
     }
@@ -342,7 +342,7 @@ object Assets3D {
         val mb = ModelBuilder()
         mb.begin()
         mb.node().id = "c"
-        mb.part("c", 7, posNor().toLong(),
+        mb.part("c", 4, posNor().toLong(),
             Material(ColorAttribute.createDiffuse(Color(0xffc93cff.toInt())), ColorAttribute.createSpecular(1f, 1f, 0.85f, 1f), FloatAttribute.createShininess(0.6f)))
             .cylinder(0.62f, 0.07f, 0.62f, 12)
         return mb.end()
