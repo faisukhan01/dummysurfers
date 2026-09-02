@@ -28,6 +28,7 @@ class Scene3D {
     val env = Environment()
     private val camTarget = Vector3()
     private val projV = Vector3()
+    private val skyMat = Matrix4()
 
     /** One scrolling world object; wraps around a fixed span. */
     private class Scroller(val inst: ModelInstance, var z: Float, val span: Float, val x: Float, val y: Float) {
@@ -141,6 +142,10 @@ class Scene3D {
         // ── 2D sky backdrop (fills window, 3D draws over it) ──
         val sw = Gdx.graphics.width.toFloat()
         val sh = Gdx.graphics.height.toFloat()
+        // sky quads are drawn in WINDOW pixel space
+        val saved = batch2d.projectionMatrix
+        skyMat.setToOrtho2D(0f, 0f, sw, sh)
+        batch2d.projectionMatrix = skyMat
         batch2d.begin()
         batch2d.disableBlending()
         batch2d.setColor(Assets3D.SKY_TOP)
@@ -165,6 +170,7 @@ class Scene3D {
         }
         batch2d.enableBlending()
         batch2d.end()
+        batch2d.projectionMatrix = saved
 
         // ── chase camera ──
         val camX = playerX * 0.42f
