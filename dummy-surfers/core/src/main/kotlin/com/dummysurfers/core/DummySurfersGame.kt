@@ -173,6 +173,12 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             else -> {}
         }
 
+        // endless demo loop
+        if (botMode && state == GameState.GAME_OVER) {
+            botRestart -= dt
+            if (botRestart <= 0f) { botRestart = 1.4f; startRun() }
+        }
+
         audio.setIntensity(if (state == GameState.PLAYING) Difficulty.speedPct(distance) else 0.25f)
     }
 
@@ -448,6 +454,15 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     }
 
     private fun onHit(hitX: Float) {
+        if (botMode) {
+            // log the cause for QA triage
+            val cause = buildString {
+                spawner.trains.firstOrNull { it.z in -1f..4f }?.let { append("train(z=${"%.1f".format(it.z)})") }
+                spawner.obstacles.firstOrNull { it.z in -1f..3f }?.let { append("${it.kind}(z=${"%.1f".format(it.z)})") }
+                if (isEmpty()) append("unknown")
+            }
+            Gdx.app.log("DSBOT", "death m=${distance.toInt()} lane=${player.lane} cause=$cause")
+        }
         if (activePowerups[2] > 0f) {
             // shield absorbs one hit
             activePowerups[2] = 0f
@@ -598,14 +613,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     private var botRestart = 1.2f
 
     private fun botThink(dt: Float) {
-        if (!botMode) return
-        // endless demo: auto-restart after game over
-        if (state == GameState.GAME_OVER) {
-            botRestart -= dt
-            if (botRestart <= 0f) { botRestart = 1.2f; startRun() }
-            return
-        }
-        if (state != GameState.PLAYING) return
+        if (!botMode || state != GameState.PLAYING) return
         botTimer -= dt
         var act: SwipeDetector.Direction? = null
         val speed = Difficulty.speed(distance)
