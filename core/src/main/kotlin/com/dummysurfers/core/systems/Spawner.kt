@@ -308,8 +308,12 @@ class Spawner {
     // ── Helpers ────────────────────────────────────────────────────────
     /** Reject pattern if it repeats the last action too soon (<0.5s of travel). */
     private fun guard(action: Char): Boolean {
-        val minZ = GameConfig.MIN_REACTION_GAP * speedHint
-        if (action == lastAction && frontier - lastActionZ < minZ * 0.8f) return true
+        // jump/slide arcs take ~0.7s of travel — ANY jump->slide (or reverse)
+        // combo closer than that is physically impossible to clear
+        val arcZ = (GameConfig.JUMP_VELOCITY / GameConfig.GRAVITY * 2f + 0.3f) * speedHint
+        if ((action == 'j' || action == 's') && (lastAction == 'j' || lastAction == 's') &&
+            frontier - lastActionZ < arcZ) return true
+        if (action == lastAction && frontier - lastActionZ < GameConfig.MIN_REACTION_GAP * speedHint) return true
         return false
     }
 
