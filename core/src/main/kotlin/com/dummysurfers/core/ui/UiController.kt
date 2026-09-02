@@ -383,12 +383,11 @@ class UiController(val theme: UiTheme) : InputAdapter() {
     // ════════════════════════════════════════════════════════════════════
     fun drawGameOver() {
         val b = bridge!!
-        // SS celebration: radial rainbow burst + glow streaks on NEW BEST
+        // SS celebration: soft radial rainbow burst behind the card on NEW BEST
         if (b.newBest) {
-            batch.setColor(1f, 1f, 1f, 1f)
-            batch.setColor(1f, 1f, 1f, 0.62f)
-            batch.draw(TextureGen.rainbowBurst, 0f, 0f, vw, vh)
-            val pulse = 0.35f + sin(System.nanoTime() / 2.4e8f) * 0.12f
+            batch.setColor(1f, 1f, 1f, 0.5f)
+            batch.draw(TextureGen.rainbowBurst, vw * 0.14f, vh * 0.16f, vw * 0.72f, vh * 0.68f)
+            val pulse = 0.3f + sin(System.nanoTime() / 2.4e8f) * 0.1f
             batch.setColor(1f, 1f, 1f, pulse)
             batch.draw(TextureGen.glow, vw / 2f - 300f, vh / 2f - 300f, 600f, 600f)
             batch.setColor(1f, 1f, 1f, 1f)

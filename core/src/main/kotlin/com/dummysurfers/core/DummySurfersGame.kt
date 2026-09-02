@@ -595,12 +595,30 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     // ── Demo bot (DS_BOT=1): plays the run itself for QA verification ──
     private val botMode = System.getenv("DS_BOT") == "1"
     private var botTimer = 0f
+    private var botRestart = 1.2f
 
     private fun botThink(dt: Float) {
         if (!botMode) return
+        // endless demo: auto-restart after game over
+        if (state == GameState.GAME_OVER) {
+            botRestart -= dt
+            if (botRestart <= 0f) { botRestart = 1.2f; startRun() }
+            return
+        }
+        if (state != GameState.PLAYING) return
         botTimer -= dt
         var act: SwipeDetector.Direction? = null
-        val look = 22f
+        val speed = Difficulty.speed(distance)
+        val react = (speed * 0.55f).coerceIn(9f, 15f)
+        val look = (speed * 1.1f).coerceIn(24f, 40f)
+
+        // ramp ride: a roofed train straight ahead with a ramp in this lane → stay on it
+        val rampHere = spawner.ramps.any { it.lane == player.lane && it.z in -2f..look }
+        if (rampHere) {
+            // keep collecting roof coins, no dodge needed
+            botTimer = min(botTimer, 0.05f)
+            return
+        }
 
         // threats in the player's lane
         for (o in spawner.obstacles) {
@@ -608,25 +626,31 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             val inLane = o.lane == player.lane || abs(o.lane * GameConfig.LANE_WIDTH - player.x) < 1.0f
             if (!inLane) continue
             when (o.kind) {
-                ObstacleKind.LOW_BARRIER -> if (o.z < 9f && player.state == PlayerState.RUNNING) act = SwipeDetector.Direction.UP
+                ObstacleKind.LOW_BARRIER -> if (o.z < react && player.state == PlayerState.RUNNING) act = SwipeDetector.Direction.UP
                 ObstacleKind.GATE, ObstacleKind.HIGH_BARRIER, ObstacleKind.FENCE_FULL ->
-                    if (o.z < 9f && player.state == PlayerState.RUNNING) act = SwipeDetector.Direction.DOWN
-                ObstacleKind.BLOCKADE -> if (o.z < 12f) act =
+                    if (o.z < react && player.state == PlayerState.RUNNING) act = SwipeDetector.Direction.DOWN
+                ObstacleKind.BLOCKADE -> if (o.z < react + 3f) act =
                     if (player.lane <= 0) SwipeDetector.Direction.RIGHT else SwipeDetector.Direction.LEFT
             }
             if (act != null) break
         }
 
-        // trains: dodge into a free lane (but ride roofs when a ramp led up)
+        // trains: dodge into a free lane (roofed trains block the ground too)
         if (act == null) {
             for (t in spawner.trains) {
                 if (t.z < 2f || t.z > look + 12f) continue
                 if (!t.lanes.contains(player.lane)) continue
-                if (t.hasRoof && player.groundY > 1f) continue // already on the roof
-                // find a free lane
-                val free = (-1..1).filter { l -> spawner.trains.none { it.z > -6f && it.z < 30f && it.lanes.contains(l) && !it.hasRoof } }
+                if (t.hasRoof && player.groundY > 1f) continue // riding this roof
+                val onRoofNow = player.groundY > 1f
+                val blocked = (-1..1).filter { l ->
+                    spawner.trains.any { o ->
+                        o.z > -6f && o.z < 34f && o.lanes.contains(l) &&
+                                !(o.hasRoof && (onRoofNow || spawner.ramps.any { r -> r.lane == l && r.z in -2f..20f }))
+                    }
+                }
+                val free = (-1..1).filter { it !in blocked }
                 val target = free.filter { it != player.lane }.minByOrNull { abs(it - player.lane) }
-                if (target != null && t.z < 15f) {
+                if (target != null && t.z < react + 6f) {
                     act = if (target > player.lane) SwipeDetector.Direction.RIGHT else SwipeDetector.Direction.LEFT
                     break
                 }
@@ -637,7 +661,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         if (act == null && botTimer <= 0f) {
             botTimer = 0.6f + rng.nextFloat() * 0.7f
             val target = spawner.coins
-                .filter { !it.collected && it.z in 4f..22f && abs(it.y - (player.groundY + 0.9f)) < 1.6f }
+                .filter { !it.collected && it.z in 4f..22f && abs(it.y - (player.groundY + 0.9f)) < 1.8f }
                 .minByOrNull { abs(it.x - player.x) }
             if (target != null && abs(target.x - player.x) > 0.8f) {
                 act = if (target.x > player.x) SwipeDetector.Direction.RIGHT else SwipeDetector.Direction.LEFT
