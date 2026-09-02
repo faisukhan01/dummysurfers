@@ -123,13 +123,17 @@ export default function Home() {
         <div className="relative max-w-5xl mx-auto px-4 sm:px-10 pt-10 sm:pt-16 pb-40 sm:pb-48">
           {/* ── Author signature — same graffiti DNA as the title ────── */}
           <div className="inline-block select-none" title="Faisal Khan — Developer">
-            <p className="inline-flex items-center gap-2 rounded-full border-2 border-white bg-white/85 px-4 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.34em] text-[#24316B] shadow-[0_4px_10px_rgba(36,49,107,.2)]">
-              <span aria-hidden className="text-[#F0A11A] text-xs leading-none">✦</span>
+            <p className="inline-flex items-center gap-1.5 rounded-full border-2 border-white bg-white/85 px-3.5 py-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] text-[#24316B] shadow-[0_3px_8px_rgba(36,49,107,.18)]">
+              <span aria-hidden className="text-[10px] leading-none text-[#F0A11A]">✦</span>
               Built by
-              <span aria-hidden className="text-[#F0A11A] text-xs leading-none">✦</span>
+              <span aria-hidden className="text-[10px] leading-none text-[#F0A11A]">✦</span>
             </p>
-            <div className="mt-2 drop-shadow-[0_10px_18px_rgba(36,49,107,.22)]">
-              <GraffitiName name="Faisal Khan" className="text-[2.7rem] sm:text-[3.6rem]" />
+            <div className="mt-1.5 drop-shadow-[0_6px_12px_rgba(36,49,107,.2)]">
+              <GraffitiName
+                name="Faisal Khan"
+                className="text-[1.9rem] sm:text-[2.4rem]"
+                shadowFilter="drop-shadow(0 3px 0 rgba(36,49,107,.9)) drop-shadow(0 7px 10px rgba(36,49,107,.25))"
+              />
             </div>
           </div>
           <h1 className="mt-5 font-bold leading-[0.95] select-none">
