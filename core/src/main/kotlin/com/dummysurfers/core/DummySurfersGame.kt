@@ -53,8 +53,9 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     private lateinit var ui: UiController
     private val audio = AudioManager()
 
-    // 3D world
-    private val scene = Scene3D()
+    // 3D world (lazy: constructing a PerspectiveCamera touches natives, which are
+    // only loaded once the backend Application exists)
+    private val scene: Scene3D by lazy { Scene3D() }
     private lateinit var game3d: Game3DRenderer
     private lateinit var playerRig: HumanoidRig
     private lateinit var guardRig: HumanoidRig
