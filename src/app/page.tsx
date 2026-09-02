@@ -121,22 +121,19 @@ export default function Home() {
         <Cloud className="right-[28%] top-[26%] h-9 w-24 sm:h-12 sm:w-32 opacity-85" delay={2.4} />
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-10 pt-10 sm:pt-16 pb-40 sm:pb-48">
-          {/* ── Author signature — same graffiti DNA as the title ────── */}
-          <div className="inline-block select-none" title="Faisal Khan — Developer">
-            <p className="inline-flex items-center gap-1.5 rounded-full border-2 border-white bg-white/85 px-3.5 py-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] text-[#24316B] shadow-[0_3px_8px_rgba(36,49,107,.18)]">
-              <span aria-hidden className="text-[10px] leading-none text-[#F0A11A]">✦</span>
+          {/* ── Author byline — one clean row, no chip ──────────────── */}
+          <div className="flex items-baseline gap-2 select-none" title="Faisal Khan — Developer">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.3em] text-[#24316B] [text-shadow:0_1px_0_rgba(255,255,255,.65)]">
               Built by
-              <span aria-hidden className="text-[10px] leading-none text-[#F0A11A]">✦</span>
-            </p>
-            <div className="mt-1.5 drop-shadow-[0_6px_12px_rgba(36,49,107,.2)]">
-              <GraffitiName
-                name="Faisal Khan"
-                className="text-[1.9rem] sm:text-[2.4rem]"
-                shadowFilter="drop-shadow(0 3px 0 rgba(36,49,107,.9)) drop-shadow(0 7px 10px rgba(36,49,107,.25))"
-              />
-            </div>
+            </span>
+            <span aria-hidden className="text-[9px] leading-none text-[#F0A11A]">✦</span>
+            <GraffitiName
+              name="Faisal Khan"
+              className="text-[1.4rem] sm:text-[1.75rem]"
+              shadowFilter="drop-shadow(0 2px 0 rgba(36,49,107,.9)) drop-shadow(0 5px 8px rgba(36,49,107,.22))"
+            />
           </div>
-          <h1 className="mt-5 font-bold leading-[0.95] select-none">
+          <h1 className="mt-3 font-bold leading-[0.95] select-none">
             <GraffitiWord word="DUMMY" tilt={-2} className="text-[3.6rem] sm:text-8xl" />
             <GraffitiWord word="SURFERS" tilt={1.5} className="text-[3.6rem] sm:text-8xl mt-1 sm:mt-2" />
           </h1>
