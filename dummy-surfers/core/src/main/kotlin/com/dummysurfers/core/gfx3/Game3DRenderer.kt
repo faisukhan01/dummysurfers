@@ -171,12 +171,11 @@ class Game3DRenderer(
             for (p in dogRig.parts) batch.render(p.instance, env)
         }
 
-        // ── game-over catch sequence: guard grabs the player ──
+        // ── game-over catch sequence: guard grabs, dog barks beside ──
         if (player.state == PlayerState.DEAD) {
-            val gz = -1.4f
-            guardRig.apply(Pose.RUN, player.x * 0.6f, 0f, gz, time * 9f, 0f, time)
+            guardRig.apply(Pose.RUN, player.x * 0.6f + 0.85f, 0f, -2.3f, time * 9f, 0f, time)
             for (p in guardRig.parts) batch.render(p.instance, env)
-            dogRig.apply(player.x * 0.6f + 0.9f, 0f, gz - 0.4f, time * 11f, true)
+            dogRig.apply(player.x * 0.6f - 0.85f, 0f, -2.0f, time * 11f, true)
             for (p in dogRig.parts) batch.render(p.instance, env)
         }
     }
