@@ -147,3 +147,17 @@ Work Log:
 
 Stage Summary:
 - Signature now reads as an elegant small credit line in the page's graffiti style, not a competing logo. Hero stack: BUILT BY chip / Faisal Khan / DUMMY SURFERS.
+
+---
+Task ID: 13
+Agent: Z.ai Code (orchestrator)
+Task: User feedback — "built by text is looking ugly" (white pill chip), "make Faisal Khan a bit more smaller", "too much empty space between Faisal Khan and DUMMY".
+
+Work Log:
+- Removed the white pill chip entirely; replaced the stacked lockup with a single-row byline: letterspaced navy "BUILT BY" label + tiny gold ✦ + "Faisal Khan" graffiti name, baseline-aligned.
+- Name shrunk again: 1.9/2.4rem → 1.4/1.75rem; shadows softened to match smaller scale (2px hard + 5px soft).
+- Gap to title tightened: h1 mt-5 → mt-3; no wrapper margins left in the byline row.
+- QA: desktop + mobile screenshots — clean hierarchy (micro byline → dominant title), overflowX=false on 390px, lint clean. Pushed (fast-forward).
+
+Stage Summary:
+- Hero byline is now a minimal credit line in one row; zero empty-space complaint surface left. Footer untouched (already approved size).
