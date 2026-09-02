@@ -278,15 +278,13 @@ class Spawner {
     }
 
     // ── Helpers ────────────────────────────────────────────────────────
-    /** Reject pattern if it repeats the last action too soon.
-     * Jump/slide arcs take ~0.7s of travel — spacing must respect that. */
+    /** Reject pattern if the last action leaves no time for this one.
+     * Jump/slide arcs take ~0.7s of travel — any jump/slide combo needs that spacing. */
     private fun guard(action: Char): Boolean {
-        val minZ = if (action == 'j' || action == 's') {
-            (GameConfig.JUMP_VELOCITY / GameConfig.GRAVITY * 2f + 0.3f) * speedHint
-        } else {
-            GameConfig.MIN_REACTION_GAP * speedHint
-        }
-        if (action == lastAction && frontier - lastActionZ < minZ) return true
+        val arcZ = (GameConfig.JUMP_VELOCITY / GameConfig.GRAVITY * 2f + 0.3f) * speedHint
+        if ((action == 'j' || action == 's') && (lastAction == 'j' || lastAction == 's') &&
+            frontier - lastActionZ < arcZ) return true
+        if (action == lastAction && frontier - lastActionZ < GameConfig.MIN_REACTION_GAP * speedHint) return true
         return false
     }
 
