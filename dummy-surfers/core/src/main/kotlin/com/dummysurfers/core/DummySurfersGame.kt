@@ -634,8 +634,11 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             .minByOrNull { it.z }
         if (nearest != null) {
             when (nearest.kind) {
-                ObstacleKind.LOW_BARRIER -> if (nearest.z < speed * 0.36f + 1.5f && player.state != PlayerState.JUMPING) act = SwipeDetector.Direction.UP
-                ObstacleKind.GATE, ObstacleKind.HIGH_BARRIER, ObstacleKind.FENCE_FULL ->
+                // low fence + full fence block the ground → JUMP over
+                ObstacleKind.LOW_BARRIER, ObstacleKind.FENCE_FULL ->
+                    if (nearest.z < speed * 0.36f + 1.5f && player.state != PlayerState.JUMPING) act = SwipeDetector.Direction.UP
+                // overhead sign + high barrier block the air band → ROLL under
+                ObstacleKind.GATE, ObstacleKind.HIGH_BARRIER ->
                     if (nearest.z < speed * 0.3f && player.state != PlayerState.JUMPING) act = SwipeDetector.Direction.DOWN
                 ObstacleKind.BLOCKADE -> if (nearest.z < react + 3f) act =
                     if (player.lane <= 0) SwipeDetector.Direction.RIGHT else SwipeDetector.Direction.LEFT
