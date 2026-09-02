@@ -4,9 +4,14 @@ import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputAdapter
 
 /**
- * Subway-Surfers-grade swipe detection: 15px dead zone, 300ms window,
- * dominant-axis decision, single action per gesture. Also exposes keyboard
- * for desktop testing.
+ * Subway-Surfers-grade swipe detection:
+ *  - fires the MOMENT the drag crosses the trigger distance (mid-gesture, like the
+ *    real game) instead of waiting for finger release;
+ *  - density-aware trigger (~22dp) so it feels identical on any screen;
+ *  - no gesture-duration limit (slow deliberate swipes count, too);
+ *  - release-flick fallback for very quick flicks that lift before the threshold;
+ *  - one action per gesture, then locked until the finger lifts;
+ *  - keyboard support for desktop testing.
  */
 class SwipeDetector(private val listener: Listener) : InputAdapter() {
     interface Listener {
@@ -15,36 +20,66 @@ class SwipeDetector(private val listener: Listener) : InputAdapter() {
 
     enum class Direction { LEFT, RIGHT, UP, DOWN }
 
-    private val deadZone = 15f
-    private val maxDuration = 0.3f
     private var startX = 0f
     private var startY = 0f
-    private var startNanos = 0L
     private var tracking = false
+    private var fired = false
+
+    /** ~22dp in physical pixels, clamped so desktop (density 1) stays snappy. */
+    private val triggerPx: Float
+        get() = (22f * Gdx.graphics.density).coerceIn(24f, 110f)
+
+    private val flickPx: Float
+        get() = triggerPx * 0.55f
+
     var keyboardEnabled = true
 
     override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
         startX = screenX.toFloat()
         startY = screenY.toFloat()
-        startNanos = System.nanoTime()
         tracking = true
-        return true
+        fired = false
+        return false
+    }
+
+    override fun touchDragged(screenX: Int, screenY: Int, pointer: Int): Boolean {
+        if (!tracking || fired) return false
+        val dx = screenX - startX
+        val dy = screenY - startY
+        val adx = kotlin.math.abs(dx)
+        val ady = kotlin.math.abs(dy)
+        val trigger = triggerPx
+        if (adx >= trigger && adx > ady) {
+            fire(if (dx > 0) Direction.RIGHT else Direction.LEFT)
+        } else if (ady >= trigger) {
+            // screen y grows downward; finger moving down = swipe DOWN
+            fire(if (dy > 0) Direction.DOWN else Direction.UP)
+        }
+        return false
     }
 
     override fun touchUp(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
-        if (!tracking) return true
+        if (!tracking) return false
         tracking = false
+        if (fired) return false
+        // flick fallback: short but very fast gesture counts
         val dx = screenX - startX
         val dy = screenY - startY
-        val dist = kotlin.math.sqrt(dx * dx + dy * dy)
-        val dtSec = (System.nanoTime() - startNanos) / 1e9f
-        if (dist < deadZone || dtSec > maxDuration) return true
-        if (kotlin.math.abs(dx) > kotlin.math.abs(dy)) {
-            listener.onSwipe(if (dx > 0) Direction.RIGHT else Direction.LEFT)
-        } else {
-            listener.onSwipe(if (dy > 0) Direction.DOWN else Direction.UP)
+        val adx = kotlin.math.abs(dx)
+        val ady = kotlin.math.abs(dy)
+        val flick = flickPx
+        if (adx >= flick && adx > ady) {
+            fire(if (dx > 0) Direction.RIGHT else Direction.LEFT)
+        } else if (ady >= flick) {
+            fire(if (dy > 0) Direction.DOWN else Direction.UP)
         }
-        return true
+        return false
+    }
+
+    private fun fire(dir: Direction) {
+        if (fired) return
+        fired = true
+        listener.onSwipe(dir)
     }
 
     /** Call from the game loop to translate desktop key input. */
