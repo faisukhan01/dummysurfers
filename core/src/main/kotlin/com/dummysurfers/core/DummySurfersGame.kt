@@ -186,6 +186,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
 
     private fun updateRun(dt: Float) {
         menuDim = 0f
+        botThink(dt)
         val speed = Difficulty.speed(distance) * (if (activePowerups[3] > 0f) GameConfig.BOOST_SPEED_MULT else 1f)
 
         // world + spawner scroll
@@ -590,6 +591,61 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     fun debugSwipe(dir: SwipeDetector.Direction) = handleSwipe(dir)
     fun debugState(): String = state.name
     fun debugMenuPanel(): String = menuPanel.name
+
+    // ── Demo bot (DS_BOT=1): plays the run itself for QA verification ──
+    private val botMode = System.getenv("DS_BOT") == "1"
+    private var botTimer = 0f
+
+    private fun botThink(dt: Float) {
+        if (!botMode) return
+        botTimer -= dt
+        var act: SwipeDetector.Direction? = null
+        val look = 22f
+
+        // threats in the player's lane
+        for (o in spawner.obstacles) {
+            if (o.z < 1.5f || o.z > look) continue
+            val inLane = o.lane == player.lane || abs(o.lane * GameConfig.LANE_WIDTH - player.x) < 1.0f
+            if (!inLane) continue
+            when (o.kind) {
+                ObstacleKind.LOW_BARRIER -> if (o.z < 9f && player.state == PlayerState.RUNNING) act = SwipeDetector.Direction.UP
+                ObstacleKind.GATE, ObstacleKind.HIGH_BARRIER, ObstacleKind.FENCE_FULL ->
+                    if (o.z < 9f && player.state == PlayerState.RUNNING) act = SwipeDetector.Direction.DOWN
+                ObstacleKind.BLOCKADE -> if (o.z < 12f) act =
+                    if (player.lane <= 0) SwipeDetector.Direction.RIGHT else SwipeDetector.Direction.LEFT
+            }
+            if (act != null) break
+        }
+
+        // trains: dodge into a free lane (but ride roofs when a ramp led up)
+        if (act == null) {
+            for (t in spawner.trains) {
+                if (t.z < 2f || t.z > look + 12f) continue
+                if (!t.lanes.contains(player.lane)) continue
+                if (t.hasRoof && player.groundY > 1f) continue // already on the roof
+                // find a free lane
+                val free = (-1..1).filter { l -> spawner.trains.none { it.z > -6f && it.z < 30f && it.lanes.contains(l) && !it.hasRoof } }
+                val target = free.filter { it != player.lane }.minByOrNull { abs(it - player.lane) }
+                if (target != null && t.z < 15f) {
+                    act = if (target > player.lane) SwipeDetector.Direction.RIGHT else SwipeDetector.Direction.LEFT
+                    break
+                }
+            }
+        }
+
+        // coin seeking when nothing threatens
+        if (act == null && botTimer <= 0f) {
+            botTimer = 0.6f + rng.nextFloat() * 0.7f
+            val target = spawner.coins
+                .filter { !it.collected && it.z in 4f..22f && abs(it.y - (player.groundY + 0.9f)) < 1.6f }
+                .minByOrNull { abs(it.x - player.x) }
+            if (target != null && abs(target.x - player.x) > 0.8f) {
+                act = if (target.x > player.x) SwipeDetector.Direction.RIGHT else SwipeDetector.Direction.LEFT
+            }
+        }
+
+        act?.let { performSwipe(it) }
+    }
 
     override fun dispose() {
         audio.dispose()

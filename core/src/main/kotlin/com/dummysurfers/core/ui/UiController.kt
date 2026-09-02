@@ -208,10 +208,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         theme.button(batch, vw / 2f - tagW / 2f, 975f + bounce, tagW, 44f, Palette.UI_ORANGE, false)
         theme.text(batch, theme.fontSmall, "BY FSK", 0f, 1004f + bounce, Color.WHITE, Align.center, vw)
 
-        // selected character preview front & center on the tracks
-        val selIdx = CharacterDef.ALL.indexOfFirst { it.id == b.save.selectedCharacter }.coerceAtLeast(0)
-        drawMiniCharacter(selIdx, vw / 2f - 110f, 760f + sin(time * 1.7f) * 6f, 220f)
-
+        // (character preview is the real 3D rig on the tracks — no 2D portrait)
         // HIGH SCORE card (periwinkle + deep slot + gold star)
         val hcW = 460f
         val hcX = vw / 2f - hcW / 2f
@@ -389,6 +386,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         // SS celebration: radial rainbow burst + glow streaks on NEW BEST
         if (b.newBest) {
             batch.setColor(1f, 1f, 1f, 1f)
+            batch.setColor(1f, 1f, 1f, 0.62f)
             batch.draw(TextureGen.rainbowBurst, 0f, 0f, vw, vh)
             val pulse = 0.35f + sin(System.nanoTime() / 2.4e8f) * 0.12f
             batch.setColor(1f, 1f, 1f, pulse)
