@@ -628,19 +628,18 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             return
         }
 
-        // threats in the player's lane
-        for (o in spawner.obstacles) {
-            if (o.z < 1.5f || o.z > look) continue
-            val inLane = o.lane == player.lane || abs(o.lane * GameConfig.LANE_WIDTH - player.x) < 1.0f
-            if (!inLane) continue
-            when (o.kind) {
-                ObstacleKind.LOW_BARRIER -> if (o.z < speed * 0.36f + 1.5f && (player.state == PlayerState.RUNNING || player.state == PlayerState.LANDING)) act = SwipeDetector.Direction.UP
+        // threats in the player's lane — act on the NEAREST one
+        val nearest = spawner.obstacles
+            .filter { o -> o.z in 1.5f..look && (o.lane == player.lane || abs(o.lane * GameConfig.LANE_WIDTH - player.x) < 1.0f) }
+            .minByOrNull { it.z }
+        if (nearest != null) {
+            when (nearest.kind) {
+                ObstacleKind.LOW_BARRIER -> if (nearest.z < speed * 0.36f + 1.5f && (player.state == PlayerState.RUNNING || player.state == PlayerState.LANDING)) act = SwipeDetector.Direction.UP
                 ObstacleKind.GATE, ObstacleKind.HIGH_BARRIER, ObstacleKind.FENCE_FULL ->
-                    if (o.z < speed * 0.3f && (player.state == PlayerState.RUNNING || player.state == PlayerState.LANDING)) act = SwipeDetector.Direction.DOWN
-                ObstacleKind.BLOCKADE -> if (o.z < react + 3f) act =
+                    if (nearest.z < speed * 0.3f && (player.state == PlayerState.RUNNING || player.state == PlayerState.LANDING)) act = SwipeDetector.Direction.DOWN
+                ObstacleKind.BLOCKADE -> if (nearest.z < react + 3f) act =
                     if (player.lane <= 0) SwipeDetector.Direction.RIGHT else SwipeDetector.Direction.LEFT
             }
-            if (act != null) break
         }
 
         // trains: dodge into a free lane (roofed trains block the ground too)
