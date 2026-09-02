@@ -161,3 +161,15 @@ Work Log:
 
 Stage Summary:
 - Hero byline is now a minimal credit line in one row; zero empty-space complaint surface left. Footer untouched (already approved size).
+
+---
+Task ID: 14
+Agent: Z.ai Code (orchestrator)
+Task: "Faisal Khan should be under the Built by" + keep it aesthetic.
+
+Work Log:
+- Restacked the byline vertically: letterspaced "— BUILT BY" label (small gold gradient dash prefix) on top, "Faisal Khan" graffiti name (kept approved 1.4/1.75rem size) directly beneath, title still mt-3 below.
+- QA: desktop + mobile screenshots — clean stacked hierarchy, no overflow (390px), lint clean. Pushed (fast-forward).
+
+Stage Summary:
+- Final byline shape: gold-dash label → gold graffiti name → DUMMY SURFERS title, all left-aligned and tight. No further user complaints pending on this element.
