@@ -59,7 +59,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     private lateinit var ui: UiController
     private val audio = AudioManager()
 
-    private val save = SaveManager()
+    private val save: SaveManager by lazy { SaveManager() }
     private val world = WorldGenerator()
     private val spawner = Spawner()
     private val player = Player()
