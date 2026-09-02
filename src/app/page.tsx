@@ -108,6 +108,8 @@ export default function Home() {
         .ss-btn-navy:active { box-shadow: 0 1px 0 #1B2038; }
         @keyframes ss-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
         .ss-cloud { animation: ss-float 6s ease-in-out infinite; }
+        .ss-signature { font-family: var(--font-pacifico), 'Brush Script MT', 'Segoe Script', cursive; font-weight: 400; }
+        .ss-goldname { background: linear-gradient(175deg,#FFF6C9 8%,#FFD23E 46%,#F5A623 88%); -webkit-background-clip: text; background-clip: text; color: transparent; }
       `}</style>
 
       {/* ── HERO: bright SS sky ─────────────────────────────────────── */}
@@ -121,9 +123,20 @@ export default function Home() {
         <Cloud className="right-[28%] top-[26%] h-9 w-24 sm:h-12 sm:w-32 opacity-85" delay={2.4} />
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-10 pt-12 sm:pt-20 pb-40 sm:pb-48">
-          <p className="inline-block rounded-full bg-[#2A3057] px-4 py-1.5 text-[11px] sm:text-xs font-bold uppercase tracking-[0.25em] text-white border-2 border-white/70 [text-shadow:0_1px_0_rgba(36,49,107,.6)]">
-            By FSK — Built with Z.ai
-          </p>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+            <p
+              className="inline-flex items-baseline gap-x-2 rounded-full bg-[#2A3057] py-2 pl-5 pr-6 text-[11px] sm:text-xs font-bold uppercase tracking-[0.22em] text-white border-2 border-white/70 shadow-[0_6px_16px_rgba(36,49,107,.28)] transition-transform hover:scale-[1.02]"
+              title="Signed by the developer"
+            >
+              <span className="[text-shadow:0_1px_0_rgba(36,49,107,.6)]">By</span>
+              <span className="ss-signature ss-goldname text-[1.45rem] sm:text-[1.7rem] leading-[1.15] tracking-normal normal-case [text-shadow:none] drop-shadow-[0_2px_0_rgba(23,31,66,.5)]">
+                Faisal Khan
+              </span>
+            </p>
+            <p className="inline-flex items-center rounded-full border-2 border-white bg-white/85 px-3.5 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.16em] text-[#24316B] shadow-[0_4px_10px_rgba(36,49,107,.18)]">
+              Built with Z.ai
+            </p>
+          </div>
           <h1 className="mt-5 font-bold leading-[0.95] select-none">
             <GraffitiWord word="DUMMY" tilt={-2} className="text-[3.6rem] sm:text-8xl" />
             <GraffitiWord word="SURFERS" tilt={1.5} className="text-[3.6rem] sm:text-8xl mt-1 sm:mt-2" />
@@ -423,7 +436,10 @@ export default function Home() {
           style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
         >
           <p className="font-bold uppercase tracking-wide text-[#FFC93C] [text-shadow:0_2px_0_rgba(36,49,107,.8)]">
-            Dummy Surfers <span className="text-white">by FSK</span>
+            Dummy Surfers <span className="text-white">by</span>{' '}
+            <span className="ss-signature ss-goldname inline-block align-middle text-[1.3rem] sm:text-[1.5rem] leading-none tracking-normal normal-case [text-shadow:none] drop-shadow-[0_2px_0_rgba(0,0,0,.35)]">
+              Faisal Khan
+            </span>
           </p>
           <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v5.0.0 — Playable!</span></p>
         </div>
