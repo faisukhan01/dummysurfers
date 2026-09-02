@@ -351,7 +351,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
     /** [pending] = per-action flags (left,right,jump,slide); true = still show the hint. */
     fun drawHintChips(time: Float, pending: BooleanArray) {
         drawHud(time)
-        val msgs = arrayOf("◄ SWIPE TO MOVE", "SWIPE TO MOVE ►", "▲ SWIPE UP = JUMP", "▼ SWIPE DOWN = ROLL")
+        val msgs = arrayOf("< SWIPE TO MOVE", "SWIPE TO MOVE >", "^ SWIPE UP = JUMP", "v SWIPE DOWN = ROLL")
         val shown = intArrayOf(0, 1, 2, 3).filter { pending.getOrNull(it) == true }
         if (shown.isEmpty()) return
         val pulse = (sin(time * 4.5f) * 0.5f + 0.5f)
