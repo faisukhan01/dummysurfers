@@ -108,8 +108,22 @@ export default function Home() {
         .ss-btn-navy:active { box-shadow: 0 1px 0 #1B2038; }
         @keyframes ss-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
         .ss-cloud { animation: ss-float 6s ease-in-out infinite; }
-        .ss-signature { font-family: var(--font-pacifico), 'Brush Script MT', 'Segoe Script', cursive; font-weight: 400; }
-        .ss-goldname { background: linear-gradient(175deg,#FFF6C9 8%,#FFD23E 46%,#F5A623 88%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .ss-signature { font-family: var(--font-script), 'Brush Script MT', 'Segoe Script', cursive; font-weight: 400; }
+        .ss-shine {
+          background: linear-gradient(105deg,#7A4E08 0%,#B9791B 18%,#E9B33C 36%,#FFF6D0 50%,#E9B33C 64%,#B9791B 82%,#7A4E08 100%);
+          background-size: 250% auto;
+          -webkit-background-clip: text; background-clip: text; color: transparent;
+          animation: ss-shine-sweep 6s linear infinite;
+        }
+        @keyframes ss-shine-sweep { to { background-position: -250% center; } }
+        .ss-shine-bright {
+          background: linear-gradient(105deg,#E8A81E 0%,#FFD23E 25%,#FFF6D0 50%,#FFD23E 75%,#E8A81E 100%);
+          background-size: 250% auto;
+          -webkit-background-clip: text; background-clip: text; color: transparent;
+          animation: ss-shine-sweep 6s linear infinite;
+          filter: drop-shadow(0 1px 6px rgba(255,210,62,.35));
+        }
+        @media (prefers-reduced-motion: reduce) { .ss-shine { animation: none; background-position: 50% center; } .ss-shine-bright { animation: none; background-position: 50% center; } }
       `}</style>
 
       {/* ── HERO: bright SS sky ─────────────────────────────────────── */}
@@ -122,20 +136,35 @@ export default function Home() {
         <Cloud className="left-[38%] top-[7%] h-8 w-20 sm:h-10 sm:w-28 opacity-90" delay={1.2} />
         <Cloud className="right-[28%] top-[26%] h-9 w-24 sm:h-12 sm:w-32 opacity-85" delay={2.4} />
 
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-10 pt-12 sm:pt-20 pb-40 sm:pb-48">
-          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-            <p
-              className="inline-flex items-baseline gap-x-2 rounded-full bg-[#2A3057] py-2 pl-5 pr-6 text-[11px] sm:text-xs font-bold uppercase tracking-[0.22em] text-white border-2 border-white/70 shadow-[0_6px_16px_rgba(36,49,107,.28)] transition-transform hover:scale-[1.02]"
-              title="Signed by the developer"
-            >
-              <span className="[text-shadow:0_1px_0_rgba(36,49,107,.6)]">By</span>
-              <span className="ss-signature ss-goldname text-[1.45rem] sm:text-[1.7rem] leading-[1.15] tracking-normal normal-case [text-shadow:none] drop-shadow-[0_2px_0_rgba(23,31,66,.5)]">
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-10 pt-10 sm:pt-16 pb-40 sm:pb-48">
+          {/* ── Elegant author signature ───────────────────────────── */}
+          <div className="group inline-block select-none" title="Faisal Khan — Developer">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <span aria-hidden className="h-[2px] w-10 sm:w-16 rounded-full bg-gradient-to-r from-transparent to-[#C98A1B]" />
+              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.42em] text-[#24316B]">Presented by</span>
+              <span aria-hidden className="h-[2px] w-10 sm:w-16 rounded-full bg-gradient-to-l from-transparent to-[#C98A1B]" />
+            </div>
+            <div className="relative mt-0.5">
+              <span
+                className="ss-signature ss-shine block pl-2 text-[3.1rem] sm:text-[3.9rem] leading-[1.25] drop-shadow-[0_2px_14px_rgba(201,138,27,0.35)] transition-transform duration-300 group-hover:scale-[1.02]"
+              >
                 Faisal Khan
               </span>
-            </p>
-            <p className="inline-flex items-center rounded-full border-2 border-white bg-white/85 px-3.5 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.16em] text-[#24316B] shadow-[0_4px_10px_rgba(36,49,107,.18)]">
-              Built with Z.ai
-            </p>
+              {/* calligraphic flourish under the name */}
+              <svg aria-hidden viewBox="0 0 260 16" className="ml-2 mt-[-2px] h-3.5 w-52 sm:w-64" fill="none">
+                <defs>
+                  <linearGradient id="flourishGold" x1="0" y1="0" x2="260" y2="0" gradientUnits="userSpaceOnUse">
+                    <stop offset="0" stopColor="#C98A1B" stopOpacity="0" />
+                    <stop offset="0.18" stopColor="#C98A1B" />
+                    <stop offset="0.5" stopColor="#F2C14E" />
+                    <stop offset="0.82" stopColor="#C98A1B" />
+                    <stop offset="1" stopColor="#C98A1B" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <path d="M6 11 C 70 3.5, 168 3, 252 9.5" stroke="url(#flourishGold)" strokeWidth="3" strokeLinecap="round" />
+                <path d="M236 4.5 l4.5 5 5 -4.5" stroke="#F2C14E" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.9" />
+              </svg>
+            </div>
           </div>
           <h1 className="mt-5 font-bold leading-[0.95] select-none">
             <GraffitiWord word="DUMMY" tilt={-2} className="text-[3.6rem] sm:text-8xl" />
@@ -437,7 +466,7 @@ export default function Home() {
         >
           <p className="font-bold uppercase tracking-wide text-[#FFC93C] [text-shadow:0_2px_0_rgba(36,49,107,.8)]">
             Dummy Surfers <span className="text-white">by</span>{' '}
-            <span className="ss-signature ss-goldname inline-block align-middle text-[1.3rem] sm:text-[1.5rem] leading-none tracking-normal normal-case [text-shadow:none] drop-shadow-[0_2px_0_rgba(0,0,0,.35)]">
+            <span className="ss-signature ss-shine-bright inline-block align-middle text-[1.9rem] sm:text-[2.2rem] leading-[1.1] tracking-normal normal-case [text-shadow:none]">
               Faisal Khan
             </span>
           </p>

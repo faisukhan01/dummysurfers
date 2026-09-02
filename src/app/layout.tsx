@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Fredoka, Pacifico } from "next/font/google";
+import { Geist, Geist_Mono, Fredoka, Great_Vibes } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
@@ -21,11 +21,11 @@ const fredoka = Fredoka({
   display: "swap",
 });
 
-// Elegant, legible signature script for the author's name ("Faisal Khan").
-const pacifico = Pacifico({
+// Refined calligraphic script for the author's signature ("Faisal Khan").
+const greatVibes = Great_Vibes({
   weight: "400",
   subsets: ["latin"],
-  variable: "--font-pacifico",
+  variable: "--font-script",
   display: "swap",
 });
 
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     title: "Dummy Surfers by Faisal Khan — Dummy Surfers v5.0.0",
     description: "Bright daylight SS-style dashboard: cyan sky, periwinkle panels, gold chunky buttons. Kotlin + LibGDX endless runner.",
     url: "https://chat.z.ai",
-    siteName: "Z.ai",
+    siteName: "Dummy Surfers",
     type: "website",
   },
   twitter: {
@@ -59,7 +59,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${fredoka.variable} ${pacifico.variable} antialiased bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} ${fredoka.variable} ${greatVibes.variable} antialiased bg-background text-foreground`}
       >
         {children}
         <Toaster />
