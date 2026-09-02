@@ -145,34 +145,42 @@ class WorldRenderer(
     //    sleepers, SS rust+silver rails ─────────────────────────────────
     private fun drawGround(distance: Float, sx: Float, sy: Float) {
         val vw = proj.vw
+        val vh = proj.vh
         val horizon = proj.horizonY + sy
         val baseY = proj.baseY + sy
         val halfTrack = GameConfig.LANE_WIDTH * 1.5f
+        val nearZ = -7f // draw past the player to the bottom edge of the screen
 
-        // vivid grass shoulders (SS bright green)
+        // vivid grass shoulders (SS bright green) — everything below the horizon
         DecoRenderer.fogged(proj, tmpC, Palette.GRASS, 20f)
         sr.setColor(tmpC)
-        sr.rect(0f, horizon, vw, baseY - horizon)
+        sr.rect(0f, -2f, vw, horizon + 2f)
 
-        // track ballast (converging trapezoid, warm terracotta)
+        // track ballast (converging trapezoid, warm terracotta) — near edge
+        // extends below the player line so no void shows under the camera
         val farScale = proj.scale(GameConfig.VIEW_DISTANCE)
-        val nearHalfPx = halfTrack * proj.ppu * proj.scale(0f)
+        val nearHalfPx = halfTrack * proj.ppu * proj.scale(nearZ)
         val farHalfPx = (halfTrack + 6f) * proj.ppu * farScale
         val cx = vw / 2f + sx
+        val nearY = proj.groundY(nearZ) + sy
         DecoRenderer.fogged(proj, tmpC, Palette.GROUND, 40f)
         sr.setColor(tmpC)
-        sr.triangle(cx - nearHalfPx, baseY, cx + nearHalfPx, baseY, cx + farHalfPx, horizon)
-        sr.triangle(cx - nearHalfPx, baseY, cx + farHalfPx, horizon, cx - farHalfPx, horizon)
+        sr.triangle(cx - nearHalfPx, nearY, cx + nearHalfPx, nearY, cx + farHalfPx, horizon)
+        sr.triangle(cx - nearHalfPx, nearY, cx + farHalfPx, horizon, cx - farHalfPx, horizon)
+        // full-width safety fill under the trapezoid (screen bottom)
+        if (nearY < vh) {
+            sr.rect(0f, -2f, vw, nearY + 2f)
+        }
 
         // SS path patches: alternating cream/orange blocks rushing past
         run {
             val blockLen = 4.2f
-            var z = distance % (blockLen * 2f)
+            var z = nearZ + ((distance + nearZ * -1f) % (blockLen * 2f))
             var idx = ((distance / blockLen).toInt()).coerceAtLeast(0)
             while (z < GameConfig.VIEW_DISTANCE) {
                 val z1 = (z + blockLen).coerceAtMost(GameConfig.VIEW_DISTANCE)
                 val col = if (idx % 2 == 0) Palette.PATH_CREAM else Palette.PATH_ORANGE
-                DecoRenderer.fogged(proj, tmpC, col, (z + z1) / 2f)
+                DecoRenderer.fogged(proj, tmpC, col, (z + z1).coerceAtLeast(0f) / 2f)
                 sr.setColor(tmpC)
                 val halfIn = (halfTrack - 0.7f) * proj.ppu * proj.scale(z)
                 val halfOut = (halfTrack - 0.7f) * proj.ppu * proj.scale(z1)
@@ -186,15 +194,18 @@ class WorldRenderer(
             }
         }
 
-        // sleepers rushing past (primary speed cue)
+        // sleepers rushing past (primary speed cue) — from just behind the
+        // player (closer than that they explode in size and swamp the screen)
         val spacing = GameConfig.SLEEPER_SPACING
-        var z = distance % spacing
+        var z = distance % spacing + nearZ
+        val sleeperMinZ = -2.6f
+        if (z < sleeperMinZ) z += spacing * ((sleeperMinZ - z) / spacing).toInt().coerceAtLeast(0) + spacing
         while (z < GameConfig.VIEW_DISTANCE) {
             val s = proj.scale(z)
             val y = proj.groundY(z) + sy
             val w = halfTrack * proj.ppu * s
             val h = 2.2f + 9f * s
-            DecoRenderer.fogged(proj, tmpC, Palette.SLEEPER, z)
+            DecoRenderer.fogged(proj, tmpC, Palette.SLEEPER, z.coerceAtLeast(0f))
             sr.setColor(tmpC)
             sr.rect(cx - w, y, w * 2f, h)
             tmpC.a = 0.25f
@@ -203,9 +214,9 @@ class WorldRenderer(
             z += spacing
         }
 
-        // 3 tracks x 2 rails: rust base + silver head (SS look)
+        // 3 tracks x 2 rails: rust base + silver head (SS look) — full span
         val railOffsets = floatArrayOf(-0.88f, 0.88f)
-        var z0 = 0f
+        var z0 = nearZ
         while (z0 < GameConfig.VIEW_DISTANCE) {
             val z1 = (z0 + 5f).coerceAtMost(GameConfig.VIEW_DISTANCE)
             for (lane in -1..1) {
@@ -218,14 +229,14 @@ class WorldRenderer(
                     // rust base (wider)
                     val bw0 = 0.2f * proj.ppu * proj.scale(z0)
                     val bw1 = 0.2f * proj.ppu * proj.scale(z1)
-                    DecoRenderer.fogged(proj, tmpC, Palette.RAIL_SIDE, z0)
+                    DecoRenderer.fogged(proj, tmpC, Palette.RAIL_SIDE, z0.coerceAtLeast(0f))
                     sr.setColor(tmpC)
                     sr.triangle(x0 - bw0, y0, x0 + bw0, y0, x1 + bw1, y1)
                     sr.triangle(x0 - bw0, y0, x1 + bw1, y1, x1 - bw1, y1)
                     // silver head
                     val w0 = 0.09f * proj.ppu * proj.scale(z0)
                     val w1 = 0.09f * proj.ppu * proj.scale(z1)
-                    DecoRenderer.fogged(proj, tmpC, Palette.RAIL, z0)
+                    DecoRenderer.fogged(proj, tmpC, Palette.RAIL, z0.coerceAtLeast(0f))
                     sr.setColor(tmpC)
                     sr.triangle(x0 - w0, y0, x0 + w0, y0, x1 + w1, y1)
                     sr.triangle(x0 - w0, y0, x1 + w1, y1, x1 - w1, y1)
