@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Fredoka, Great_Vibes } from "next/font/google";
+import { Geist, Geist_Mono, Fredoka } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
@@ -18,14 +18,6 @@ const fredoka = Fredoka({
   weight: ["600", "700"],
   subsets: ["latin"],
   variable: "--font-fredoka",
-  display: "swap",
-});
-
-// Refined calligraphic script for the author's signature ("Faisal Khan").
-const greatVibes = Great_Vibes({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-script",
   display: "swap",
 });
 
@@ -59,7 +51,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${fredoka.variable} ${greatVibes.variable} antialiased bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} ${fredoka.variable} antialiased bg-background text-foreground`}
       >
         {children}
         <Toaster />

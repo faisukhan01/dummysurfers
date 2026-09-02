@@ -108,22 +108,6 @@ export default function Home() {
         .ss-btn-navy:active { box-shadow: 0 1px 0 #1B2038; }
         @keyframes ss-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
         .ss-cloud { animation: ss-float 6s ease-in-out infinite; }
-        .ss-signature { font-family: var(--font-script), 'Brush Script MT', 'Segoe Script', cursive; font-weight: 400; }
-        .ss-shine {
-          background: linear-gradient(105deg,#7A4E08 0%,#B9791B 18%,#E9B33C 36%,#FFF6D0 50%,#E9B33C 64%,#B9791B 82%,#7A4E08 100%);
-          background-size: 250% auto;
-          -webkit-background-clip: text; background-clip: text; color: transparent;
-          animation: ss-shine-sweep 6s linear infinite;
-        }
-        @keyframes ss-shine-sweep { to { background-position: -250% center; } }
-        .ss-shine-bright {
-          background: linear-gradient(105deg,#E8A81E 0%,#FFD23E 25%,#FFF6D0 50%,#FFD23E 75%,#E8A81E 100%);
-          background-size: 250% auto;
-          -webkit-background-clip: text; background-clip: text; color: transparent;
-          animation: ss-shine-sweep 6s linear infinite;
-          filter: drop-shadow(0 1px 6px rgba(255,210,62,.35));
-        }
-        @media (prefers-reduced-motion: reduce) { .ss-shine { animation: none; background-position: 50% center; } .ss-shine-bright { animation: none; background-position: 50% center; } }
       `}</style>
 
       {/* ── HERO: bright SS sky ─────────────────────────────────────── */}
@@ -137,33 +121,15 @@ export default function Home() {
         <Cloud className="right-[28%] top-[26%] h-9 w-24 sm:h-12 sm:w-32 opacity-85" delay={2.4} />
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-10 pt-10 sm:pt-16 pb-40 sm:pb-48">
-          {/* ── Elegant author signature ───────────────────────────── */}
-          <div className="group inline-block select-none" title="Faisal Khan — Developer">
-            <div className="flex items-center gap-2.5 sm:gap-3">
-              <span aria-hidden className="h-[2px] w-10 sm:w-16 rounded-full bg-gradient-to-r from-transparent to-[#C98A1B]" />
-              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.42em] text-[#24316B]">Presented by</span>
-              <span aria-hidden className="h-[2px] w-10 sm:w-16 rounded-full bg-gradient-to-l from-transparent to-[#C98A1B]" />
-            </div>
-            <div className="relative mt-0.5">
-              <span
-                className="ss-signature ss-shine block pl-2 text-[3.1rem] sm:text-[3.9rem] leading-[1.25] drop-shadow-[0_2px_14px_rgba(201,138,27,0.35)] transition-transform duration-300 group-hover:scale-[1.02]"
-              >
-                Faisal Khan
-              </span>
-              {/* calligraphic flourish under the name */}
-              <svg aria-hidden viewBox="0 0 260 16" className="ml-2 mt-[-2px] h-3.5 w-52 sm:w-64" fill="none">
-                <defs>
-                  <linearGradient id="flourishGold" x1="0" y1="0" x2="260" y2="0" gradientUnits="userSpaceOnUse">
-                    <stop offset="0" stopColor="#C98A1B" stopOpacity="0" />
-                    <stop offset="0.18" stopColor="#C98A1B" />
-                    <stop offset="0.5" stopColor="#F2C14E" />
-                    <stop offset="0.82" stopColor="#C98A1B" />
-                    <stop offset="1" stopColor="#C98A1B" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                <path d="M6 11 C 70 3.5, 168 3, 252 9.5" stroke="url(#flourishGold)" strokeWidth="3" strokeLinecap="round" />
-                <path d="M236 4.5 l4.5 5 5 -4.5" stroke="#F2C14E" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.9" />
-              </svg>
+          {/* ── Author signature — same graffiti DNA as the title ────── */}
+          <div className="inline-block select-none" title="Faisal Khan — Developer">
+            <p className="inline-flex items-center gap-2 rounded-full border-2 border-white bg-white/85 px-4 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.34em] text-[#24316B] shadow-[0_4px_10px_rgba(36,49,107,.2)]">
+              <span aria-hidden className="text-[#F0A11A] text-xs leading-none">✦</span>
+              Built by
+              <span aria-hidden className="text-[#F0A11A] text-xs leading-none">✦</span>
+            </p>
+            <div className="mt-2 drop-shadow-[0_10px_18px_rgba(36,49,107,.22)]">
+              <GraffitiName name="Faisal Khan" className="text-[2.7rem] sm:text-[3.6rem]" />
             </div>
           </div>
           <h1 className="mt-5 font-bold leading-[0.95] select-none">
@@ -465,10 +431,8 @@ export default function Home() {
           style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
         >
           <p className="font-bold uppercase tracking-wide text-[#FFC93C] [text-shadow:0_2px_0_rgba(36,49,107,.8)]">
-            Dummy Surfers <span className="text-white">by</span>{' '}
-            <span className="ss-signature ss-shine-bright inline-block align-middle text-[1.9rem] sm:text-[2.2rem] leading-[1.1] tracking-normal normal-case [text-shadow:none]">
-              Faisal Khan
-            </span>
+            Dummy Surfers <span className="text-white">by</span>
+            <GraffitiName name="Faisal Khan" className="ml-2 inline-block align-middle normal-case text-[1.55rem] sm:text-[1.85rem]" stroke="#1B2038" shadowFilter="drop-shadow(0 3px 0 rgba(9,12,30,.55))" />
           </p>
           <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v5.0.0 — Playable!</span></p>
         </div>
@@ -505,6 +469,50 @@ function GraffitiWord({ word, tilt, className = '' }: { word: string; tilt: numb
           {ch}
         </span>
       ))}
+    </span>
+  )
+}
+
+/** Chunky graffiti-styled name — same DNA as the DUMMY SURFERS title:
+ *  Fredoka bold, gold gradient fill, navy outline, hard cartoon shadow.
+ *  NOTE: shadows use filter:drop-shadow (NOT text-shadow) because with
+ *  background-clip:text the fill paints as background, and text-shadow
+ *  would paint on top of it and hide the gradient. */
+function GraffitiName({
+  name,
+  className = '',
+  stroke = '#24316B',
+  shadowFilter = 'drop-shadow(0 4px 0 rgba(36,49,107,.9)) drop-shadow(0 9px 14px rgba(36,49,107,.28))',
+}: { name: string; className?: string; stroke?: string; shadowFilter?: string }) {
+  return (
+    <span
+      className={`ss-font inline-block font-bold leading-[1.15] ${className}`}
+      aria-label={name}
+      role="text"
+      style={{ textShadow: 'none' }}
+    >
+      {name.split('').map((ch, i) =>
+        ch === ' ' ? (
+          <span key={`sp-${i}`} aria-hidden className="inline-block w-[0.42em]" />
+        ) : (
+          <span
+            key={`${ch}-${i}`}
+            aria-hidden
+            className="inline-block cursor-default transition-transform duration-150 hover:-translate-y-1"
+            style={{
+              transform: `rotate(${(i % 2 === 0 ? -1 : 1) * (1.4 + (i % 3) * 0.7)}deg) translateY(${i % 2 === 0 ? 0 : 2}px)`,
+              background: 'linear-gradient(180deg,#FFEDAD 0%,#FFC93C 52%,#F5A623 100%)',
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              color: 'transparent',
+              WebkitTextStroke: `2px ${stroke}`,
+              filter: shadowFilter,
+            }}
+          >
+            {ch}
+          </span>
+        )
+      )}
     </span>
   )
 }
