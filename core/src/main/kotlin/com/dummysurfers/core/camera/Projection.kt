@@ -18,14 +18,21 @@ class Projection {
 
     fun setViewport(w: Float, h: Float) {
         vw = w; vh = h
-        horizonY = vh * GameConfig.VANISHING_POINT_Y
-        baseY = vh * GameConfig.PLAYER_BASE_Y
+        // Config fractions are measured from the TOP of the screen (standard
+        // screen convention), but GL y grows UPWARD — so mirror them here.
+        // Getting this wrong mirrors the whole world vertically (far objects
+        // at the bottom of the screen) — the bug that made v1.x unplayable-ugly.
+        horizonY = vh * (1f - GameConfig.VANISHING_POINT_Y)
+        baseY = vh * (1f - GameConfig.PLAYER_BASE_Y)
         // 3 lanes (7.5 units) occupy ~92% of virtual width at z=0
         ppu = vw * 0.92f / (GameConfig.LANE_WIDTH * 3f)
     }
 
     fun scale(z: Float): Float {
-        val s = GameConfig.FOCAL_LENGTH / (GameConfig.FOCAL_LENGTH + z)
+        // clamp the near plane: z can approach -FOCAL for geometry passing the
+        // camera → division blows up to infinity (giant quads across the screen)
+        val zz = if (z < -GameConfig.FOCAL_LENGTH * 0.5f) -GameConfig.FOCAL_LENGTH * 0.5f else z
+        val s = GameConfig.FOCAL_LENGTH / (GameConfig.FOCAL_LENGTH + zz)
         return s * zoom
     }
 

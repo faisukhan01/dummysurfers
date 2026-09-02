@@ -12,6 +12,7 @@ import com.dummysurfers.core.entities.CharacterDef
 import com.dummysurfers.core.gfx.Palette
 import com.dummysurfers.core.gfx.TextureGen
 import com.dummysurfers.core.state.GameEvent
+import com.dummysurfers.core.state.PowerUpType
 import com.dummysurfers.core.state.GameState
 import com.dummysurfers.core.state.MenuPanel
 import com.dummysurfers.core.state.MissionType
@@ -41,8 +42,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         val menuPanel: MenuPanel
         val shopTab: ShopTab
         var shopTabSet: ShopTab
-        /** per-action pending flags (left,right,jump,slide) for first-run hints */
-        val tutorialHints: BooleanArray
+        var tutorialStep: Int?
         val score: Int
         val displayScore: Int
         val runCoins: Int
@@ -50,9 +50,17 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         val multiplier: Int
         val powerupRemaining: FloatArray // 5
         val powerupTotal: FloatArray     // 5
+        val boardTimer: Float            // hoverboard ride time left (0 = not riding)
+        val boardTotal: Float            // hoverboard ride duration
         val newBest: Boolean
+        val guardCatch: Boolean
+        // v4.6 post-run gift: double the run's coins once (SS end-screen doubler)
+        val giftAvailable: Boolean
+        val giftBonus: Int
+        fun claimGift()
         val save: com.dummysurfers.core.state.SaveManager
-        val toFrame: (FloatArray) -> Unit // converts screen touch to virtual coords
+        val toFrame: (FloatArray) -> Unit // converts last input position to virtual coords
+        val toFrameAt: (Int, Int, FloatArray) -> Unit // converts a specific touch event position to virtual coords
 
         fun startRun()
         fun pauseGame()
@@ -64,6 +72,8 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         fun selectCharacter(id: String)
         fun buyCharacter(id: String)
         fun buyUpgrade(name: String)
+        fun buyHoverboard()
+        fun activateBoard()
         fun buyTrail(index: Int)
         fun claimMission(index: Int)
         fun setMusic(on: Boolean)
@@ -87,6 +97,12 @@ class UiController(val theme: UiTheme) : InputAdapter() {
     var scrollY = 0f
     private var toastMsg: String? = null
     private var toastTimer = 0f
+    // v4.1 live MISSION COMPLETE celebration
+    private var missionPopT = 0f
+    private var missionPopReward = 0
+    private var lastHudTime = 0f
+
+    fun showMissionPopup(reward: Int) { missionPopT = 2.8f; missionPopReward = reward }
 
     fun toast(msg: String) {
         toastMsg = msg
@@ -98,7 +114,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
     override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
         val b = bridge ?: return false
         val v = FloatArray(2)
-        b.toFrame(v)
+        b.toFrameAt(screenX, screenY, v)
         touchVirtualX = v[0]; touchVirtualY = v[1]
         if (panelOpen()) {
             // panels own the whole screen (buttons + scroll area)
@@ -117,12 +133,11 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         }
         return when (b.state) {
             GameState.PLAYING, GameState.TUTORIAL -> {
-                // only the pause button steals touches during play — everything
-                // else falls through to the swipe detector
-                val hit = hits.lastOrNull { it.id == "pause" && inside(it, touchVirtualX, touchVirtualY) }
+                // only pause/board steal touches during play — everything else
+                // falls through to the swipe detector
+                val hit = hits.lastOrNull { (it.id == "pause" || it.id == "board") && inside(it, touchVirtualX, touchVirtualY) }
                 if (hit != null) { pressedId = hit.id; true } else false
             }
-            // MENU / GAME_OVER / PAUSED-without-panel: every registered button is live
             else -> {
                 val hit = hits.lastOrNull { inside(it, touchVirtualX, touchVirtualY) }
                 if (hit != null) { pressedId = hit.id; dragging = false; true } else false
@@ -133,7 +148,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
     override fun touchDragged(screenX: Int, screenY: Int, pointer: Int): Boolean {
         if (!dragging) return panelOpen()
         val v = FloatArray(2)
-        bridge!!.toFrame(v)
+        bridge!!.toFrameAt(screenX, screenY, v)
         val dy = v[1] - scrollDragStart
         scrollY = (scrollDragValue - dy).coerceIn(0f, maxScroll())
         return true
@@ -145,7 +160,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         dragging = false
         if (wasPressed == null) return panelOpen()
         val v = FloatArray(2)
-        bridge!!.toFrame(v)
+        bridge!!.toFrameAt(screenX, screenY, v)
         val hit = hits.lastOrNull { it.id == wasPressed && inside(it, v[0], v[1]) }
         if (hit != null) {
             clickId = hit.id
@@ -199,28 +214,49 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         // settings gear shortcut top-left
         if (btn("gear", 24f, vh - 100f, 76f, 76f, Palette.UI_NAVY, "O", theme.fontMed)) b.openPanel(MenuPanel.SETTINGS)
 
-        // graffiti-style logo with bounce
-        val bounce = sin(time * 2.2f) * 8f
-        theme.text(batch, theme.fontHuge, "DUMMY", 0f, 1120f + bounce, Palette.GOLD, Align.center, vw)
-        theme.text(batch, theme.fontHuge, "SURFERS", 0f, 1052f + bounce, Color.WHITE, Align.center, vw)
-        // orange "BY FSK" tag chip
-        val tagW = 150f
-        theme.button(batch, vw / 2f - tagW / 2f, 975f + bounce, tagW, 44f, Palette.UI_ORANGE, false)
-        theme.text(batch, theme.fontSmall, "BY FSK", 0f, 1004f + bounce, Color.WHITE, Align.center, vw)
+        // v3.0: warm sun glow behind the logo block (SS title-screen warmth)
+        val glowPulse = 0.30f + sin(time * 1.4f) * 0.05f
+        batch.setColor(1f, 0.92f, 0.55f, glowPulse)
+        batch.draw(TextureGen.glow, vw / 2f - 330f, 940f, 660f, 660f)
+        batch.setColor(1f, 1f, 1f, 1f)
 
-        // (character preview is the real 3D rig on the tracks — no 2D portrait)
+        // graffiti-style logo with bounce (double-draw: navy drop + main)
+        val bounce = sin(time * 2.2f) * 8f
+        theme.text(batch, theme.fontHuge, "DUMMY", 4f, 1147f + bounce, Palette.UI_OUTLINE, Align.center, vw)
+        theme.text(batch, theme.fontHuge, "DUMMY", 0f, 1150f + bounce, Palette.GOLD, Align.center, vw)
+        theme.text(batch, theme.fontHuge, "SURFERS", 4f, 1079f + bounce, Palette.UI_OUTLINE, Align.center, vw)
+        theme.text(batch, theme.fontHuge, "SURFERS", 0f, 1082f + bounce, Color.WHITE, Align.center, vw)
+        // orange "BY FSK" tag chip (in the gap between logo and hero cap)
+        val tagW = 150f
+        theme.button(batch, vw / 2f - tagW / 2f, 996f + bounce, tagW, 44f, Palette.UI_ORANGE, false)
+        theme.text(batch, theme.fontSmall, "BY FSK", 0f, 1025f + bounce, Color.WHITE, Align.center, vw)
+
+        // selected character preview front & center on the tracks (big SS-style hero)
+        // v4.3: portrait rebuilt at 360px w/ head in the lower 2/3 + its own
+        // in-texture ground shadow — drawn 372px, no external shadow blob
+        // v4.6: first lift (348@640 → 300@682) still left the shoes in the
+        // card's drop-shadow sliver — 14px of clearance is NOT clearance when
+        // the card's rounded shadow eats ~10px. Final: 264px @ y738 = the full
+        // figure + ground shadow floats clear of the card (top padding tucks
+        // harmlessly behind the BY FSK chip, which draws later anyway)
+        val selIdx = CharacterDef.ALL.indexOfFirst { it.id == b.save.selectedCharacter }.coerceAtLeast(0)
+        val heroBob = sin(time * 1.7f) * 7f
+        drawMiniCharacter(selIdx, vw / 2f - 132f, 738f + heroBob, 264f)
+
         // HIGH SCORE card (periwinkle + deep slot + gold star)
         val hcW = 460f
         val hcX = vw / 2f - hcW / 2f
-        theme.panel(batch, hcX, 628f, hcW, 108f, Palette.UI_PANEL)
-        theme.panel(batch, hcX + 18f, 644f, hcW - 36f, 56f, Palette.UI_PANEL_DEEP)
+        theme.panel(batch, hcX, 560f, hcW, 108f, Palette.UI_PANEL)
+        theme.panel(batch, hcX + 18f, 576f, hcW - 36f, 56f, Palette.UI_PANEL_DEEP)
         batch.setColor(1f, 1f, 1f, 1f)
-        batch.draw(TextureGen.powerIcons[1], hcX + 22f, 648f, 48f, 48f)
-        theme.text(batch, theme.fontTiny, "HIGH SCORE", hcX + 80f, 706f, Palette.UI_MUTED)
-        theme.text(batch, theme.fontMed, "${b.save.best}", hcX + 80f, 684f, Palette.GOLD)
+        batch.draw(TextureGen.powerIcons[1], hcX + 22f, 580f, 48f, 48f)
+        theme.text(batch, theme.fontTiny, "HIGH SCORE", hcX + 80f, 638f, Palette.UI_MUTED)
+        theme.text(batch, theme.fontMed, "${b.save.best}", hcX + 80f, 616f, Palette.GOLD)
+        // hoverboard rack count
+        theme.text(batch, theme.fontTiny, "HOVERBOARDS x${b.save.hoverboards}", 0f, 532f, Palette.UI_MUTED, Align.center, vw)
 
         // giant gold RUN button
-        if (btn("play", vw / 2 - 210f, 452f, 420f, 136f, Palette.UI_GOLD_BTN, "RUN", theme.fontLarge)) {
+        if (btn("play", vw / 2 - 210f, 384f, 420f, 136f, Palette.UI_GOLD_BTN, "RUN", theme.fontLarge)) {
             b.startRun()
         }
 
@@ -232,6 +268,9 @@ class UiController(val theme: UiTheme) : InputAdapter() {
             val x = 24f + i * (tabW + 12f)
             hits.add(HitRect(id, x, tabY, tabW, 128f) {})
             theme.button(batch, x, tabY, tabW, 128f, Palette.UI_NAVY, pressedId == id)
+            // v4.5: white glyph above the label — the bare navy tiles read blank
+            batch.setColor(1f, 1f, 1f, 1f)
+            batch.draw(TextureGen.navIcons[i], x + tabW / 2f - 27f, tabY + 56f, 54f, 54f)
             theme.text(batch, theme.fontSmall, label, x, tabY + 38f, Color.WHITE, Align.center, tabW)
             when (id) {
                 "chars" -> if (clickId == id) b.openPanel(MenuPanel.CHARACTERS)
@@ -291,20 +330,57 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         // distance under score
         theme.text(batch, theme.fontSmall, "${b.distance.toInt()}m", 0f, vh - 118f, Color.WHITE, Align.center, vw)
 
-        // pause button — orange rounded square, white bars (top-right)
+        // v3.0: live "BEST!" flag the moment the current run passes the record
+        if (!b.newBest && b.save.best > 0 && b.score > b.save.best) {
+            val bob = sin(time * 6f) * 4f
+            val bw = 150f
+            val bx = vw / 2f - bw / 2f
+            theme.button(batch, bx, vh - 200f + bob, bw, 54f, Palette.UI_GREEN, false)
+            theme.text(batch, theme.fontSmall, "★ BEST!", bx, vh - 163f + bob, Color.WHITE, Align.center, bw)
+        }
+
+        // pause button — white frosted rounded square, navy bars (SS top-right)
         val pauseX = vw - 92f
         val pauseY = vh - 96f
         hits.add(HitRect("pause", pauseX, pauseY, 68f, 68f) {})
-        theme.button(batch, pauseX, pauseY, 68f, 68f, Palette.UI_ORANGE, pressedId == "pause")
-        sr.begin(ShapeRenderer.ShapeType.Filled)
-        sr.setColor(1f, 1f, 1f, 1f)
-        sr.rect(pauseX + 20f, pauseY + 17f, 8f, 34f)
-        sr.rect(pauseX + 40f, pauseY + 17f, 8f, 34f)
-        sr.end()
+        theme.pill(batch, pauseX, pauseY, 68f, 68f, Palette.UI_PANEL_LIGHT, 0.85f)
+        theme.rect(batch, pauseX + 21f, pauseY + 17f, 8f, 34f, Palette.UI_NAVY)
+        theme.rect(batch, pauseX + 39f, pauseY + 17f, 8f, 34f, Palette.UI_NAVY)
+
+        // hoverboard chip — bottom-right: tap it (or double-tap anywhere) to ride
+        val boards = b.save.hoverboards
+        val bt = b.boardTimer
+        if (boards > 0 || bt > 0f) {
+            val chipW = 110f
+            val chipH = 92f
+            val chipX = vw - chipW - 24f
+            val chipY = 30f
+            hits.add(HitRect("board", chipX, chipY, chipW, chipH) {})
+            val active = bt > 0f
+            theme.button(batch, chipX, chipY, chipW, chipH, if (active) Palette.UI_ACCENT2 else Palette.UI_NAVY, pressedId == "board")
+            val ix = chipX + chipW / 2f
+            val iy = chipY + chipH / 2f + 8f
+            // hoverboard side view (deck + gold stripe + wheels) — batch-safe
+            theme.pill(batch, ix - 34f, iy - 9f, 68f, 18f, if (active) Color.WHITE else Palette.UI_ACCENT2)
+            theme.rect(batch, ix - 34f, iy - 3f, 68f, 5f, Palette.GOLD)
+            theme.disc(batch, ix - 24f, iy - 12f, 6.5f, Palette.UI_PANEL_DEEP)
+            theme.disc(batch, ix + 24f, iy - 12f, 6.5f, Palette.UI_PANEL_DEEP)
+            if (active) {
+                val t = if (b.boardTotal > 0f) (bt / b.boardTotal).coerceIn(0f, 1f) else 0f
+                theme.bar(batch, chipX + 12f, chipY + 14f, chipW - 24f, 10f, t, Color.WHITE)
+            } else {
+                theme.text(batch, theme.fontTiny, "x$boards", chipX, chipY + 12f, Color.WHITE, Align.center, chipW)
+            }
+            if (clickId == "board" && !active) b.activateBoard()
+            // first-runs hint
+            if (!active && boards > 0 && b.save.stats.runs < 3 && b.distance < 80f) {
+                theme.text(batch, theme.fontTiny, "TAP BOARD = 2ND CHANCE (OR DOUBLE-TAP)", 0f, 14f, Color.WHITE, Align.center, vw)
+            }
+        }
 
         // active power-ups — SS hoverboard-style segmented meter, bottom-center
         var activeCount = 0
-        for (i in 0 until 5) {
+        for (i in 0 until PowerUpType.entries.size) {
             val rem = b.powerupRemaining[i]
             if (rem > 0f) {
                 activeCount++
@@ -320,18 +396,62 @@ class UiController(val theme: UiTheme) : InputAdapter() {
                 batch.setColor(1f, 1f, 1f, if (flashing) 0.55f else 1f)
                 batch.draw(TextureGen.powerIcons[i], mX + 14f, mY + 8f, 40f, 40f)
                 batch.setColor(1f, 1f, 1f, 1f)
-                // segmented fill (5 segments like the SS board meter)
-                sr.begin(ShapeRenderer.ShapeType.Filled)
+                // segmented fill (5 segments like the SS board meter) — batch-safe
                 val segs = 5
                 val segW = (mW - 76f) / segs
                 val filled = ceil(t * segs).toInt().coerceIn(0, segs)
                 for (sg in 0 until filled) {
-                    sr.setColor(color)
-                    sr.rect(mX + 62f + sg * segW + 2f, mY + 12f, segW - 4f, 32f)
+                    theme.rect(batch, mX + 62f + sg * segW + 2f, mY + 12f, segW - 4f, 32f, color)
                 }
-                sr.end()
             }
         }
+
+        drawFirstRunHints(time)
+
+        // v4.1 MISSION COMPLETE — gold banner drops in, bounces, slides away
+        val hdt = (time - lastHudTime).coerceIn(0f, 0.05f); lastHudTime = time
+        if (missionPopT > 0f) {
+            missionPopT -= hdt
+            val k = (missionPopT / 2.8f).coerceIn(0f, 1f)
+            val enter = if (k > 0.86f) 1f - ((1f - k) / 0.14f).let { it * it } else 1f
+            val leave = if (k < 0.18f) k / 0.18f else 1f
+            val yOff = (1f - enter) * 240f - (1f - leave) * 90f
+            val alpha = leave.coerceIn(0f, 1f)
+            val bw = 470f; val bx = vw / 2f - bw / 2f; val by = vh - 320f + yOff
+            batch.setColor(1f, 1f, 1f, alpha)
+            theme.button(batch, bx, by, bw, 110f, Palette.UI_GOLD_BTN, false)
+            // v4.7 trophy glyph bobbing on the banner's left edge — the gold
+            // slab alone read as a plain toast, not an award
+            val tBob = sin(time * 5.2f) * 3f
+            batch.draw(TextureGen.trophy, bx + 20f, by + 16f + tBob, 78f, 78f)
+            theme.text(batch, theme.fontMed, "MISSION COMPLETE!", 0f, by + 76f, Color.WHITE, Align.center, vw)
+            theme.text(batch, theme.fontTiny, "CLAIM $missionPopReward COINS IN MISSIONS", 0f, by + 38f, Color(0xfff3d0ff.toInt()), Align.center, vw)
+            batch.setColor(1f, 1f, 1f, 1f)
+        }
+    }
+
+    /**
+     * v3.0: non-blocking SS-style guidance for brand-new players. A bobbing
+     * gold chip cycles the three moves over the first meters of the first two
+     * runs — it never interrupts play (the old forced tutorial did).
+     */
+    private fun drawFirstRunHints(time: Float) {
+        val b = bridge!!
+        if (b.save.stats.runs >= 2 || b.distance > 90f) return
+        val d = b.distance
+        val msg = when {
+            d < 14f -> "SWIPE LEFT / RIGHT TO CHANGE LANES"
+            d < 26f -> "SWIPE UP TO JUMP"
+            d < 38f -> "SWIPE DOWN TO ROLL"
+            d < 58f -> "GRAB THE COINS!"
+            else -> "DODGE THE TRAINS — THE COP IS CHASING!"
+        }
+        val bob = sin(time * 3.1f) * 5f
+        val w = theme.textWidth(theme.fontSmall, msg) + 64f
+        val x = vw / 2f - w / 2f
+        val y = 210f + bob
+        theme.button(batch, x, y, w, 58f, Palette.UI_GOLD_BTN, false)
+        theme.text(batch, theme.fontSmall, msg, x, y + 37f, Color.WHITE, Align.center, w)
     }
 
     private fun powerColor(i: Int): Color = when (i) {
@@ -339,28 +459,36 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         1 -> Color(0xf59e0bff.toInt())
         2 -> Color(0x2dd4bfff.toInt())
         3 -> Color(0xa3e635ff.toInt())
-        else -> Color(0xf97316ff.toInt())
+        4 -> Color(0xf97316ff.toInt())
+        else -> Color(0xc084fcff.toInt())
     }
 
     // ════════════════════════════════════════════════════════════════════
-    //  TUTORIAL — non-blocking floating hint chips during the first run
+    //  TUTORIAL
     // ════════════════════════════════════════════════════════════════════
-    /** [pending] = per-action flags (left,right,jump,slide); true = still show the hint. */
-    fun drawHintChips(time: Float, pending: BooleanArray) {
+    fun drawTutorial(time: Float) {
+        val b = bridge!!
         drawHud(time)
-        val msgs = arrayOf("< SWIPE TO MOVE", "SWIPE TO MOVE >", "^ SWIPE UP = JUMP", "v SWIPE DOWN = ROLL")
-        val shown = intArrayOf(0, 1, 2, 3).filter { pending.getOrNull(it) == true }
-        if (shown.isEmpty()) return
-        val pulse = (sin(time * 4.5f) * 0.5f + 0.5f)
-        val chipH = 104f
-        val startY = vh * 0.62f
-        for ((i, idx) in shown.withIndex()) {
-            val y = startY - i * (chipH + 22f)
-            batch.setColor(1f, 1f, 1f, 0.92f)
-            theme.panel(batch, vw / 2f - 280f, y, 560f, chipH, Palette.UI_PANEL)
-            batch.setColor(1f, 1f, 1f, 1f)
-            theme.text(batch, theme.fontSmall, msgs[idx], 0f, y + chipH / 2f + 16f, Palette.GOLD, Align.center, vw)
+        val step = b.tutorialStep ?: return
+        val msgs = arrayOf(
+            "SWIPE LEFT\nTO MOVE LEFT",
+            "SWIPE RIGHT\nTO MOVE RIGHT",
+            "SWIPE UP\nTO JUMP",
+            "SWIPE DOWN\nTO SLIDE"
+        )
+        val msg = msgs[step.coerceIn(0, 3)]
+        // pulsing arrow — big gold glyph (batch-safe)
+        val pulse = sin(time * 5f) * 14f
+        val cx = vw / 2f
+        val cy = vh * 0.42f
+        val glyph = when (step) {
+            0 -> "←"; 1 -> "→"; 2 -> "↑"; else -> "↓"
         }
+        val offX = if (step == 0) -pulse else if (step == 1) pulse else 0f
+        val offY = if (step == 2) pulse else if (step == 3) -pulse else 0f
+        theme.text(batch, theme.fontHuge, glyph, cx - 40f + offX, cy + 40f + offY, Palette.GOLD, Align.center, 80f)
+        theme.panel(batch, 60f, vh * 0.16f, vw - 120f, 150f, Palette.UI_PANEL)
+        theme.text(batch, theme.fontMed, msg, 0f, vh * 0.16f + 105f, Palette.UI_TEXT, Align.center, vw)
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -368,14 +496,29 @@ class UiController(val theme: UiTheme) : InputAdapter() {
     // ════════════════════════════════════════════════════════════════════
     fun drawPause() {
         val b = bridge!!
-        theme.panel(batch, vw / 2 - 270f, vh / 2 - 400f, 540f, 800f, Palette.UI_PANEL)
-        theme.panel(batch, vw / 2 - 240f, vh / 2 - 40f, 480f, 300f, Palette.UI_PANEL_DEEP)
-        theme.text(batch, theme.fontLarge, "PAUSED", 0f, vh / 2 + 230f, Color.WHITE, Align.center, vw)
-        theme.text(batch, theme.fontMed, "SCORE ${b.score}", 0f, vh / 2 + 130f, Palette.GOLD, Align.center, vw)
-        theme.text(batch, theme.fontSmall, "${b.distance.toInt()}m  •  ${b.runCoins} COINS", 0f, vh / 2 + 70f, Palette.UI_MUTED, Align.center, vw)
-        if (btn("resume", vw / 2 - 190f, vh / 2 - 120f, 380f, 100f, Palette.UI_GREEN, "RESUME")) b.resumeGame()
-        if (btn("restart", vw / 2 - 190f, vh / 2 - 240f, 380f, 100f, Palette.UI_GOLD_BTN, "RESTART")) b.restartRun()
-        if (btn("home", vw / 2 - 190f, vh / 2 - 360f, 380f, 100f, Palette.UI_NAVY, "HOME")) b.toMenu()
+        // v4.5: same scene-dim as game over — world no longer bleeds through
+        theme.rect(batch, 0f, 0f, vw, vh, Palette.UI_DIM, 0.5f)
+        // v4.1 SS-style pause card: white rounded card, character portrait,
+        // stat chips, gold RESUME — reads like the SS pause overlay
+        val cx = vw / 2f
+        theme.panel(batch, cx - 300f, vh / 2 - 420f, 600f, 840f, Palette.UI_PANEL_LIGHT)
+        theme.panel(batch, cx - 268f, vh / 2 - 30f, 536f, 320f, Palette.UI_PANEL_DEEP)
+        // selected runner portrait in the stat slot
+        val selIdx = CharacterDef.ALL.indexOfFirst { it.id == b.save.selectedCharacter }
+        drawMiniCharacter(if (selIdx < 0) 0 else selIdx, cx - 90f, vh / 2 + 60f, 180f)
+        theme.text(batch, theme.fontHuge, "PAUSED", 0f, vh / 2 + 288f, Color.WHITE, Align.center, vw)
+        theme.text(batch, theme.fontMed, "SCORE ${b.score}", 0f, vh / 2 + 64f, Palette.GOLD, Align.center, vw)
+        // stat chips: distance / coins
+        theme.panel(batch, cx - 268f, vh / 2 - 160f, 258f, 110f, Palette.UI_PANEL)
+        theme.text(batch, theme.fontMed, "${b.distance.toInt()}m", cx - 268f, vh / 2 - 92f, Color.WHITE, Align.center, 258f)
+        theme.text(batch, theme.fontTiny, "DISTANCE", cx - 268f, vh / 2 - 126f, Palette.UI_MUTED, Align.center, 258f)
+        theme.panel(batch, cx + 10f, vh / 2 - 160f, 258f, 110f, Palette.UI_PANEL)
+        theme.coinIcon(batch, cx + 10f + 96f, vh / 2 - 90f, 36f)
+        theme.text(batch, theme.fontMed, "${b.runCoins}", cx + 10f, vh / 2 - 92f, Palette.GOLD, Align.center, 258f)
+        theme.text(batch, theme.fontTiny, "COINS", cx + 10f, vh / 2 - 126f, Palette.UI_MUTED, Align.center, 258f)
+        if (btn("resume", cx - 190f, vh / 2 - 300f, 380f, 104f, Palette.UI_GREEN, "RESUME", theme.fontLarge)) b.resumeGame()
+        if (btn("restart", cx - 190f, vh / 2 - 424f, 380f, 96f, Palette.UI_GOLD_BTN, "RESTART")) b.restartRun()
+        if (btn("home", cx - 190f, vh / 2 - 540f, 380f, 96f, Palette.UI_NAVY, "HOME")) b.toMenu()
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -383,18 +526,22 @@ class UiController(val theme: UiTheme) : InputAdapter() {
     // ════════════════════════════════════════════════════════════════════
     fun drawGameOver() {
         val b = bridge!!
-        // SS celebration: soft radial rainbow burst behind the card on NEW BEST
+        // v4.5: dim the scene behind the card — the 3D world (esp. a frozen
+        // train right after a crash) bled through the panel and made the
+        // score card unreadable in QA shots. SS dims its overlays too.
+        theme.rect(batch, 0f, 0f, vw, vh, Palette.UI_DIM, 0.5f)
+        // SS celebration: warm glow pulse behind the panel on NEW BEST (no fullscreen rainbow)
         if (b.newBest) {
-            batch.setColor(1f, 1f, 1f, 0.5f)
-            batch.draw(TextureGen.rainbowBurst, vw * 0.14f, vh * 0.16f, vw * 0.72f, vh * 0.68f)
-            val pulse = 0.3f + sin(System.nanoTime() / 2.4e8f) * 0.1f
-            batch.setColor(1f, 1f, 1f, pulse)
-            batch.draw(TextureGen.glow, vw / 2f - 300f, vh / 2f - 300f, 600f, 600f)
+            val pulse = 0.30f + sin(System.nanoTime() / 2.4e8f) * 0.10f
+            batch.setColor(1f, 0.9f, 0.55f, pulse)
+            batch.draw(TextureGen.glow, vw / 2f - 330f, 470f, 660f, 660f)
             batch.setColor(1f, 1f, 1f, 1f)
         }
         theme.panel(batch, vw / 2 - 320f, 220f, 640f, 820f, Palette.UI_PANEL)
         if (b.newBest) {
             theme.text(batch, theme.fontLarge, "NEW HIGH SCORE!", 0f, 962f, Palette.GOLD, Align.center, vw)
+        } else if (b.guardCatch) {
+            theme.text(batch, theme.fontLarge, "CAUGHT BY THE GUARD!", 0f, 966f, Palette.DANGER, Align.center, vw)
         } else {
             theme.text(batch, theme.fontLarge, "RUN OVER", 0f, 970f, Color.WHITE, Align.center, vw)
         }
@@ -416,10 +563,19 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         // best
         theme.text(batch, theme.fontSmall, "BEST ${b.save.best}", 0f, 528f, if (b.newBest) Palette.GOLD else Palette.UI_MUTED, Align.center, vw)
 
-        if (btn("retry", vw / 2 - 190f, 366f, 380f, 112f, Palette.UI_GOLD_BTN, "RUN AGAIN", theme.fontLarge)) {
+        if (btn("retry", vw / 2 - 190f, 424f, 380f, 112f, Palette.UI_GOLD_BTN, "RUN AGAIN", theme.fontLarge)) {
             b.restartRun()
         }
-        if (btn("gohome", vw / 2 - 190f, 250f, 380f, 90f, Palette.UI_NAVY, "HOME")) {
+        // v4.6 post-run GIFT: double this run's coins, once per run (SS doubler)
+        if (b.giftAvailable && b.runCoins > 0) {
+            if (btn("gift", vw / 2 - 190f, 340f, 380f, 72f, Palette.UI_GREEN, "DOUBLE COINS x2", theme.fontMed)) {
+                b.claimGift()
+            }
+        } else if (b.giftBonus > 0) {
+            theme.panel(batch, vw / 2 - 190f, 340f, 380f, 72f, Palette.UI_PANEL_DEEP)
+            theme.text(batch, theme.fontMed, "GIFTED +${b.giftBonus}", vw / 2 - 190f, 386f, Palette.GOLD, Align.center, 380f)
+        }
+        if (btn("gohome", vw / 2 - 190f, 248f, 380f, 80f, Palette.UI_NAVY, "HOME")) {
             b.toMenu()
         }
     }
@@ -470,9 +626,6 @@ class UiController(val theme: UiTheme) : InputAdapter() {
             }
         }
 
-        sr.begin(ShapeRenderer.ShapeType.Filled)
-        sr.setColor(1f, 1f, 1f, 1f)
-        sr.end()
         when (b.shopTab) {
             ShopTab.CHARACTERS -> shopCharacters()
             ShopTab.UPGRADES -> shopUpgrades()
@@ -524,29 +677,46 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         var y = vh - 300f - scrollY
         for ((i, name) in com.dummysurfers.core.state.SaveManager.Companion.POWERUP_NAMES.withIndex()) {
             if (y < 150f) break
-            if (y > vh) { y -= 190f; continue }
+            if (y > vh) { y -= 165f; continue }
             val lvl = b.save.upgradeLevel(name)
-            theme.panel(batch, 24f, y, vw - 48f, 170f, Palette.UI_PANEL_LIGHT)
+            theme.panel(batch, 24f, y, vw - 48f, 148f, Palette.UI_PANEL_LIGHT)
             batch.setColor(1f, 1f, 1f, 1f)
-            batch.draw(TextureGen.powerIcons[i], 44f, y + 45f, 80f, 80f)
-            theme.text(batch, theme.fontSmall, GameConfig.POWERUP_LABELS[i], 150f, y + 120f, Palette.UI_TEXT)
-            // level pips
+            batch.draw(TextureGen.powerIcons[i], 44f, y + 38f, 72f, 72f)
+            theme.text(batch, theme.fontSmall, GameConfig.POWERUP_LABELS[i], 142f, y + 106f, Palette.UI_TEXT)
+            // level pips — batch-safe discs
             for (p in 0 until 3) {
-                sr.begin(ShapeRenderer.ShapeType.Filled)
-                sr.setColor(if (p < lvl) Palette.GOLD else Palette.UI_PANEL_DEEP)
-                sr.circle(160f + p * 34f, y + 85f, 12f)
-                sr.end()
+                theme.disc(batch, 152f + p * 32f, y + 76f, 11f, if (p < lvl) Palette.GOLD else Palette.UI_PANEL_DEEP)
             }
             val costText = if (lvl >= 3) "MAXED" else "+3s  ${GameConfig.UPGRADE_COSTS[i][lvl]} C"
-            theme.text(batch, theme.fontTiny, costText, 150f, y + 50f, Palette.UI_MUTED)
+            theme.text(batch, theme.fontTiny, costText, 142f, y + 42f, Palette.UI_MUTED)
             if (lvl < 3) {
                 val id = "upg_$name"
-                if (btn(id, vw - 260f, y + 50f, 210f, 70f, Palette.UI_GOLD_BTN, "UPGRADE", theme.fontSmall)) b.buyUpgrade(name)
+                if (btn(id, vw - 260f, y + 40f, 210f, 68f, Palette.UI_GOLD_BTN, "UPGRADE", theme.fontSmall)) b.buyUpgrade(name)
             } else {
-                theme.panel(batch, vw - 260f, y + 50f, 210f, 70f, Palette.UI_PANEL_DEEP)
-                theme.text(batch, theme.fontTiny, "MAX", vw - 260f, y + 80f, Palette.UI_MUTED, Align.center, 210f)
+                theme.panel(batch, vw - 260f, y + 40f, 210f, 68f, Palette.UI_PANEL_DEEP)
+                theme.text(batch, theme.fontTiny, "MAX", vw - 260f, y + 62f, Palette.UI_MUTED, Align.center, 210f)
             }
-            y -= 190f
+            y -= 165f
+        }
+        // hoverboard consumable — the SS 2nd-chance machine
+        if (y >= 150f) {
+            theme.panel(batch, 24f, y, vw - 48f, 148f, Palette.UI_PANEL_LIGHT)
+            val ix = 80f
+            val iy = y + 74f
+            // hoverboard preview — deck + gold stripe + wheels (batch-safe)
+            theme.pill(batch, ix - 34f, iy - 8f, 68f, 16f, Palette.UI_ACCENT2)
+            theme.rect(batch, ix - 34f, iy - 2f, 68f, 4f, Palette.GOLD)
+            theme.disc(batch, ix - 24f, iy - 11f, 6f, Palette.UI_PANEL_DEEP)
+            theme.disc(batch, ix + 24f, iy - 11f, 6f, Palette.UI_PANEL_DEEP)
+            theme.text(batch, theme.fontSmall, "HOVERBOARD", 142f, y + 106f, Palette.UI_TEXT)
+            val full = b.save.hoverboards >= GameConfig.HOVERBOARD_MAX
+            theme.text(batch, theme.fontTiny, "x${b.save.hoverboards} · SAVES FROM ONE CRASH · DOUBLE-TAP TO RIDE", 142f, y + 74f, Palette.UI_MUTED)
+            if (full) {
+                theme.panel(batch, vw - 260f, y + 40f, 210f, 68f, Palette.UI_PANEL_DEEP)
+                theme.text(batch, theme.fontTiny, "RACK FULL", vw - 260f, y + 62f, Palette.UI_MUTED, Align.center, 210f)
+            } else {
+                if (btn("buy_board", vw - 260f, y + 40f, 210f, 68f, Palette.UI_GOLD_BTN, "${GameConfig.HOVERBOARD_COST} C", theme.fontSmall)) b.buyHoverboard()
+            }
         }
     }
 
@@ -561,13 +731,10 @@ class UiController(val theme: UiTheme) : InputAdapter() {
             val owned = i == 0 || b.save.trail >= i
             val active = b.save.trail == i
             theme.panel(batch, 24f, y, vw - 48f, 150f, Palette.UI_PANEL_LIGHT)
-            // trail preview: three blobs
-            sr.begin(ShapeRenderer.ShapeType.Filled)
+            // trail preview: three fading blobs (batch-safe)
             for (k in 0 until 3) {
-                sr.setColor(colors[i])
-                sr.circle(90f + k * 34f, y + 75f - k * 4f, 14f - k * 3f)
+                theme.disc(batch, 90f + k * 34f, y + 75f - k * 4f, 14f - k * 3f, colors[i], 1f - k * 0.22f)
             }
-            sr.end()
             theme.text(batch, theme.fontMed, names[i], 200f, y + 100f, Palette.UI_TEXT)
             val statusText = if (i == 0) "DEFAULT" else if (active) "EQUIPPED" else if (owned) "OWNED" else "${GameConfig.TRAIL_COSTS[i]} COINS"
             theme.text(batch, theme.fontTiny, statusText, 200f, y + 60f, if (active) Palette.UI_ACCENT2 else Palette.UI_MUTED)
@@ -622,7 +789,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
             theme.panel(batch, 24f, y, vw - 48f, 200f, Palette.UI_PANEL_LIGHT)
             theme.text(batch, theme.fontSmall, missionLabel(m.type), 44f, y + 150f, Palette.UI_TEXT)
             theme.text(batch, theme.fontTiny, "REWARD ${m.reward} COINS", 44f, y + 112f, Palette.GOLD)
-            theme.progressBar(sr, 44f, y + 55f, vw - 400f, 20f, m.progress.toFloat() / m.goal, if (done) Palette.UI_GREEN else Palette.GOLD)
+            theme.bar(batch, 44f, y + 55f, vw - 400f, 20f, m.progress.toFloat() / m.goal, if (done) Palette.UI_GREEN else Palette.GOLD)
             theme.text(batch, theme.fontTiny, "${min(m.progress, m.goal)}/${m.goal}", 44f, y + 40f, Palette.UI_MUTED)
             if (m.claimed) {
                 theme.panel(batch, vw - 280f, y + 60f, 230f, 80f, Palette.UI_PANEL_DEEP)
@@ -652,16 +819,12 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         fun toggle(id: String, label: String, on: Boolean, set: (Boolean) -> Unit) {
             theme.panel(batch, 24f, y, vw - 48f, 110f, Palette.UI_PANEL_LIGHT)
             theme.text(batch, theme.fontMed, label, 48f, y + 65f, Palette.UI_TEXT)
-            // switch
+            // switch — pill track + sliding knob (batch-safe)
             val sx = vw - 220f
-            sr.begin(ShapeRenderer.ShapeType.Filled)
-            sr.setColor(if (on) Palette.UI_GREEN else Palette.UI_PANEL_DEEP)
-            sr.rect(sx, y + 30f, 150f, 50f)
-            sr.circle(sx + 25f, y + 55f, 25f)
-            sr.circle(sx + 125f, y + 55f, 25f)
-            sr.setColor(Color.WHITE)
-            sr.circle(if (on) sx + 118f else sx + 32f, y + 55f, 21f)
-            sr.end()
+            theme.pill(batch, sx, y + 30f, 150f, 50f, if (on) Palette.UI_GREEN else Palette.UI_PANEL_DEEP)
+            theme.disc(batch, sx + 25f, y + 55f, 24f, if (on) Palette.UI_GREEN else Palette.UI_PANEL_DEEP)
+            theme.disc(batch, sx + 125f, y + 55f, 24f, if (on) Palette.UI_GREEN else Palette.UI_PANEL_DEEP)
+            theme.disc(batch, if (on) sx + 118f else sx + 32f, y + 55f, 20f, Color.WHITE)
             hits.add(HitRect(id, sx - 20f, y + 20f, 190f, 70f) {})
             if (clickId == id) set(!on)
         }
@@ -672,7 +835,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         toggle("vib", "VIBRATION", b.save.vibrationOn) { b.setVibration(it) }
         y -= 170f
         if (btn("reset", vw / 2 - 190f, y, 380f, 100f, Palette.DANGER, "RESET DATA", theme.fontSmall)) b.openPanel(MenuPanel.RESET_CONFIRM)
-        theme.text(batch, theme.fontTiny, "DUMMY SURFERS BY FSK — V1.0", 0f, 80f, Palette.UI_MUTED, Align.center, vw)
+        theme.text(batch, theme.fontTiny, "DUMMY SURFERS BY FSK", 0f, 80f, Palette.UI_MUTED, Align.center, vw)
         theme.text(batch, theme.fontTiny, "RUNS ${b.save.stats.runs}   BEST DIST ${b.save.stats.bestDistance}m", 0f, 110f, Palette.UI_MUTED, Align.center, vw)
     }
 
