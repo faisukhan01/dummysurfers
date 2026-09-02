@@ -121,17 +121,19 @@ export default function Home() {
         <Cloud className="right-[28%] top-[26%] h-9 w-24 sm:h-12 sm:w-32 opacity-85" delay={2.4} />
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-10 pt-10 sm:pt-16 pb-40 sm:pb-48">
-          {/* ── Author byline — one clean row, no chip ──────────────── */}
-          <div className="flex items-baseline gap-2 select-none" title="Faisal Khan — Developer">
-            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.3em] text-[#24316B] [text-shadow:0_1px_0_rgba(255,255,255,.65)]">
+          {/* ── Author byline — label on top, name beneath ─────────── */}
+          <div className="inline-block select-none" title="Faisal Khan — Developer">
+            <p className="flex items-center gap-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.32em] text-[#24316B] [text-shadow:0_1px_0_rgba(255,255,255,.65)]">
+              <span aria-hidden className="h-[2px] w-6 sm:w-8 rounded-full bg-gradient-to-r from-transparent to-[#E0A62B]" />
               Built by
-            </span>
-            <span aria-hidden className="text-[9px] leading-none text-[#F0A11A]">✦</span>
-            <GraffitiName
-              name="Faisal Khan"
-              className="text-[1.4rem] sm:text-[1.75rem]"
-              shadowFilter="drop-shadow(0 2px 0 rgba(36,49,107,.9)) drop-shadow(0 5px 8px rgba(36,49,107,.22))"
-            />
+            </p>
+            <div className="mt-0.5">
+              <GraffitiName
+                name="Faisal Khan"
+                className="text-[1.4rem] sm:text-[1.75rem]"
+                shadowFilter="drop-shadow(0 2px 0 rgba(36,49,107,.9)) drop-shadow(0 5px 8px rgba(36,49,107,.22))"
+              />
+            </div>
           </div>
           <h1 className="mt-3 font-bold leading-[0.95] select-none">
             <GraffitiWord word="DUMMY" tilt={-2} className="text-[3.6rem] sm:text-8xl" />
