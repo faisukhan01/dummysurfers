@@ -48,7 +48,7 @@ fun main() {
                 flipped.drawPixmap(pm, 0, y, pm.width, 1, 0, pm.height - 1 - y, pm.width, 1)
             }
             val name = "%04d-%s.png".format(shotIndex++, if (label.isBlank()) "frame" else label)
-            PixmapIO.writePNG(File(dir, name), flipped)
+            PixmapIO.writePNG(com.badlogic.gdx.files.FileHandle(File(dir, name)), flipped)
             flipped.dispose()
             pm.dispose()
             Gdx.app.log("DSHARNESS", "shot $name state=${game.debugState()}")
