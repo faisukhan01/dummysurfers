@@ -80,9 +80,10 @@ class Game3DRenderer(
             if (t.z < -30f || t.z > 100f) continue
             val laneX = t.lanes[0] * GameConfig.LANE_WIDTH
             val pool = carPools[t.livery % 6]
+            // span [t.z, t.z + totalLength]: leading face at t.z, body extends away
             for (car in 0 until t.cars) {
-                val cz = t.z - (car + 0.5f) * GameConfig.TRAIN_CAR_LENGTH
-                if (cz < -12f || cz > 100f) continue
+                val cz = t.z + (car + 0.5f) * GameConfig.TRAIN_CAR_LENGTH
+                if (cz < -12f || cz > 110f) continue
                 if (pool.canTake()) {
                     val inst = pool.next()
                     inst.transform.setToTranslation(laneX, 0f, cz)
@@ -90,7 +91,7 @@ class Game3DRenderer(
                 }
             }
             // cab face at the leading (min-z) end — the face the player meets first
-            placeSimple(cabPool, laneX, 0f, t.z - t.totalLength + GameConfig.TRAIN_CAR_LENGTH / 2f + 0.05f, 180f)
+            placeSimple(cabPool, laneX, 0f, t.z + 0.16f)
         }
 
         // ── ramps (rotated 180° so the LOW edge is at min-z, met first) ──

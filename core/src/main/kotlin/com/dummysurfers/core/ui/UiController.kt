@@ -355,15 +355,14 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         val shown = intArrayOf(0, 1, 2, 3).filter { pending.getOrNull(it) == true }
         if (shown.isEmpty()) return
         val pulse = (sin(time * 4.5f) * 0.5f + 0.5f)
-        val chipH = 92f
-        val startY = vh * 0.68f
+        val chipH = 104f
+        val startY = vh * 0.62f
         for ((i, idx) in shown.withIndex()) {
-            val y = startY - i * (chipH + 26f)
-            val a = 0.62f + pulse * 0.38f
-            batch.setColor(1f, 1f, 1f, a * 0.9f)
-            theme.panel(batch, vw / 2f - 250f, y, 500f, chipH, Palette.UI_PANEL)
+            val y = startY - i * (chipH + 22f)
+            batch.setColor(1f, 1f, 1f, 0.92f)
+            theme.panel(batch, vw / 2f - 280f, y, 560f, chipH, Palette.UI_PANEL)
             batch.setColor(1f, 1f, 1f, 1f)
-            theme.text(batch, theme.fontMed, msgs[idx], 0f, y + chipH / 2f + 22f, Palette.GOLD, Align.center, vw)
+            theme.text(batch, theme.fontSmall, msgs[idx], 0f, y + chipH / 2f + 16f, Palette.GOLD, Align.center, vw)
         }
     }
 

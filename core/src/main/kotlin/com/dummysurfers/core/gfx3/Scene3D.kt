@@ -174,13 +174,13 @@ class Scene3D {
 
         // ── chase camera ──
         val camX = playerX * 0.42f
-        val camY = 4.6f + camLift
+        val camY = 3.9f + camLift
         cam.position.set(
             cam.position.x + (camX - cam.position.x) * 0.16f,
             cam.position.y + (camY - cam.position.y) * 0.12f,
-            -7.6f
+            -6.4f
         )
-        camTarget.set(playerX * 0.6f, 1.7f + camLift * 0.85f, 14f)
+        camTarget.set(playerX * 0.6f, 1.5f + camLift * 0.85f, 12f)
         cam.lookAt(camTarget)
         cam.update()
 
