@@ -134,3 +134,16 @@ Stage Summary:
 - Hero now opens with an animated gold calligraphy signature "Presented by Faisal Khan" + flourish; footer matches with bright shimmer. No "Built with Z.ai" anywhere on the page.
 - Design tokens: `.ss-signature` (font), `.ss-shine` (light bg), `.ss-shine-bright` (dark bg) in page.tsx style block — reusable for future signature spots.
 - Next: previous playability/fidelity mandate (Jack-style character, empty-screen fix, ~700 commits) remains the standing large-track task; this round only covered branding as requested.
+
+---
+Task ID: 12
+Agent: Z.ai Code (orchestrator)
+Task: "make it size small to make it aesthetically impressive" — compact the Built-by signature lockup.
+
+Work Log:
+- Hero signature scaled down: chip 10/11px → 9/10px (px-3.5 py-1, tracking .3em), name 2.7/3.6rem → 1.9/2.4rem, per-letter shadows softened (3px hard + 7px soft drop-shadow), wrapper glow reduced, spacing tightened (mt-1.5).
+- Result: clear hierarchy — micro chip → modest gold name → dominant DUMMY SURFERS title.
+- QA: desktop + 390px mobile screenshots, overflowX=false, lint clean. Pushed (fast-forward).
+
+Stage Summary:
+- Signature now reads as an elegant small credit line in the page's graffiti style, not a competing logo. Hero stack: BUILT BY chip / Faisal Khan / DUMMY SURFERS.
