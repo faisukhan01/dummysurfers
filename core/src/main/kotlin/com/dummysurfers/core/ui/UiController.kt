@@ -59,7 +59,8 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         val giftBonus: Int
         fun claimGift()
         val save: com.dummysurfers.core.state.SaveManager
-        val toFrame: (FloatArray) -> Unit // converts screen touch to virtual coords
+        val toFrame: (FloatArray) -> Unit // converts last input position to virtual coords
+        val toFrameAt: (Int, Int, FloatArray) -> Unit // converts a specific touch event position to virtual coords
 
         fun startRun()
         fun pauseGame()
@@ -113,7 +114,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
     override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
         val b = bridge ?: return false
         val v = FloatArray(2)
-        b.toFrame(v)
+        b.toFrameAt(screenX, screenY, v)
         touchVirtualX = v[0]; touchVirtualY = v[1]
         if (panelOpen()) {
             // panels own the whole screen (buttons + scroll area)
@@ -137,9 +138,6 @@ class UiController(val theme: UiTheme) : InputAdapter() {
                 val hit = hits.lastOrNull { (it.id == "pause" || it.id == "board") && inside(it, touchVirtualX, touchVirtualY) }
                 if (hit != null) { pressedId = hit.id; true } else false
             }
-            // MENU / GAME_OVER / PAUSED-without-panel: every registered button is
-            // live. (The old early-return here made RUN/CHARS/SHOP/TASKS/SETUP
-            // dead on touch devices — players were stuck on the menu forever.)
             else -> {
                 val hit = hits.lastOrNull { inside(it, touchVirtualX, touchVirtualY) }
                 if (hit != null) { pressedId = hit.id; dragging = false; true } else false
@@ -150,7 +148,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
     override fun touchDragged(screenX: Int, screenY: Int, pointer: Int): Boolean {
         if (!dragging) return panelOpen()
         val v = FloatArray(2)
-        bridge!!.toFrame(v)
+        bridge!!.toFrameAt(screenX, screenY, v)
         val dy = v[1] - scrollDragStart
         scrollY = (scrollDragValue - dy).coerceIn(0f, maxScroll())
         return true
@@ -162,7 +160,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         dragging = false
         if (wasPressed == null) return panelOpen()
         val v = FloatArray(2)
-        bridge!!.toFrame(v)
+        bridge!!.toFrameAt(screenX, screenY, v)
         val hit = hits.lastOrNull { it.id == wasPressed && inside(it, v[0], v[1]) }
         if (hit != null) {
             clickId = hit.id

@@ -919,6 +919,11 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         if (state == GameState.PLAYING || state == GameState.TUTORIAL) state = GameState.PAUSED
     }
 
+    // ── QA harness hooks (desktop only) ────────────────────────────────
+    fun debugStartRun() = startRun()
+    fun debugSwipe(dir: com.dummysurfers.core.input.SwipeDetector.Direction) = handleSwipe(dir)
+    fun debugState(): String = state.name
+
     override fun dispose() {
         audio.dispose()
         theme.dispose()
@@ -1061,10 +1066,14 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         }
         override val save: SaveManager get() = this@DummySurfersGame.save
         override val toFrame: (FloatArray) -> Unit
-            get() = { out ->
-                out[0] = (Gdx.input.x - vpX) / viewScale
-                out[1] = GameConfig.VIRTUAL_HEIGHT - (Gdx.input.y - vpY) / viewScale
-            }
+            get() = { out -> toFrameAtImpl(Gdx.input.x, Gdx.input.y, out) }
+        override val toFrameAt: (Int, Int, FloatArray) -> Unit
+            get() = { x, y, out -> toFrameAtImpl(x, y, out) }
+
+        private fun toFrameAtImpl(x: Int, y: Int, out: FloatArray) {
+            out[0] = (x - vpX) / viewScale
+            out[1] = GameConfig.VIRTUAL_HEIGHT - (y - vpY) / viewScale
+        }
 
         override fun startRun() = this@DummySurfersGame.startRun()
         override fun pauseGame() = this@DummySurfersGame.pauseGame()
