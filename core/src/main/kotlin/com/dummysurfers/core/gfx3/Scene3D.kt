@@ -173,14 +173,14 @@ class Scene3D {
         batch2d.projectionMatrix = saved
 
         // ── chase camera ──
-        val camX = playerX * 0.42f
-        val camY = 3.9f + camLift
+        val camX = playerX * 0.45f
+        val camY = 3.7f + camLift
         cam.position.set(
             cam.position.x + (camX - cam.position.x) * 0.16f,
             cam.position.y + (camY - cam.position.y) * 0.12f,
-            -6.4f
+            -5.9f
         )
-        camTarget.set(playerX * 0.6f, 1.5f + camLift * 0.85f, 12f)
+        camTarget.set(playerX * 0.62f, 1.45f + camLift * 0.85f, 12f)
         cam.lookAt(camTarget)
         cam.update()
 
