@@ -68,7 +68,7 @@ class HumanoidRig(palette: RigPalette) {
     // root space: y=0 at feet. Each part gets its OWN model (own material) —
     // per-part tinting is then guaranteed to render correctly.
     private fun add(hex: Int, px: Float, py: Float, pz: Float, ox: Float, oy: Float, oz: Float, sx: Float, sy: Float, sz: Float): BodyPart {
-        val p = BodyPart(ModelInstance(Assets3D.boxModel(c(hex)))), Vector3(px, py, pz), Vector3(ox, oy, oz), Vector3(sx, sy, sz))
+        val p = BodyPart(ModelInstance(Assets3D.boxModel(c(hex))), Vector3(px, py, pz), Vector3(ox, oy, oz), Vector3(sx, sy, sz))
         parts.add(p)
         return p
     }
@@ -215,7 +215,7 @@ class DogRig {
     val parts = ArrayList<BodyPart>(10)
     private val c = { hex: Int -> Color(hex.shl(8) or 0xff) }
     private fun add(hex: Int, px: Float, py: Float, pz: Float, ox: Float, oy: Float, oz: Float, sx: Float, sy: Float, sz: Float): BodyPart {
-        val p = BodyPart(ModelInstance(Assets3D.boxModel(c(hex)))), Vector3(px, py, pz), Vector3(ox, oy, oz), Vector3(sx, sy, sz))
+        val p = BodyPart(ModelInstance(Assets3D.boxModel(c(hex))), Vector3(px, py, pz), Vector3(ox, oy, oz), Vector3(sx, sy, sz))
         parts.add(p)
         return p
     }
