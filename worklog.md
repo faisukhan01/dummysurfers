@@ -116,3 +116,21 @@ Stage Summary:
 - The game now wears Subway Surfers' complete visual identity (world + entities + UI + fonts + celebration) while staying 100% procedural/original. All Gradle modules green; APK rebuilt.
 - Design Bible at dummy-surfers/docs/DESIGN_BIBLE.md governs future art additions.
 - Next-round ideas: hoverboard-style 2nd-chance power-up, character shop portraits w/ SS big-head proportions, mission-complete popup cards, daily word-hunt style side event, more World Tour city themes (palette swap per zone).
+
+---
+Task ID: 10
+Agent: Z.ai Code (orchestrator)
+Task: Landing-page branding — replace "By FSK — Built with Z.ai" with an impressive, aesthetic "Faisal Khan" signature; user then rejected v1 (pill + Pacifico looked ugly) and ordered removal of "Built with Z.ai".
+
+Work Log:
+- v1 (rejected): navy pill badge + Pacifico script name + separate "Built with Z.ai" chip; added Pacifico via next/font/google in layout.tsx.
+- v2 (shipped): swapped to Great_Vibes calligraphy (`--font-script`), removed BOTH pills, built an elegant signature lockup — "PRESENTED BY" micro-label with gold gradient rules, large (3.1/3.9rem) "Faisal Khan" with animated gold-shimmer gradient (`.ss-shine`, 6s background-position sweep, reduced-motion fallback), soft warm glow, SVG calligraphic flourish underline with gradient stroke + pen-flick tick.
+- Footer: "Dummy Surfers by Faisal Khan" with `.ss-shine-bright` (lighter gold stops + drop-shadow so it stays legible on navy; v1 dark-gold gradient was invisible on dark bg — caught in QA screenshot).
+- Stripped every remaining "Z.ai"/"FSK" mention from page.tsx (grep = 0 matches); OG siteName → "Dummy Surfers"; metadata title/description/authors/OG/Twitter → "by Faisal Khan".
+- QA via agent-browser: desktop hero + footer screenshots, 390px mobile screenshot — Pacifico/GreatVibes loaded, no horizontal overflow, sticky footer intact, console clean (HMR info only).
+- Git: local had diverged from remote (parallel v5.0.0 commit history, same content re-synced locally via f4e985f). Verified local superset (174 files, versionCode 20 matches), committed signature v2, force-pushed with lease (fee19b8 → 22921e7). CI will build new APK automatically.
+
+Stage Summary:
+- Hero now opens with an animated gold calligraphy signature "Presented by Faisal Khan" + flourish; footer matches with bright shimmer. No "Built with Z.ai" anywhere on the page.
+- Design tokens: `.ss-signature` (font), `.ss-shine` (light bg), `.ss-shine-bright` (dark bg) in page.tsx style block — reusable for future signature spots.
+- Next: previous playability/fidelity mandate (Jack-style character, empty-screen fix, ~700 commits) remains the standing large-track task; this round only covered branding as requested.
