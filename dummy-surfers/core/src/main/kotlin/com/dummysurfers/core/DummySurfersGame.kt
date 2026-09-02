@@ -74,7 +74,9 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     private var state: GameState = GameState.MENU
     private var menuPanel = MenuPanel.NONE
     private var shopTab = ShopTab.CHARACTERS
-    private var tutorialStep: Int? = null
+
+    /** Non-blocking first-run hints (left,right,jump,slide). true = still pending. */
+    private val tutorialHints = BooleanArray(4)
 
     // ── Run state ──────────────────────────────────────────────────────
     private var score = 0
@@ -163,7 +165,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
 
         when (state) {
             GameState.MENU -> updateAttract(dt)
-            GameState.TUTORIAL -> updateRun(dt, tutorial = true)
+            GameState.TUTORIAL -> updateRun(dt, tutorial = true) // kept for save compat, unused
             GameState.PLAYING -> updateRun(dt, tutorial = false)
             GameState.DYING -> updateDying(dt)
             else -> {}
@@ -302,29 +304,20 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     // ── Gameplay interactions ──────────────────────────────────────────
     private fun handleSwipe(dir: SwipeDetector.Direction) {
         when (state) {
-            GameState.TUTORIAL -> {
-                val step = tutorialStep ?: return
-                val expected = when (step) {
-                    0 -> SwipeDetector.Direction.LEFT
-                    1 -> SwipeDetector.Direction.RIGHT
-                    2 -> SwipeDetector.Direction.UP
-                    else -> SwipeDetector.Direction.DOWN
+            GameState.PLAYING -> {
+                performSwipe(dir)
+                // first-run hint completed by performing the action
+                val idx = when (dir) {
+                    SwipeDetector.Direction.LEFT -> 0
+                    SwipeDetector.Direction.RIGHT -> 1
+                    SwipeDetector.Direction.UP -> 2
+                    else -> 3
                 }
-                if (dir == expected) {
-                    // perform the action then advance
-                    performSwipe(dir)
-                    tutorialStep = if (step >= 3) null else step + 1
-                    if (tutorialStep == null) {
-                        save.markTutorialDone()
-                        startRun()
-                    } else {
-                        audio.play(GameEvent.TUTORIAL_STEP)
-                    }
-                } else {
-                    performSwipe(dir) // still allow moving during tutorial
+                if (tutorialHints[idx]) {
+                    tutorialHints[idx] = false
+                    if (tutorialHints.all { !it }) save.markTutorialDone()
                 }
             }
-            GameState.PLAYING -> performSwipe(dir)
             else -> {}
         }
     }
@@ -506,17 +499,15 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
 
     fun startRun() {
         startRunInternal()
-        state = if (save.tutorialDone) GameState.PLAYING else GameState.TUTORIAL
-        if (state == GameState.TUTORIAL) {
-            tutorialStep = 0
-            spawner.reset()
-        }
+        state = GameState.PLAYING
+        // first ever run gets floating hint chips, but gameplay starts immediately
+        val firstRun = !save.tutorialDone
+        for (i in 0 until 4) tutorialHints[i] = firstRun
         audio.play(GameEvent.CLICK)
     }
 
     fun restartRun() {
         startRunInternal()
-        tutorialStep = null
         state = GameState.PLAYING
         audio.play(GameEvent.CLICK)
     }
@@ -527,7 +518,6 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     fun toMenu() {
         state = GameState.MENU
         menuPanel = MenuPanel.NONE
-        tutorialStep = null
         player.reset()
         world.reset()
         spawner.reset()
@@ -535,6 +525,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     }
 
     private fun finalizeRun() {
+        save.markTutorialDone() // after any completed run the player knows the controls
         newBest = save.submitRun(score, runCoins, distance.toInt(), jumps, slides, powerupsUsed, nearMisses)
         displayScore = 0
         state = GameState.GAME_OVER
@@ -554,6 +545,12 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     override fun pause() {
         if (state == GameState.PLAYING || state == GameState.TUTORIAL) state = GameState.PAUSED
     }
+
+    // ── QA autopilot hooks (used by the desktop test harness only) ─────
+    fun debugStartRun() = startRun()
+    fun debugSwipe(dir: SwipeDetector.Direction) = handleSwipe(dir)
+    fun debugState(): String = state.name
+    fun debugMenuPanel(): String = menuPanel.name
 
     override fun dispose() {
         audio.dispose()
@@ -604,8 +601,10 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
                 if (menuPanel == MenuPanel.NONE) ui.drawMenu(time) else ui.drawPanel(time)
                 ui.drawToast(rawDt)
             }
-            GameState.TUTORIAL -> ui.drawTutorial(time)
-            GameState.PLAYING -> ui.drawHud(time)
+            GameState.PLAYING -> {
+                ui.drawHud(time)
+                if (!save.tutorialDone) ui.drawHintChips(time, tutorialHints)
+            }
             GameState.PAUSED -> { ui.drawHud(time); ui.drawPause() }
             GameState.GAME_OVER -> { ui.drawGameOver(); ui.drawToast(rawDt) }
             else -> {}
@@ -624,9 +623,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         override var shopTabSet: ShopTab
             get() = this@DummySurfersGame.shopTab
             set(value) { this@DummySurfersGame.shopTab = value }
-        override var tutorialStep: Int?
-            get() = this@DummySurfersGame.tutorialStep
-            set(value) { this@DummySurfersGame.tutorialStep = value }
+        override val tutorialHints: BooleanArray get() = this@DummySurfersGame.tutorialHints
         override val score: Int get() = this@DummySurfersGame.score
         override val displayScore: Int
             get() {

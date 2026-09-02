@@ -41,7 +41,8 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         val menuPanel: MenuPanel
         val shopTab: ShopTab
         var shopTabSet: ShopTab
-        var tutorialStep: Int?
+        /** per-action pending flags (left,right,jump,slide) for first-run hints */
+        val tutorialHints: BooleanArray
         val score: Int
         val displayScore: Int
         val runCoins: Int
@@ -345,42 +346,25 @@ class UiController(val theme: UiTheme) : InputAdapter() {
     }
 
     // ════════════════════════════════════════════════════════════════════
-    //  TUTORIAL
+    //  TUTORIAL — non-blocking floating hint chips during the first run
     // ════════════════════════════════════════════════════════════════════
-    fun drawTutorial(time: Float) {
-        val b = bridge!!
+    /** [pending] = per-action flags (left,right,jump,slide); true = still show the hint. */
+    fun drawHintChips(time: Float, pending: BooleanArray) {
         drawHud(time)
-        val step = b.tutorialStep ?: return
-        val msgs = arrayOf(
-            "SWIPE LEFT\nTO MOVE LEFT",
-            "SWIPE RIGHT\nTO MOVE RIGHT",
-            "SWIPE UP\nTO JUMP",
-            "SWIPE DOWN\nTO SLIDE"
-        )
-        val msg = msgs[step.coerceIn(0, 3)]
-        // pulsing arrow
-        val pulse = sin(time * 5f) * 14f
-        sr.begin(ShapeRenderer.ShapeType.Filled)
-        sr.setColor(Palette.GOLD)
-        val cx = vw / 2f
-        val cy = vh * 0.42f
-        when (step) {
-            0 -> { // left chevron
-                sr.triangle(cx - 40f - pulse, cy, cx + 10f - pulse, cy + 50f, cx + 10f - pulse, cy - 50f)
-            }
-            1 -> { // right chevron
-                sr.triangle(cx + 40f + pulse, cy, cx - 10f + pulse, cy + 50f, cx - 10f + pulse, cy - 50f)
-            }
-            2 -> { // up chevron
-                sr.triangle(cx, cy + 44f + pulse, cx - 48f, cy - 6f + pulse, cx + 48f, cy - 6f + pulse)
-            }
-            3 -> { // down chevron
-                sr.triangle(cx, cy - 44f - pulse, cx - 48f, cy + 6f - pulse, cx + 48f, cy + 6f - pulse)
-            }
+        val msgs = arrayOf("◄ SWIPE TO MOVE", "SWIPE TO MOVE ►", "▲ SWIPE UP = JUMP", "▼ SWIPE DOWN = ROLL")
+        val shown = intArrayOf(0, 1, 2, 3).filter { pending.getOrNull(it) == true }
+        if (shown.isEmpty()) return
+        val pulse = (sin(time * 4.5f) * 0.5f + 0.5f)
+        val chipH = 92f
+        val startY = vh * 0.68f
+        for ((i, idx) in shown.withIndex()) {
+            val y = startY - i * (chipH + 26f)
+            val a = 0.62f + pulse * 0.38f
+            batch.setColor(1f, 1f, 1f, a * 0.9f)
+            theme.panel(batch, vw / 2f - 250f, y, 500f, chipH, Palette.UI_PANEL)
+            batch.setColor(1f, 1f, 1f, 1f)
+            theme.text(batch, theme.fontMed, msgs[idx], 0f, y + chipH / 2f + 22f, Palette.GOLD, Align.center, vw)
         }
-        sr.end()
-        theme.panel(batch, 60f, vh * 0.16f, vw - 120f, 150f, Palette.UI_PANEL)
-        theme.text(batch, theme.fontMed, msg, 0f, vh * 0.16f + 105f, Palette.UI_TEXT, Align.center, vw)
     }
 
     // ════════════════════════════════════════════════════════════════════
