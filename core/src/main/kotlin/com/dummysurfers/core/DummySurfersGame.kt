@@ -90,6 +90,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     private val powerupTotal = FloatArray(5)
     private var displayScore = 0
     private var newBest = false
+    private var scoreAccum = 0f
     private var coinStreak = 0
     private var coinStreakTimer = 0f
     private var multiplier = 1
@@ -218,8 +219,13 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             }
         }
 
-        // score & multiplier
-        score += (scroll * GameConfig.DISTANCE_SCORE_PER_METER).toInt() * multiplier
+        // score & multiplier (float accumulator — scroll per frame < 1m)
+        scoreAccum += scroll * GameConfig.DISTANCE_SCORE_PER_METER * multiplier
+        if (scoreAccum >= 1f) {
+            val whole = scoreAccum.toInt()
+            score += whole
+            scoreAccum -= whole
+        }
         multiplier = Difficulty.multiplier(distance)
 
         // power-up timers
@@ -522,7 +528,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     private fun startRunInternal() {
         score = 0; displayScore = 0; runCoins = 0; distance = 0f
         jumps = 0; slides = 0; powerupsUsed = 0; nearMisses = 0
-        newBest = false; coinStreak = 0; multiplier = 1
+        newBest = false; coinStreak = 0; multiplier = 1; scoreAccum = 0f
         for (i in 0 until 5) { activePowerups[i] = 0f; powerupTotal[i] = 0f }
         player.reset()
         chaser.active = false

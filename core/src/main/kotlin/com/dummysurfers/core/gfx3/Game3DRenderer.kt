@@ -117,6 +117,8 @@ class Game3DRenderer(
             if (!coinPool.canTake()) break
             val inst = coinPool.next()
             inst.transform.setToTranslation(c.x, c.y, c.z)
+            // stand the disc upright facing the runner, then classic Y-spin
+            inst.transform.rotate(1f, 0f, 0f, 90f)
             inst.transform.rotate(0f, 1f, 0f, (time * 260f) % 360f)
             batch.render(inst, env)
         }
@@ -183,10 +185,10 @@ class Game3DRenderer(
     fun renderMenu(time: Float) {
         playerRig.apply(Pose.WAVE, 0f, 0f, 0f, 0f, 0f, time)
         for (p in playerRig.parts) batch.render(p.instance, env)
-        val gz = -4.6f + sin(time * 0.7f) * 0.5f
-        guardRig.apply(Pose.IDLE, -1.35f, 0f, gz, time, 0f, time)
+        val gz = 2.6f + sin(time * 0.7f) * 0.4f
+        guardRig.apply(Pose.IDLE, -1.45f, 0f, gz, time, 0f, time)
         for (p in guardRig.parts) batch.render(p.instance, env)
-        dogRig.apply(1.25f, 0f, gz - 0.35f, time * 2f, false)
+        dogRig.apply(1.35f, 0f, gz - 0.4f, time * 2f, false)
         for (p in dogRig.parts) batch.render(p.instance, env)
     }
 }
