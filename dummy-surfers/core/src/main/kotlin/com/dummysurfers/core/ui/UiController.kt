@@ -210,6 +210,13 @@ class UiController(val theme: UiTheme) : InputAdapter() {
     fun drawMenu(time: Float) {
         val b = bridge!!
         batch.setColor(1f, 1f, 1f, 1f)
+        // v5.2.1: DAYLIGHT LIFT — the world behind the menu rendered grey and
+        // moody (teal skyline + tunnel dark); a soft white + sky wash lifts
+        // the backdrop to the bright SS title-screen freshness without
+        // touching the world renderer
+        theme.rect(batch, 0f, 0f, vw, vh, Color(1f, 1f, 1f, 0.15f))
+        theme.rect(batch, 0f, vh * 0.5f, vw, vh * 0.5f, Color(0.62f, 0.86f, 1f, 0.10f))
+        batch.setColor(1f, 1f, 1f, 1f)
         // top currency pills (navy/gold, SS style)
         chipCoins(vw - 250f, vh - 96f)
         // settings gear shortcut top-left — v5.2: real white gear glyph (the
@@ -341,14 +348,16 @@ class UiController(val theme: UiTheme) : InputAdapter() {
             theme.button(batch, chipX, vh - 92f, chipW, 58f, Palette.UI_GOLD_BTN, false)
             theme.text(batch, theme.fontSmall, "x${b.multiplier}", chipX, vh - 55f, Color.WHITE, Align.center, chipW)
         }
-        // coins row: clean gold coin + outlined number over the scene (no slab
-        // pill — the real SS HUD keeps this minimal)
+        // coins row — v5.2.1: frosted navy pill (matches the pause roundel);
+        // the bare icon+number floated loose before, the chip is the real SS
         val coinStr = "${b.runCoins}"
         val coinStrW = theme.textWidth(theme.fontMed, coinStr)
-        theme.coinIcon(batch, vw - 22f - coinStrW - 50f, vh - 122f, 42f)
-        theme.text(batch, theme.fontMed, coinStr, 0f, vh - 86f, Color.WHITE, Align.right, vw - 22f)
-        // distance, small + soft, under the coins
-        theme.text(batch, theme.fontSmall, "${b.distance.toInt()}m", 0f, vh - 146f, Color(1f, 1f, 1f, 0.85f), Align.right, vw - 22f)
+        val coinPillW = coinStrW + 74f
+        theme.pill(batch, vw - 22f - coinPillW, vh - 138f, coinPillW, 60f, Palette.UI_PANEL_DEEP, 0.74f)
+        theme.coinIcon(batch, vw - 22f - coinPillW + 14f, vh - 127f, 38f)
+        theme.text(batch, theme.fontMed, coinStr, 0f, vh - 88f, Color.WHITE, Align.right, vw - 34f)
+        // distance, small + soft, under the coins pill
+        theme.text(batch, theme.fontSmall, "${b.distance.toInt()}m", 0f, vh - 154f, Color(1f, 1f, 1f, 0.85f), Align.right, vw - 22f)
 
         // v3.0: live "BEST!" flag the moment the current run passes the record
         if (!b.newBest && b.save.best > 0 && b.score > b.save.best) {
