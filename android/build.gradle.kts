@@ -20,8 +20,8 @@ android {
         applicationId = "com.fsk.dummysurfers"
         minSdk = 24
         targetSdk = 34
-        versionCode = 25
-        versionName = "5.4.0"
+        versionCode = 26
+        versionName = "6.0.0"
     }
 
     signingConfigs {
@@ -76,9 +76,8 @@ dependencies {
     gdxNatives("com.badlogicgames.gdx:gdx-platform:1.12.1:natives-armeabi-v7a")
     gdxNatives("com.badlogicgames.gdx:gdx-platform:1.12.1:natives-arm64-v8a")
     gdxNatives("com.badlogicgames.gdx:gdx-platform:1.12.1:natives-x86_64") // emulators
-    gdxNatives("com.badlogicgames.gdx:gdx-freetype-platform:1.12.1:natives-armeabi-v7a")
-    gdxNatives("com.badlogicgames.gdx:gdx-freetype-platform:1.12.1:natives-arm64-v8a")
-    gdxNatives("com.badlogicgames.gdx:gdx-freetype-platform:1.12.1:natives-x86_64") // emulators
+    // v6.0.0: gdx-freetype natives REMOVED — fonts are pre-baked BMFonts, the
+    // device never loads libgdx-freetype.so again (uncatchable native crash class)
 }
 
 // Extract every natives jar into build/gdx-jniLibs/<abi>/*.so so AGP packages
