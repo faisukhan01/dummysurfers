@@ -134,6 +134,9 @@ class UiTheme {
     }
 
     fun coinIcon(batch: SpriteBatch, x: Float, y: Float, size: Float) {
+        // v5.2: defensive white tint — this is drawn right after ninepatch
+        // slabs whose setColor() leak tints the coin into a dark blob
+        batch.setColor(1f, 1f, 1f, 1f)
         batch.draw(TextureGen.coinFrames[0], x, y, size, size)
     }
 }
