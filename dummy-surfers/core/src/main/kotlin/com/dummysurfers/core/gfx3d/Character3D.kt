@@ -90,15 +90,20 @@ class Human3D(
         // limb meshes pivot at their TOP (joint) — geometry hangs downward
         val thighM = f.colorBox("thigh$pants", 0.21f, 0.32f, 0.24f, pants)
         val shinM = f.colorBox("shin$pants", 0.18f, 0.26f, 0.2f, pants)
-        val shoeM = f.colorBox("shoe$shoes$accent", 0.19f, 0.13f, 0.36f, shoes)
-        // v4.7: slimmed 0.17x0.27x0.18 -> 0.15x0.24x0.17 AND hanging (pivot at
-        // the top) — centered boxes jutted above the shoulder and read as
-        // diagonal wings whenever the torso rolled during a lane change
+        // v5.2: SNEAKER REBUILD — the flat red box read as a sock from the
+        // chase cam. Now: white mid-sole slab + upper + white toe cap + heel
+        // tab (heel faces the camera — the detail you actually see running).
+        val shoeM = buildShoe(shoes)
+        // v4.7: slimmed hanging upper-arm — centered boxes jutted above the
+        // shoulder and read as diagonal wings whenever the torso rolled
         val upperM = f.colorBoxHang("upper$hoodie", 0.15f, 0.24f, 0.17f, hoodie)
         // v4.2: guard gets uniform-covered forearms (bare skin read as T-shirt
         // arms on a duty officer)
         val foreM = f.colorBoxHang("fore$skin$isGuard", 0.13f, 0.2f, 0.15f, if (isGuard) hoodie else skin)
-        val handM = f.colorBoxHang("hand$skin", 0.14f, 0.13f, 0.15f, skin)
+        // v5.2: sphere hands (box hands read as mittens)
+        val handM = f.colorBall("handBall$skin", 0.15f, skin, 7)
+        // v5.2: shoulder joint balls — smooth the arm/torso seam in silhouette
+        val shoulderM = f.colorBall("shoulderBall$hoodie", 0.17f, hoodie, 7)
 
         thighL = rig.add(ModelInstance(thighM), null, -0.13f, 0.72f, 0f)
         thighR = rig.add(ModelInstance(thighM), null, 0.13f, 0.72f, 0f)
@@ -111,6 +116,8 @@ class Human3D(
         torso = rig.add(ModelInstance(torsoM), null, 0f, 0.72f, 0f)
         armL = rig.add(ModelInstance(upperM), torso, -0.38f, 0.5f, 0f)
         armR = rig.add(ModelInstance(upperM), torso, 0.38f, 0.5f, 0f)
+        rig.add(ModelInstance(shoulderM), torso, -0.38f, 0.5f, 0f)
+        rig.add(ModelInstance(shoulderM), torso, 0.38f, 0.5f, 0f)
         foreL = rig.add(ModelInstance(foreM), armL, 0f, -0.27f, 0f)
         foreR = rig.add(ModelInstance(foreM), armR, 0f, -0.27f, 0f)
         rig.add(ModelInstance(handM), foreL, 0f, -0.2f, 0.02f)
@@ -170,6 +177,28 @@ class Human3D(
         return mb.end()
     }
 
+    /**
+     * v5.2 sneaker: white mid-sole + colored upper + white toe cap + heel
+     * tab. The heel tab deliberately faces +z (the chase camera) — it's the
+     * only shoe detail visible mid-run, and SS sneakers always flash white.
+     */
+    private fun buildShoe(shoes: Int): com.badlogic.gdx.graphics.g3d.Model {
+        val f = this.f
+        val mb = f.mb
+        mb.begin()
+        var mpb = mb.part("sole", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(0xeef0f2ff.toInt()))
+        mpb.setUVRange(0f, 0f, 1f, 1f)
+        mpb.cbox(0f, -0.045f, 0.01f, 0.21f, 0.07f, 0.38f)
+        mpb = mb.part("upper", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(shoes))
+        mpb.setUVRange(0f, 0f, 1f, 1f)
+        mpb.cbox(0f, 0.03f, 0f, 0.19f, 0.09f, 0.34f)
+        mpb = mb.part("toe", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(0xeef0f2ff.toInt()))
+        mpb.cbox(0f, 0.005f, -0.145f, 0.17f, 0.055f, 0.07f)
+        mpb = mb.part("heel", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(0xeef0f2ff.toInt()))
+        mpb.cbox(0f, 0.05f, 0.175f, 0.1f, 0.08f, 0.03f)
+        return mb.end()
+    }
+
     private fun buildTorso(hoodie: Int, vest: Int, hoodLining: Int, accent: Int, backpack: Int): com.badlogic.gdx.graphics.g3d.Model {
         val f = this.f
         val mb = f.mb
@@ -198,22 +227,35 @@ class Human3D(
             mpb.cbox(-0.07f, 0.36f, -0.2f, 0.035f, 0.16f, 0.03f)
             mpb.cbox(0.07f, 0.36f, -0.2f, 0.035f, 0.16f, 0.03f)
         }
-        // backpack + flap + straps (ON THE BACK = +z, faces the chase cam —
-        // v4.2 fix: the pack used to hang on the chest, invisible in-game)
-        // v4.5: pack deepened (0.16→0.2) so it reads as a BULKY spray pack in
-        // silhouette, not a flat apron; dark cross-band + top handle give the
-        // chase-cam view some hardware (SS packs always show a strap)
+        // v5.2 BACKPACK REBUILD — the old 0.44×0.50 slab covered the whole
+        // torso back with flat color ("blue box body" in QA). Smaller pack +
+        // side pockets + vertical straps with gold clips + hood roll behind
+        // the neck = real gear design the chase cam can actually read.
         if (!isGuard) {
             mpb = mb.part("pack", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(backpack))
             mpb.setUVRange(0f, 0f, 1f, 1f)
-            mpb.cbox(0f, 0.31f, 0.26f, 0.44f, 0.5f, 0.2f)
+            mpb.cbox(0f, 0.31f, 0.26f, 0.4f, 0.44f, 0.2f)
             mpb = mb.part("packFlap", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(mul(backpack, 0.8f)))
             mpb.setUVRange(0f, 0f, 1f, 1f)
-            mpb.cbox(0f, 0.46f, 0.35f, 0.44f, 0.14f, 0.05f)
+            mpb.cbox(0f, 0.47f, 0.345f, 0.4f, 0.12f, 0.05f)
             mpb = mb.part("packBand", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(mul(backpack, 0.5f)))
-            mpb.cbox(0f, 0.33f, 0.355f, 0.46f, 0.1f, 0.04f)
+            mpb.cbox(0f, 0.33f, 0.355f, 0.42f, 0.09f, 0.04f)
             mpb = mb.part("packHandle", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(mul(backpack, 0.62f)))
-            mpb.cbox(0f, 0.575f, 0.3f, 0.16f, 0.05f, 0.08f)
+            mpb.cbox(0f, 0.545f, 0.3f, 0.14f, 0.05f, 0.07f)
+            // side pockets (darker) — break up the slab silhouette
+            mpb = mb.part("packPocket", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(mul(backpack, 0.72f)))
+            mpb.cbox(-0.235f, 0.27f, 0.27f, 0.09f, 0.2f, 0.16f)
+            mpb.cbox(0.235f, 0.27f, 0.27f, 0.09f, 0.2f, 0.16f)
+            // vertical straps + gold clips on the pack face
+            mpb = mb.part("packStrapV", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(mul(backpack, 0.45f)))
+            mpb.cbox(-0.1f, 0.32f, 0.377f, 0.06f, 0.34f, 0.02f)
+            mpb.cbox(0.1f, 0.32f, 0.377f, 0.06f, 0.34f, 0.02f)
+            mpb = mb.part("packClip", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(accent))
+            mpb.cbox(-0.1f, 0.455f, 0.377f, 0.08f, 0.05f, 0.02f)
+            mpb.cbox(0.1f, 0.455f, 0.377f, 0.08f, 0.05f, 0.02f)
+            // hood roll behind the neck (white lining) — Jake DNA from behind
+            mpb = mb.part("hoodRoll", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(if (hoodLining != 0) hoodLining else mul(hoodie, 1.3f)))
+            mpb.cbox(0f, 0.565f, 0.19f, 0.34f, 0.09f, 0.1f)
             mpb = mb.part("straps", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(mul(backpack, 0.7f)))
             mpb.cbox(-0.16f, 0.42f, 0.19f, 0.07f, 0.34f, 0.02f)
             mpb.cbox(0.16f, 0.42f, 0.19f, 0.07f, 0.34f, 0.02f)
@@ -244,14 +286,23 @@ class Human3D(
         mpb.cbox(0f, 0.44f, -0.27f, 0.44f, 0.1f, 0.04f)
         // BACK of the head — hair panel under the cap (v4.2: the uniform-skin
         // head box read bald from the chase cam; SS heads show hair at the back;
-        // v5.1: slimmed 0.52x0.52 → 0.46x0.36 and lowered — the old full-height
-        // slab glued to the skull read as a brown box from behind)
-        mpb.cbox(0f, 0.30f, 0.26f, 0.46f, 0.36f, 0.03f)
+        // v5.1: slimmed + lowered; v5.2: widened 0.46→0.52 and dropped a hair
+        // spike row at the nape so the back of the head finally reads as HAIR)
+        mpb.cbox(0f, 0.29f, 0.25f, 0.52f, 0.34f, 0.03f)
+        mpb.cbox(-0.12f, 0.14f, 0.25f, 0.1f, 0.09f, 0.03f)
+        mpb.cbox(0.12f, 0.14f, 0.25f, 0.1f, 0.09f, 0.03f)
         // cap dome + brim (BACKWARDS: brim points +z, at the chase camera) + ridge
         mpb = mb.part("cap", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(cap))
         mpb.cbox(0f, 0.63f, -0.01f, 0.62f, 0.16f, 0.54f)
         mpb.cbox(0f, 0.575f, 0.31f, 0.56f, 0.07f, 0.15f) // backwards brim — visible from behind
         mpb.cbox(0f, 0.72f, -0.01f, 0.22f, 0.05f, 0.18f) // top button-ish ridge
+        // v5.2: cap seam band + back stitch line — from the chase cam the cap
+        // was a flat colored slab; two subtle tone breaks make it read as a
+        // sewn baseball cap
+        mpb = mb.part("capSeam", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(cap, 1.22f))
+        mpb.cbox(0f, 0.685f, -0.01f, 0.63f, 0.035f, 0.55f)
+        mpb = mb.part("capStitch", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(cap, 0.78f))
+        mpb.cbox(0f, 0.615f, 0.27f, 0.05f, 0.16f, 0.02f)
         if (capPanel != 0) {
             mpb = mb.part("panel", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(capPanel))
             mpb.cbox(0f, 0.63f, -0.28f, 0.38f, 0.13f, 0.03f) // true front — hidden from the chase cam
@@ -263,11 +314,10 @@ class Human3D(
             mpb = mb.part("stache", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(0x4a3524ff.toInt()))
             mpb.cbox(0f, 0.17f, -0.265f, 0.3f, 0.07f, 0.03f)
         }
-        // ears — small, tucked to the skull (v4.2: smaller + skin-true, were
-        // salmon flags sticking out of the hair)
+        // ears — v5.2: pushed further out so they read from the chase cam
         mpb = mb.part("ears", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(mul(skin, 0.96f)))
-        mpb.cbox(-0.27f, 0.26f, -0.02f, 0.04f, 0.09f, 0.07f)
-        mpb.cbox(0.27f, 0.26f, -0.02f, 0.04f, 0.09f, 0.07f)
+        mpb.cbox(-0.295f, 0.26f, -0.02f, 0.05f, 0.11f, 0.08f)
+        mpb.cbox(0.295f, 0.26f, -0.02f, 0.05f, 0.11f, 0.08f)
         // v5.1: big cartoon eyes — the launcher-thumbnail character's whole
         // personality. TRUE front = -z (menu/CHARS portrait + guard face-off);
         // hidden from the chase cam in-game, exactly like the cap panel.

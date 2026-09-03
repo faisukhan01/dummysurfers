@@ -101,6 +101,18 @@ class ModelFactory {
             }
         }
 
+    /**
+     * v5.2: low-poly sphere — rounded cartoon joints/hands. Flat box hands
+     * read as mittens; balls read as SS-chibi flesh.
+     */
+    fun colorBall(key: String, d: Float, hex: Int, div: Int = 8, factor: Float = 1f): Model =
+        models.getOrPut(key) {
+            build(matColor(hex, factor)) {
+                setUVRange(0f, 0f, 1f, 1f)
+                sphere(d, d, d, div, div)
+            }
+        }
+
     /** Box with a texture on every face (UV repeats across each face). */
     fun texBox(key: String, w: Float, h: Float, d: Float, tex: Texture, uvU: Float = 1f, uvV: Float = 1f): Model =
         models.getOrPut(key) {
