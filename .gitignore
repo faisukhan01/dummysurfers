@@ -52,3 +52,14 @@ prompt
 server.log
 # Skills directory
 /skills/
+# sandbox/local artifacts (never publish)
+.env
+.env*
+db/
+.zscripts/
+tool-results/
+upload/
+download/
+/preview-*.png
+/ss-*.jpg
+/worklog.md
