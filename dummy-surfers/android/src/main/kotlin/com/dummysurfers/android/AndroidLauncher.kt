@@ -90,12 +90,46 @@ class AndroidLauncher : AndroidApplication() {
             useAccelerometer = false
             useCompass = false
             useGyroscope = false
-            useWakelock = true          // → FLAG_KEEP_SCREEN_ON, needs no permission
+            // v6.0.0: do NOT ask libgdx to manage a wake lock — the keep-screen-on
+            // behavior is set directly below with a window flag (needs no
+            // permission, touches no PowerManager, cannot throw at onResume time).
+            useWakelock = false
             maxSimultaneousSounds = 8
             // DO NOT set resolutionStrategy = null: GLSurfaceView20.onMeasure()
             // dereferences it → instant NPE on first frame. Default (Fill) is right.
         }
+        // Keep the screen on while the game is visible (same effect the old
+        // useWakelock=true chased, with zero native/lifecycle involvement).
+        try { window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) } catch (_: Throwable) {}
         initialize(game, config)
+    }
+
+    // ── v6.0.0 lifecycle immunity ──────────────────────────────────────────
+    // onCreate is guarded, but onResume/onPause/onStop run OUTSIDE it — any
+    // throw there (device-specific window/audio/input quirks) used to end the
+    // process instantly with no fallback. Every callback now fails soft.
+    override fun onResume() {
+        try { super.onResume() } catch (t: Throwable) {
+            writeCrashFile("lifecycle onResume", t)
+        }
+    }
+
+    override fun onPause() {
+        try { super.onPause() } catch (t: Throwable) {
+            writeCrashFile("lifecycle onPause", t)
+        }
+    }
+
+    override fun onStop() {
+        try { super.onStop() } catch (t: Throwable) {
+            writeCrashFile("lifecycle onStop", t)
+        }
+    }
+
+    override fun onDestroy() {
+        try { super.onDestroy() } catch (t: Throwable) {
+            writeCrashFile("lifecycle onDestroy", t)
+        }
     }
 
     /** v5.4: full-native last resort when the GL view cannot even be created. */
