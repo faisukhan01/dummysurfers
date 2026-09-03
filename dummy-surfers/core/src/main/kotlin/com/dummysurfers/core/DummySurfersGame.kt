@@ -231,6 +231,16 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     private var prevJetOn = false
     private var jetCoinTimer = 0f
 
+    // v5.3 QA hooks — game-side, render-driven. The desktop launcher's script
+    // thread posts touch events from OUTSIDE the frame loop, which starves
+    // under Xvfb's background throttle (see DesktopLauncher). These hooks run
+    // inside render(), so every scripted beat lands between real frames.
+    private val qaPauseTimes = System.getenv("DS_PAUSE_AT")
+        ?.split(",")?.mapNotNull { it.trim().toFloatOrNull() }?.sorted() ?: emptyList()
+    private var qaPauseIdx = 0
+    private val qaPanel = System.getenv("DS_PANEL")
+    private var qaPanelDone = false
+
     private fun devHarness(rawDt: Float) {
         val menuFirst = System.getenv("DS_MENU_FIRST") == "1"
         if (!devInit) {
@@ -264,6 +274,15 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         }
         val dir = System.getenv("DS_SHOT_DIR") ?: return
         devT += rawDt
+        // v5.3 scripted beats (see qaPauseTimes note above)
+        if (qaPauseIdx < qaPauseTimes.size && devT >= qaPauseTimes[qaPauseIdx]) {
+            qaPauseIdx++
+            if (state == GameState.PLAYING) pauseGame() else if (state == GameState.PAUSED) resumeGame()
+        }
+        if (!qaPanelDone && qaPanel != null && devT >= 1.2f && state == GameState.MENU) {
+            qaPanelDone = true
+            menuPanel = try { MenuPanel.valueOf(qaPanel.trim().uppercase()) } catch (_: Throwable) { MenuPanel.NONE }
+        }
         if (devShotIdx < devShotTimes.size && devT >= devShotTimes[devShotIdx]) {
             val pm: Pixmap = ScreenUtils.getFrameBufferPixmap(vpX, vpY, vpW, vpH)
             // GL framebuffer rows are bottom-up — flip so PNGs read like the screen
@@ -1048,6 +1067,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             }
             GameState.TUTORIAL -> ui.drawTutorial(time)
             GameState.PLAYING -> ui.drawHud(time)
+            GameState.DYING -> ui.drawHud(time) // v5.3: HUD stays up during the catch slow-mo (SS keeps score visible)
             GameState.PAUSED -> { ui.drawHud(time); ui.drawPause() }
             GameState.GAME_OVER -> { ui.drawGameOver(); ui.drawToast(rawDt) }
             else -> {}
