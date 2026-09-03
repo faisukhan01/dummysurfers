@@ -223,3 +223,28 @@ Stage Summary:
 - Push command for next session (needs user token): `cd /home/z/my-project && ./push-game.sh <github-token>` — force-pushes rewritten game main + site. CI will build v5.2.0 (code 22) and publish the APK release automatically.
 - After push: user should see their contribution graph populated for ALL past commit days (rewritten identity) + today.
 - Remaining fidelity ideas (next rounds): train liveries close-up pass, mission cards restyle, pause/game-over card polish, guard+dog catch-scene framing.
+
+---
+Task ID: 17
+Agent: Z.ai Code (orchestrator)
+Task: "here is the token, now fix all" — push the rewritten commit history (graph fix), verify Pages banner gone, character/UI fidelity pass v5.2.1, ship APK.
+
+Work Log:
+- TOKEN received → ./push-game.sh executed: game subtree force-pushed to main (091f4f4), landing to site (3077ea7).
+- ✅ COMMIT GRAPH ROOT CAUSE FIXED & VERIFIED: every remote commit was authored `Z User <z@container>` → GitHub showed author: None → zero contributions. After push, API confirms gh-author: faisukhan01 on every commit (48 on main, dates preserved → past days light up).
+- ✅ "site had recent pushes" VERIFIED GONE: GitHub Pages API 404, has_pages=false, environments=[], deployments=[], live repo HTML has ZERO Pages strings. Banner source does not exist anymore.
+- Junk commit (user screenshots + tool-results w/ UUID subject) dropped via reset; .env/db/.zscripts/tool-results/upload/preview shots untracked + gitignored (never leak to public site branch again).
+- CHARACTER PASS v5.2.1 (Xvfb desktop harness before/after screenshots):
+  - Cap: flat brick slab → squashed low-poly SPHERE dome hugging the skull + backwards brim + top button + rear stitch (ModelBuilder.setVertexTransform trick).
+  - Backpack: dark harness straps → light front pocket + gold zip; goggles/headphones re-fitted outside the new dome.
+  - Menu portrait: arch brows (3 discs), eyes closer ±31 w/ bigger centered iris + single big glint (kills googly look), teeth narrowed, brim-tip blobs removed, cap badge now a clean rounded square (JACK capPanel = white).
+  - Runner shadow 0.32→0.20 alpha + tighter; HUD coin counter in frosted navy pill; menu daylight lift (white+sky wash).
+- SDK REINSTALLED (sandbox wiped /home/z/android-sdk): cmdline-tools + platform 34 + build-tools 34.0.0 → :android:assembleDebug green (android-debug.apk 5.8 MB).
+- QA: menu/hud/action screenshots verified — face cute + symmetric, cap reads as baseball cap from chase cam, coin pill clean, world bright.
+- versionCode 23 / v5.2.1; landing changelog v5.2.1 entry + nav/footer version strings.
+- 9 granular commits (all authored Faisal Khan <193670919+faisukhan01@users.noreply.github.com>).
+
+Stage Summary:
+- All three user complaints closed: commit graph attributed (verified via API), Pages banner gone (verified via API+HTML), character/UI fidelity pass shipped as v5.2.1.
+- CI building v5.2.1 → release DummySurfers.apk via stable latest/download URL.
+- Note for future rounds: keep using ./push-game.sh; never git-add upload/ or tool-results/; SDK lives at /home/z/android-sdk (reinstall if sandbox resets).
