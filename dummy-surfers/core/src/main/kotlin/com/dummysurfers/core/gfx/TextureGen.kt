@@ -880,12 +880,9 @@ object TextureGen {
         p.setColor(mul(ch.cap, 0.8f))
         p.fillRectangle((cx - 24).toInt(), domeTop + 18, 3, 58)
         p.fillRectangle((cx + 21).toInt(), domeTop + 18, 3, 58)
-        // side brim tips of the backwards cap (darker discs near the edges)
-        p.setColor(mul(ch.cap, 0.82f))
-        p.fillCircle((cx - (headR - 10f)).toInt(), (capEdge - 20f).toInt(), 13)
-        p.fillCircle((cx + (headR - 10f)).toInt(), (capEdge - 20f).toInt(), 13)
-
         // hair fringe scallops peeking under the cap edge (strap covers tops)
+        // v5.2.1: the old side "brim tip" discs are GONE — they read as weird
+        // handlebar blobs at the cap's edges in every menu screenshot
         for (i in 0..6) {
             val fx = cx - 57f + i * 19f
             p.setColor(OUT); p.fillCircle(fx.toInt(), (capEdge + 3f).toInt(), 11)
@@ -902,30 +899,36 @@ object TextureGen {
         // top button
         circ(cx, capEdge - headR - 14f, 7f, mul(ch.cap, 1.14f))
         if (ch.capPanel != 0) {
-            // front panel badge on the dome (chars with capPanel set)
-            softCol(ch.capPanel, 1f)
-            p.fillCircle(cx.toInt(), (capEdge - 74f).toInt(), 22)
-            p.setColor(mul(ch.capPanel, 0.7f))
-            p.fillCircle(cx.toInt(), (capEdge - 74f).toInt(), 8)
+            // v5.2.1: front badge = clean rounded-square patch (the old white
+            // circle read as a balloon egg); tiny accent dot keeps it lively
+            roundRect(cx - 17f, capEdge - 92f, 34f, 26f, 7f, ch.capPanel)
+            p.setColor(mul(ch.capPanel, 0.72f))
+            p.fillRectangle((cx - 17f).toInt(), (capEdge - 72f).toInt(), 34, 3)
+            p.setColor(mul(ch.capPanel, 0.55f))
+            p.fillCircle(cx.toInt(), (capEdge - 79f).toInt(), 5)
         }
 
         // ── FACE — SS-grade cartoon features ───────────────────────────
+        // v5.2.1 eye retune: closer together (±33→±31), bigger centered iris
+        // and ONE big glint + one tiny (the double mid-size glints read as
+        // wonky googly eyes in the menu screenshot)
         val eyeY = headCY + 18f
         for (side in intArrayOf(-1, 1)) {
-            val ex = cx + side * 33f
-            // brow (thick, friendly arch)
+            val ex = cx + side * 31f
+            // brow — friendly arch built from three overlapping discs
             p.setColor(mul(ch.hair, 0.72f))
-            p.fillRectangle((ex - 15f).toInt(), (capEdge + 7f).toInt(), 30, 7)
-            p.fillCircle((ex - 13f).toInt(), (capEdge + 10f).toInt(), 4)
-            p.fillCircle((ex + 13f).toInt(), (capEdge + 10f).toInt(), 4)
-            // eye: white oval → iris → pupil → double glint
+            p.fillCircle((ex - 12f).toInt(), (capEdge + 12f).toInt(), 5)
+            p.fillCircle(ex.toInt(), (capEdge + 8f).toInt(), 6)
+            p.fillCircle((ex + 12f).toInt(), (capEdge + 12f).toInt(), 5)
+            p.fillRectangle((ex - 12f).toInt(), (capEdge + 9f).toInt(), 24, 6)
+            // eye: white oval → iris → pupil → big + tiny glint
             p.setColor(0xffffffff.toInt())
             fillEllipse(p, ex, eyeY, 16.5f, 18.5f)
-            p.setColor(0x5a3a1fff.toInt()); fillEllipse(p, ex, eyeY + 2f, 11f, 12f)
-            p.setColor(0x24160aff.toInt()); fillEllipse(p, ex, eyeY + 3f, 6f, 7f)
+            p.setColor(0x5a3a1fff.toInt()); fillEllipse(p, ex, eyeY + 1f, 12f, 13f)
+            p.setColor(0x24160aff.toInt()); fillEllipse(p, ex, eyeY + 2f, 6.5f, 7.5f)
             p.setColor(0xffffffff.toInt())
-            fillEllipse(p, ex - 5f, eyeY - 4f, 4.5f, 4.5f)
-            fillEllipse(p, ex + 4f, eyeY + 7f, 2.2f, 2.2f)
+            fillEllipse(p, ex - 5f, eyeY - 4f, 5f, 5f)
+            fillEllipse(p, ex + 5f, eyeY + 6f, 2.2f, 2.2f)
             // blush
             p.setColor(0.95f, 0.55f, 0.5f, 0.38f)
             p.fillCircle((cx + side * 60f).toInt(), (eyeY + 22f).toInt(), 9)
@@ -933,17 +936,18 @@ object TextureGen {
         // nose
         p.setColor(mul(ch.skin, 0.88f))
         p.fillCircle(cx.toInt(), (eyeY + 16f).toInt(), 5)
-        // open grin: dark mouth, white teeth, pink tongue
+        // open grin: dark mouth, white teeth, pink tongue (teeth narrowed so
+        // the band no longer reads as a grid across the smile)
         p.setColor(0x5e2c1dff.toInt())
         fillEllipse(p, cx, eyeY + 32f, 15f, 12f)
         p.setColor(0x7a3a26ff.toInt())
         fillEllipse(p, cx, eyeY + 36f, 10f, 6f)
         p.setColor(0xffffffff.toInt())
-        p.fillRectangle((cx - 11f).toInt(), (eyeY + 21f).toInt(), 22, 6)
+        p.fillRectangle((cx - 8f).toInt(), (eyeY + 21f).toInt(), 16, 6)
         p.setColor(0xe8836fff.toInt())
         fillEllipse(p, cx, eyeY + 38f, 7f, 4f)
         p.setColor(OUT)
-        p.fillRectangle((cx - 11f).toInt(), (eyeY + 20f).toInt(), 22, 2)
+        p.fillRectangle((cx - 9f).toInt(), (eyeY + 20f).toInt(), 18, 2)
 
         // ── signature accessories on the cards ─────────────────────────
         if (ch.accessory == 2) {
