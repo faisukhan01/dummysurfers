@@ -398,10 +398,11 @@ class EntityRenderer(
         // SS chibis read BIG on screen (~30% of height) — visual-only scale
         val u = proj.ppu * 1.30f
 
-        // soft blob shadow
+        // soft blob shadow — v5.2.1: lighter + tighter (the old 0.32-alpha
+        // slab read as a dark hole punched under the runner)
         val shadowScale = Mathz.clamp01(1f - p.jumpY / 5f)
-        sr.setColor(0f, 0f, 0f, 0.32f * shadowScale)
-        sr.ellipse(x - u * 0.44f * shadowScale, groundY - 4f, u * 0.88f * shadowScale, u * 0.15f * shadowScale + 2f)
+        sr.setColor(0f, 0f, 0f, 0.20f * shadowScale)
+        sr.ellipse(x - u * 0.40f * shadowScale, groundY - 4f, u * 0.80f * shadowScale, u * 0.13f * shadowScale + 2f)
 
         if (blink && (p.invulnTimer > 0f) && ((p.invulnTimer * 10f).toInt() % 2 == 0)) return
 
