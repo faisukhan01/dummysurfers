@@ -34,6 +34,11 @@ fun main() {
         setResizable(false)
         useVsync(false)
         setForegroundFPS(60)
+        // v5.3 QA NOTE: the DS_AUTO script thread here fires taps OUTSIDE the
+        // render loop; under Xvfb the LWJGL3 loop may starve between them
+        // (taps landed, clicks were never consumed by a frame). Scripted QA
+        // therefore moved INTO the game's devHarness (DS_PAUSE_AT, DS_PANEL)
+        // which runs inside render() — every beat lands between real frames.
     }
 
     if (shotDir != null || (script != null && script.isNotBlank() && script != "0")) {
