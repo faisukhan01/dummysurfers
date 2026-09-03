@@ -16,5 +16,7 @@ kotlin {
 
 dependencies {
     api("com.badlogicgames.gdx:gdx:1.12.1")
-    api("com.badlogicgames.gdx:gdx-freetype:1.12.1")
+    // v6.0.0: gdx-freetype REMOVED from the game — fonts ship pre-baked
+    // (android/assets/fonts-baked). freetype now only runs on the desktop
+    // inside the build-time FontBaker (declared in :desktop).
 }
