@@ -63,7 +63,17 @@ const consoleLines = [
 
 const changelog = [
   {
-    v: 'v5.1.0', date: 'Crash-fix + thumbnail hero — today', latest: true, items: [
+    v: 'v5.2.0', date: 'Real-SS HUD + character rebuild — today', latest: true, items: [
+      '🎮 HUD mirrored to the REAL Subway Surfers layout: pause roundel top-LEFT (frosted navy, white bars), big outlined score top-RIGHT with gold ×N chip, clean coin icon + count beneath, distance under that — no more gold slab pills',
+      '🧑‍🎨 Menu portrait rebuilt from scratch: one big face circle (no more mushroom robot), clipped cap dome w/ strap + seams + backwards brim tips, scalloped hair fringe, oval eyes w/ iris + double glints, open grin w/ teeth + tongue, blush, drawstrings, chunky white-soled sneakers',
+      '🎒 Gameplay back-view rebuild: sneaker white mid-sole + heel tabs, sphere hands + shoulder joints, cap seam band + back stitch, nape hair spikes, wider ears, smaller pack with side pockets, vertical straps + gold clips, hood roll behind the neck',
+      '🎥 Camera pulled back + up — the runner now fills ~25% of the frame like the real game, so you can actually read the track ahead',
+      '🐛 Menu coin icon rendered as a dark blob (stale SpriteBatch tint leaked across frames) — fixed everywhere; settings gear is a real white gear glyph now',
+      '🏷️ versionCode 22 — clearly distinct from every older download',
+    ]
+  },
+  {
+    v: 'v5.1.0', date: 'Crash-fix + thumbnail hero', items: [
       '🛡️ THE crash-loop fix: the in-app crash reporter could crash the launcher itself (crash file never consumed + unguarded dialog) — after one crash the app died on every launch. Report is now consumed atomically and the dialog path is fully guarded',
       '🎧 Audio-thread immunity: a dying audio device (background/foreground races, audio-focus) used to kill the whole process mid-run — the mixer now degrades to silence instead',
       '🧯 Render safety net: a failed gameplay tick recovers to the menu instead of ending the process; corrupt save files fall back to a fresh start instead of crashing at boot',
@@ -194,7 +204,7 @@ export default function Home() {
             </a>
           ))}
           <span className="ml-auto shrink-0 rounded-full bg-[#FFC93C] px-3 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#24316B] border-2 border-white shadow-[0_2px_0_#E09B12]">
-            v5.1.0 — Crash-proof & Prettier!
+            v5.2.0 — Real-SS HUD + Character Rebuild!
           </span>
         </div>
       </nav>
@@ -447,7 +457,7 @@ export default function Home() {
             Dummy Surfers <span className="text-white">by</span>
             <GraffitiName name="Faisal Khan" className="ml-2 inline-block align-middle normal-case text-[1.55rem] sm:text-[1.85rem]" stroke="#1B2038" shadowFilter="drop-shadow(0 3px 0 rgba(9,12,30,.55))" />
           </p>
-          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v5.1.0 — Crash-proof & Prettier!</span></p>
+          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v5.2.0 — Real-SS HUD + Character Rebuild!</span></p>
         </div>
       </footer>
     </main>
