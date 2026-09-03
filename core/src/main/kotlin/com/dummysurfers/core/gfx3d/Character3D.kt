@@ -191,6 +191,13 @@ class Human3D(
         mpb = mb.part("tee", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(lining))
         mpb.setUVRange(0f, 0f, 1f, 1f)
         mpb.cbox(0f, 0.4f, -0.18f, 0.3f, 0.3f, 0.02f)
+        // v5.1: white hoodie drawstrings hanging over the tee — the thumbnail
+        // character's signature chest detail (TRUE front = -z)
+        if (!isGuard) {
+            mpb = mb.part("strings", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(0xf5f5f0ff.toInt()))
+            mpb.cbox(-0.07f, 0.36f, -0.2f, 0.035f, 0.16f, 0.03f)
+            mpb.cbox(0.07f, 0.36f, -0.2f, 0.035f, 0.16f, 0.03f)
+        }
         // backpack + flap + straps (ON THE BACK = +z, faces the chase cam —
         // v4.2 fix: the pack used to hang on the chest, invisible in-game)
         // v4.5: pack deepened (0.16→0.2) so it reads as a BULKY spray pack in
@@ -237,8 +244,9 @@ class Human3D(
         mpb.cbox(0f, 0.44f, -0.27f, 0.44f, 0.1f, 0.04f)
         // BACK of the head — hair panel under the cap (v4.2: the uniform-skin
         // head box read bald from the chase cam; SS heads show hair at the back;
-        // spans neck → cap so no skin bands peek above/below)
-        mpb.cbox(0f, 0.29f, 0.26f, 0.52f, 0.52f, 0.03f)
+        // v5.1: slimmed 0.52x0.52 → 0.46x0.36 and lowered — the old full-height
+        // slab glued to the skull read as a brown box from behind)
+        mpb.cbox(0f, 0.30f, 0.26f, 0.46f, 0.36f, 0.03f)
         // cap dome + brim (BACKWARDS: brim points +z, at the chase camera) + ridge
         mpb = mb.part("cap", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(cap))
         mpb.cbox(0f, 0.63f, -0.01f, 0.62f, 0.16f, 0.54f)
@@ -260,6 +268,19 @@ class Human3D(
         mpb = mb.part("ears", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(mul(skin, 0.96f)))
         mpb.cbox(-0.27f, 0.26f, -0.02f, 0.04f, 0.09f, 0.07f)
         mpb.cbox(0.27f, 0.26f, -0.02f, 0.04f, 0.09f, 0.07f)
+        // v5.1: big cartoon eyes — the launcher-thumbnail character's whole
+        // personality. TRUE front = -z (menu/CHARS portrait + guard face-off);
+        // hidden from the chase cam in-game, exactly like the cap panel.
+        mpb = mb.part("eyes", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(0xffffffff.toInt()))
+        mpb.cbox(-0.13f, 0.33f, -0.245f, 0.11f, 0.14f, 0.03f)
+        mpb.cbox(0.13f, 0.33f, -0.245f, 0.11f, 0.14f, 0.03f)
+        mpb = mb.part("pupils", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(0x27303fff.toInt()))
+        mpb.cbox(-0.115f, 0.305f, -0.262f, 0.055f, 0.075f, 0.02f)
+        mpb.cbox(0.115f, 0.305f, -0.262f, 0.055f, 0.075f, 0.02f)
+        // v5.1: warm little open-mouth smile — without it the low-set eyes read
+        // as a frown in the menu portrait (the whole "grumpy thumbnail" effect)
+        mpb = mb.part("mouth", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(0x9c4f3fff.toInt()))
+        mpb.cbox(0f, 0.15f, -0.262f, 0.15f, 0.055f, 0.02f)
         return mb.end()
     }
 
