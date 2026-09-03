@@ -219,13 +219,25 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         batch.setColor(1f, 1f, 1f, 1f)
         // top currency pills (navy/gold, SS style)
         chipCoins(vw - 250f, vh - 96f)
-        // settings gear shortcut top-left — v5.2: real white gear glyph (the
-        // bare "O" letter read as a broken button in QA)
-        hits.add(HitRect("gear", 24f, vh - 100f, 76f, 76f) {})
-        theme.button(batch, 24f, vh - 100f, 76f, 76f, Palette.UI_NAVY, pressedId == "gear")
-        batch.setColor(1f, 1f, 1f, 1f)
-        batch.draw(TextureGen.navIcons[3], 24f + 14f, vh - 100f + 14f, 48f, 48f)
-        if (clickId == "gear") { bridge!!.click(); b.openPanel(MenuPanel.SETTINGS) }
+
+        // v5.3 top-left floater stack — round jelly SETTINGS + MISSIONS
+        // (white ring = opaque white jelly circle under a frosted navy one)
+        fun floatRoundel(id: String, x: Float, icon: com.badlogic.gdx.graphics.Texture, badge: Int, open: MenuPanel) {
+            hits.add(HitRect(id, x, vh - 104f, 80f, 80f) {})
+            theme.cardShadow(batch, x + 4f, vh - 104f + 4f, 72f, 72f)
+            theme.circleButton(batch, x - 3f, vh - 107f, 86f, Color(1f, 1f, 1f, 0.92f), false)
+            theme.circleButton(batch, x, vh - 104f, 80f, Palette.UI_NAVY, pressedId == id)
+            batch.setColor(1f, 1f, 1f, 1f)
+            batch.draw(icon, x + 20f, vh - 104f + 20f, 40f, 40f)
+            if (badge > 0) {
+                theme.circleButton(batch, x + 50f, vh - 104f + 44f, 36f, Palette.DANGER, false)
+                theme.text(batch, theme.fontTiny, "$badge", x + 50f, vh - 104f + 44f + 23f, Color.WHITE, Align.center, 36f)
+            }
+            if (clickId == id) { bridge!!.click(); b.openPanel(open) }
+        }
+        val readyTop = b.save.missions.count { !it.claimed && it.progress >= it.goal }
+        floatRoundel("gear", 24f, TextureGen.navIcons[3], 0, MenuPanel.SETTINGS)
+        floatRoundel("mtasks", 116f, TextureGen.navIcons[2], readyTop, MenuPanel.MISSIONS)
 
         // v3.0: warm sun glow behind the logo block (SS title-screen warmth)
         val glowPulse = 0.30f + sin(time * 1.4f) * 0.05f
@@ -256,9 +268,11 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         val heroBob = sin(time * 1.7f) * 7f
         drawMiniCharacter(selIdx, vw / 2f - 132f, 738f + heroBob, 264f)
 
-        // HIGH SCORE card (periwinkle + deep slot + gold star)
+        // HIGH SCORE card (periwinkle + deep slot + gold star) — v5.3 floats
+        // on a soft drop shadow like every SS card
         val hcW = 460f
         val hcX = vw / 2f - hcW / 2f
+        theme.cardShadow(batch, hcX, 560f, hcW, 108f)
         theme.panel(batch, hcX, 560f, hcW, 108f, Palette.UI_PANEL)
         theme.panel(batch, hcX + 18f, 576f, hcW - 36f, 56f, Palette.UI_PANEL_DEEP)
         batch.setColor(1f, 1f, 1f, 1f)
@@ -269,23 +283,27 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         theme.button(batch, vw / 2f - 110f, 518f, 220f, 42f, Palette.UI_NAVY, false)
         theme.text(batch, theme.fontTiny, "HOVERBOARDS x${b.save.hoverboards}", 0f, 544f, Color.WHITE, Align.center, vw)
 
-        // giant gold RUN button
+        // giant gold RUN jelly button + play glyph (v5.3)
+        theme.cardShadow(batch, vw / 2 - 210f, 384f, 420f, 136f)
         if (btn("play", vw / 2 - 210f, 384f, 420f, 136f, Palette.UI_GOLD_BTN, "RUN", theme.fontLarge)) {
             b.startRun()
         }
+        theme.playIcon(batch, vw / 2 - 124f, 384f + 46f, 44f)
 
-        // bottom tab bar (navy tabs, SS layout)
-        val tabW = (vw - 24f * 2 - 12f * 3) / 4f
-        val tabY = 96f
+        // v5.3 bottom floaters — SS never pins heavy slabs; four round jelly
+        // buttons with tiny labels float over the world instead
+        val dia = 112f
+        val gap = (vw - 4f * dia) / 5f
+        val tabY = 118f
         val tabs = arrayOf("chars" to "CHARS", "shop" to "SHOP", "tasks" to "TASKS", "setup" to "SETUP")
         tabs.forEachIndexed { i, (id, label) ->
-            val x = 24f + i * (tabW + 12f)
-            hits.add(HitRect(id, x, tabY, tabW, 128f) {})
-            theme.button(batch, x, tabY, tabW, 128f, Palette.UI_NAVY, pressedId == id)
-            // v4.5: white glyph above the label — the bare navy tiles read blank
+            val x = gap + i * (dia + gap)
+            hits.add(HitRect(id, x, tabY, dia, dia) {})
+            theme.cardShadow(batch, x + 8f, tabY - 4f, dia - 16f, dia - 16f)
+            theme.circleButton(batch, x, tabY, dia, Palette.UI_NAVY, pressedId == id)
             batch.setColor(1f, 1f, 1f, 1f)
-            batch.draw(TextureGen.navIcons[i], x + tabW / 2f - 27f, tabY + 56f, 54f, 54f)
-            theme.text(batch, theme.fontSmall, label, x, tabY + 38f, Color.WHITE, Align.center, tabW)
+            batch.draw(TextureGen.navIcons[i], x + dia / 2f - 26f, tabY + dia / 2f - 20f, 52f, 52f)
+            theme.text(batch, theme.fontTiny, label, x - 12f, tabY - 14f, Color.WHITE, Align.center, dia + 24f)
             when (id) {
                 "chars" -> if (clickId == id) b.openPanel(MenuPanel.CHARACTERS)
                 "shop" -> if (clickId == id) b.openPanel(MenuPanel.SHOP)
@@ -293,12 +311,11 @@ class UiController(val theme: UiTheme) : InputAdapter() {
                 "setup" -> if (clickId == id) b.openPanel(MenuPanel.SETTINGS)
             }
         }
-        // red "!" badge when missions are claimable
-        val ready = b.save.missions.count { !it.claimed && it.progress >= it.goal }
-        if (ready > 0) {
-            val bx = 24f + 2 * (tabW + 12f) + tabW - 26f
-            theme.button(batch, bx, tabY + 96f, 44f, 44f, Palette.DANGER, false)
-            theme.text(batch, theme.fontSmall, "!", bx, tabY + 128f, Color.WHITE, Align.center, 44f)
+        // red badge on the TASKS floater when missions are claimable
+        if (readyTop > 0) {
+            val bx = gap + 2 * (dia + gap) + dia - 34f
+            theme.circleButton(batch, bx, tabY + dia - 38f, 46f, Palette.DANGER, false)
+            theme.text(batch, theme.fontSmall, "!", bx, tabY + dia - 38f + 31f, Color.WHITE, Align.center, 46f)
         }
 
         theme.text(batch, theme.fontTiny, "SWIPE TO MOVE — UP JUMP — DOWN SLIDE", 0f, 52f, Color.WHITE, Align.center, vw)
@@ -329,12 +346,14 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         // rendered as a dark blob because of exactly that. Reset every HUD/menu.
         batch.setColor(1f, 1f, 1f, 1f)
 
-        // ── top-left: PAUSE — frosted deep-navy roundel + white bars (SS DNA)
+        // ── top-left: PAUSE — v5.3 round jelly roundel (white ring + frosted
+        // deep-navy circle), the exact SS pause anatomy
         val pauseX = 20f
         val pauseY = vh - 96f
         hits.add(HitRect("pause", pauseX, pauseY, 68f, 68f) {})
-        theme.pill(batch, pauseX, pauseY, 68f, 68f, Palette.UI_PANEL_DEEP, 0.74f)
-        theme.rect(batch, pauseX + 22f, pauseY + 18f, 8f, 32f, Color.WHITE)
+        theme.circleButton(batch, pauseX - 3f, pauseY - 3f, 74f, Color(1f, 1f, 1f, 0.9f), false)
+        theme.circleButton(batch, pauseX, pauseY, 68f, Palette.UI_PANEL_DEEP, pressedId == "pause")
+        theme.rect(batch, pauseX + 23f, pauseY + 18f, 8f, 32f, Color.WHITE)
         theme.rect(batch, pauseX + 38f, pauseY + 18f, 8f, 32f, Color.WHITE)
 
         // ── top-RIGHT cluster: score → coins → distance (real SS layout)
@@ -412,10 +431,11 @@ class UiController(val theme: UiTheme) : InputAdapter() {
                 val mW = 320f
                 val mX = vw / 2f - mW / 2f
                 val mY = 120f - (activeCount - 1) * 74f
-                theme.panel(batch, mX, mY, mW, 56f, Palette.UI_PANEL)
-                theme.panel(batch, mX + 8f, mY + 8f, mW - 16f, 40f, Palette.UI_PANEL_DEEP)
+                // v5.3: one frosted slab + colored roundel slot for the icon
+                theme.pill(batch, mX, mY, mW, 56f, Palette.UI_PANEL_DEEP, 0.72f)
+                theme.circleButton(batch, mX + 6f, mY + 6f, 44f, color, false)
                 batch.setColor(1f, 1f, 1f, if (flashing) 0.55f else 1f)
-                batch.draw(TextureGen.powerIcons[i], mX + 14f, mY + 8f, 40f, 40f)
+                batch.draw(TextureGen.powerIcons[i], mX + 14f, mY + 14f, 28f, 28f)
                 batch.setColor(1f, 1f, 1f, 1f)
                 // segmented fill (5 segments like the SS board meter) — batch-safe
                 val segs = 5
@@ -519,27 +539,39 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         val b = bridge!!
         // v4.5: same scene-dim as game over — world no longer bleeds through
         theme.rect(batch, 0f, 0f, vw, vh, Palette.UI_DIM, 0.5f)
-        // v4.1 SS-style pause card: white rounded card, character portrait,
-        // stat chips, gold RESUME — reads like the SS pause overlay
+        // v5.3 SS pause card — floats on a shadow, portrait in a deep slot,
+        // gold score under the hero, big green play roundel + two circles
         val cx = vw / 2f
-        theme.panel(batch, cx - 300f, vh / 2 - 420f, 600f, 840f, Palette.UI_PANEL_LIGHT)
-        theme.panel(batch, cx - 268f, vh / 2 - 30f, 536f, 320f, Palette.UI_PANEL_DEEP)
+        theme.cardShadow(batch, cx - 300f, vh / 2 - 460f, 600f, 880f)
+        theme.panel(batch, cx - 300f, vh / 2 - 460f, 600f, 880f, Palette.UI_PANEL_LIGHT)
+        theme.panel(batch, cx - 268f, vh / 2 - 10f, 536f, 280f, Palette.UI_PANEL_DEEP)
         // selected runner portrait in the stat slot
         val selIdx = CharacterDef.ALL.indexOfFirst { it.id == b.save.selectedCharacter }
-        drawMiniCharacter(if (selIdx < 0) 0 else selIdx, cx - 90f, vh / 2 + 60f, 180f)
-        theme.text(batch, theme.fontHuge, "PAUSED", 0f, vh / 2 + 288f, Color.WHITE, Align.center, vw)
-        theme.text(batch, theme.fontMed, "SCORE ${b.score}", 0f, vh / 2 + 64f, Palette.GOLD, Align.center, vw)
+        drawMiniCharacter(if (selIdx < 0) 0 else selIdx, cx - 85f, vh / 2 + 60f, 170f)
+        theme.text(batch, theme.fontHuge, "PAUSED", 0f, vh / 2 + 300f, Color.WHITE, Align.center, vw)
+        theme.text(batch, theme.fontMed, "SCORE ${b.score}", 0f, vh / 2 + 16f, Palette.GOLD, Align.center, vw)
         // stat chips: distance / coins
         theme.panel(batch, cx - 268f, vh / 2 - 160f, 258f, 110f, Palette.UI_PANEL)
         theme.text(batch, theme.fontMed, "${b.distance.toInt()}m", cx - 268f, vh / 2 - 92f, Color.WHITE, Align.center, 258f)
         theme.text(batch, theme.fontTiny, "DISTANCE", cx - 268f, vh / 2 - 126f, Palette.UI_MUTED, Align.center, 258f)
         theme.panel(batch, cx + 10f, vh / 2 - 160f, 258f, 110f, Palette.UI_PANEL)
-        theme.coinIcon(batch, cx + 10f + 96f, vh / 2 - 90f, 36f)
-        theme.text(batch, theme.fontMed, "${b.runCoins}", cx + 10f, vh / 2 - 92f, Palette.GOLD, Align.center, 258f)
+        // v5.3: coin icon + count as ONE centered row (icon no longer floats
+        // over the digits)
+        val pcW = 36f + 10f + theme.textWidth(theme.fontMed, "${b.runCoins}")
+        val pcX = cx + 10f + 129f - pcW / 2f
+        theme.coinIcon(batch, pcX, vh / 2 - 114f, 36f)
+        theme.text(batch, theme.fontMed, "${b.runCoins}", pcX + 46f, vh / 2 - 84f, Palette.GOLD)
         theme.text(batch, theme.fontTiny, "COINS", cx + 10f, vh / 2 - 126f, Palette.UI_MUTED, Align.center, 258f)
-        if (btn("resume", cx - 190f, vh / 2 - 300f, 380f, 104f, Palette.UI_GREEN, "RESUME", theme.fontLarge)) b.resumeGame()
-        if (btn("restart", cx - 190f, vh / 2 - 424f, 380f, 96f, Palette.UI_GOLD_BTN, "RESTART")) b.restartRun()
-        if (btn("home", cx - 190f, vh / 2 - 540f, 380f, 96f, Palette.UI_NAVY, "HOME")) b.toMenu()
+        // v5.3 actions — big green RESUME w/ play glyph, RESTART + HOME circles
+        theme.cardShadow(batch, cx - 210f, 356f, 420f, 112f)
+        if (btn("resume", cx - 210f, 356f, 420f, 112f, Palette.UI_GREEN, "RESUME", theme.fontLarge)) b.resumeGame()
+        theme.playIcon(batch, cx - 156f, 356f + 34f, 44f)
+        val d2 = 118f
+        val cy2 = 208f
+        theme.cardShadow(batch, cx - 138f, cy2 - 12f, d2, d2)
+        theme.cardShadow(batch, cx + 20f, cy2 - 12f, d2, d2)
+        if (btn("restart", cx - 138f, cy2, d2, d2, Palette.UI_GOLD_BTN, "REDO", theme.fontSmall)) b.restartRun()
+        if (btn("home", cx + 20f, cy2, d2, d2, Palette.UI_NAVY, "HOME", theme.fontSmall)) b.toMenu()
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -558,16 +590,20 @@ class UiController(val theme: UiTheme) : InputAdapter() {
             batch.draw(TextureGen.glow, vw / 2f - 330f, 470f, 660f, 660f)
             batch.setColor(1f, 1f, 1f, 1f)
         }
+        theme.cardShadow(batch, vw / 2 - 320f, 220f, 640f, 820f)
         theme.panel(batch, vw / 2 - 320f, 220f, 640f, 820f, Palette.UI_PANEL)
         if (b.newBest) {
             theme.text(batch, theme.fontLarge, "NEW HIGH SCORE!", 0f, 962f, Palette.GOLD, Align.center, vw)
         } else if (b.guardCatch) {
-            theme.text(batch, theme.fontLarge, "CAUGHT BY THE GUARD!", 0f, 966f, Palette.DANGER, Align.center, vw)
+            // v5.3: SS's iconic BUSTED! — display font, double-draw navy drop
+            theme.text(batch, theme.fontHuge, "BUSTED!", 4f, 972f, Palette.UI_OUTLINE, Align.center, vw)
+            theme.text(batch, theme.fontHuge, "BUSTED!", 0f, 968f, Palette.DANGER, Align.center, vw)
         } else {
             theme.text(batch, theme.fontLarge, "RUN OVER", 0f, 970f, Color.WHITE, Align.center, vw)
         }
 
-        // score on deep slot (SS profile card style)
+        // score on deep slot (SS profile card style) — v5.3 shadow-floated
+        theme.cardShadow(batch, vw / 2 - 280f, 660f, 560f, 200f)
         theme.panel(batch, vw / 2 - 280f, 660f, 560f, 200f, Palette.UI_PANEL_DEEP)
         theme.text(batch, theme.fontHuge, "${b.displayScore}", 0f, 790f, Color.WHITE, Align.center, vw)
         theme.text(batch, theme.fontTiny, "SCORE", 0f, 745f, Palette.UI_MUTED, Align.center, vw)
@@ -577,8 +613,11 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         theme.text(batch, theme.fontMed, "${b.distance.toInt()}m", vw / 2 - 280f, 622f, Color.WHITE, Align.center, 265f)
         theme.text(batch, theme.fontTiny, "DISTANCE", vw / 2 - 280f, 588f, Palette.UI_MUTED, Align.center, 265f)
         theme.panel(batch, vw / 2 + 15f, 560f, 265f, 110f, Palette.UI_PANEL_LIGHT)
-        theme.coinIcon(batch, vw / 2 + 15f + 105f, 630f, 38f)
-        theme.text(batch, theme.fontMed, "${b.runCoins}", vw / 2 + 15f, 622f, Palette.GOLD, Align.center, 265f)
+        // v5.3: coin icon + count as ONE centered row
+        val ocW = 38f + 10f + theme.textWidth(theme.fontMed, "${b.runCoins}")
+        val ocX = vw / 2 + 15f + 132.5f - ocW / 2f
+        theme.coinIcon(batch, ocX, 596f, 38f)
+        theme.text(batch, theme.fontMed, "${b.runCoins}", ocX + 48f, 624f, Palette.GOLD)
         theme.text(batch, theme.fontTiny, "COINS", vw / 2 + 15f, 588f, Palette.UI_MUTED, Align.center, 265f)
 
         // best
@@ -587,6 +626,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         if (btn("retry", vw / 2 - 190f, 424f, 380f, 112f, Palette.UI_GOLD_BTN, "RUN AGAIN", theme.fontLarge)) {
             b.restartRun()
         }
+        theme.playIcon(batch, vw / 2 - 148f, 424f + 38f, 36f)
         // v4.6 post-run GIFT: double this run's coins, once per run (SS doubler)
         if (b.giftAvailable && b.runCoins > 0) {
             if (btn("gift", vw / 2 - 190f, 340f, 380f, 72f, Palette.UI_GREEN, "DOUBLE COINS x2", theme.fontMed)) {
@@ -608,8 +648,13 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         val b = bridge!!
         // backdrop — periwinkle wash, world peeks through
         theme.panel(batch, 0f, 0f, vw, vh, Palette.UI_PANEL, 0.94f)
-        // header
-        if (btn("back", 24f, vh - 104f, 96f, 72f, Palette.UI_ORANGE, "<", theme.fontMed)) b.closePanel()
+        // v5.3 round frosted back button + centered display title
+        hits.add(HitRect("back", 24f, vh - 104f, 80f, 80f) {})
+        theme.cardShadow(batch, 28f, vh - 104f + 4f, 72f, 72f)
+        theme.circleButton(batch, 21f, vh - 107f, 86f, Color(1f, 1f, 1f, 0.92f), false)
+        theme.circleButton(batch, 24f, vh - 104f, 80f, Palette.UI_NAVY, pressedId == "back")
+        theme.text(batch, theme.fontMed, "<", 24f, vh - 104f + 48f, Color.WHITE, Align.center, 80f)
+        if (clickId == "back") { bridge!!.click(); b.closePanel() }
         val title = when (b.menuPanel) {
             MenuPanel.SHOP -> "SHOP"
             MenuPanel.CHARACTERS -> "CHARACTERS"
@@ -617,7 +662,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
             MenuPanel.SETTINGS -> "SETTINGS"
             else -> ""
         }
-        theme.text(batch, theme.fontMed, title, 140f, vh - 52f, Palette.UI_TEXT)
+        theme.text(batch, theme.fontLarge, title, 0f, vh - 44f, Palette.UI_TEXT, Align.center, vw)
         chipCoins(vw - 250f, vh - 104f)
 
         when (b.menuPanel) {
@@ -881,6 +926,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         toastTimer -= dt
         if (toastTimer <= 0f) { toastMsg = null; return }
         val alpha = min(1f, toastTimer * 2f)
+        theme.cardShadow(batch, vw / 2 - 300f, 140f, 600f, 90f)
         theme.button(batch, vw / 2 - 300f, 140f, 600f, 90f, Palette.UI_NAVY, false)
         theme.text(batch, theme.fontSmall, toastMsg!!, 0f, 195f, Palette.GOLD, Align.center, vw)
     }
