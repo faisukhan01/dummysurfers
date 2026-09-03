@@ -171,14 +171,49 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     }
 
     // ── Main loop ──────────────────────────────────────────────────────
+    // v5.1: last-resort safety net. An exception escaping render() kills the
+    // whole app ("opens fine, then it just closes mid-run"). Any gameplay
+    // tick that throws now logs the error and recovers to the MENU instead
+    // of ending the process; the crash reporter still captures genuinely
+    // fatal startup failures.
+    private var tickErrors = 0
     override fun render() {
         val rawDt = Gdx.graphics.deltaTime.coerceIn(0.001f, 0.05f)
         val dt = rawDt * if (state == GameState.DYING) 0.4f else 1f
         time += rawDt
 
-        update(dt)
-        draw(rawDt)
-        devHarness(rawDt)
+        try {
+            update(dt)
+            draw(rawDt)
+            devHarness(rawDt)
+            if (tickErrors > 0) tickErrors--
+        } catch (t: Throwable) {
+            tickErrors++
+            Gdx.app.error("DS", "tick #${tickErrors} failed — recovering", t)
+            if (tickErrors >= 8) {
+                // Something is persistently broken; park in the safest known
+                // state (menu, world reset) and stop hammering the failing path.
+                try {
+                    recoverToMenu()
+                } catch (_: Throwable) {}
+                tickErrors = 0
+                Thread.sleep(120) // brief cool-off; GL thread may sleep here safely
+            }
+        }
+    }
+
+    /** No-sound, no-luck recovery path used by the render() safety net. */
+    private fun recoverToMenu() {
+        state = GameState.MENU
+        menuPanel = MenuPanel.NONE
+        tutorialStep = null
+        dangerTimer = 0f
+        stumbleSlowTimer = 0f
+        guardCatch = false
+        boardTimer = 0f
+        player.reset()
+        world.reset()
+        spawner.reset()
     }
 
     // ── Dev visual-QA harness (desktop) ────────────────────────────────
