@@ -104,6 +104,8 @@ object TextureGen {
     lateinit var trophy: Texture           // v4.7 gold trophy on the MISSION COMPLETE banner
     lateinit var panelNine: NinePatch
     lateinit var buttonNine: NinePatch
+    lateinit var circleNine: NinePatch     // v5.3 SS round buttons (pause/gear/menu floaters)
+    lateinit var play: Texture             // v5.3 white play triangle (RUN/RESUME glyphs)
     lateinit var white: Texture
     lateinit var disc: Texture            // hard-edged circle (UI pips, wheels, dots)
     lateinit var hazeBand: Texture        // symmetric horizon haze (soft both edges)
@@ -154,6 +156,8 @@ object TextureGen {
         previews = Array(CharacterDef.ALL.size) { characterPreview(CharacterDef.ALL[it]) }
         panelNine = roundedNine(64, 18, Color(1f, 1f, 1f, 1f), border = false)
         buttonNine = roundedNine(64, 18, Color(1f, 1f, 1f, 1f), border = true)
+        circleNine = circleNine()
+        play = playGlyph()
         trainSides = Array(Palette.TRAIN_LIVERIES.size) { trainSide(it) }
         trainFronts = Array(Palette.TRAIN_LIVERIES.size) { trainFront(it) }
         trainRears = Array(Palette.TRAIN_LIVERIES.size) { trainRear(it) }
@@ -180,6 +184,7 @@ object TextureGen {
         powerIcons.forEach { it.dispose() }
         navIcons.forEach { it.dispose() }
         trophy.dispose()
+        play.dispose()
         previews.forEach { it.dispose() }
         trainSides.forEach { it.dispose() }
         trainFronts.forEach { it.dispose() }
@@ -696,26 +701,91 @@ object TextureGen {
         return tex(p)
     }
 
-    private fun roundedNine(size: Int, radius: Int, color: Color, border: Boolean): NinePatch {
+    /** Rounded-rect fill (Pixmap has no rounded API — compose rects + circles). */
+    private fun fillRoundRect(p: Pixmap, x: Int, y: Int, w: Int, h: Int, r: Int) {
+        p.fillRectangle(x + r, y, w - r * 2, h)
+        p.fillRectangle(x, y + r, w, h - r * 2)
+        p.fillCircle(x + r, y + r, r)
+        p.fillCircle(x + w - r, y + r, r)
+        p.fillCircle(x + r, y + h - r, r)
+        p.fillCircle(x + w - r, y + h - r, r)
+    }
+
+    /**
+     * v5.3 SS-JELLY BUTTON — real Subway Surfers buttons are jelly: dark navy
+     * outline all around, saturated fill, bright gloss band on top, chunky
+     * darker bottom lip that sells the 3D press. Everything is baked as
+     * white/alpha over white so the per-draw tint colors the whole shape.
+     * (The old ninepatch was a flat slab with a hairline gloss — buttons read
+     * as sticky notes, not candy.)
+     */
+    private fun roundedNine(size: Int, radius: Int, @Suppress("UNUSED_PARAMETER") color: Color, border: Boolean): NinePatch {
         val p = Pixmap(size, size, Pixmap.Format.RGBA8888)
-        p.setColor(color)
-        p.fillRectangle(radius, 0, size - radius * 2, size)
-        p.fillRectangle(0, radius, size, size - radius * 2)
-        p.fillCircle(radius, radius, radius); p.fillCircle(size - radius, radius, radius)
-        p.fillCircle(radius, size - radius, radius); p.fillCircle(size - radius, size - radius, radius)
-        // chunky cartoon look: top gloss + bottom 3D lip (SS game buttons)
-        p.setColor(1f, 1f, 1f, 0.26f)
-        p.fillRectangle(radius, radius / 3, size - radius * 2, radius / 2)
-        p.fillCircle(radius + radius / 2, radius / 2 + radius / 3, radius / 3)
+        val r = radius
         if (border) {
-            p.setColor(0f, 0f, 0f, 0.32f)
-            p.fillRectangle(radius, size - radius / 2, size - radius * 2, radius / 2)
-            p.fillCircle(radius, size - radius / 2, radius / 2)
-            p.fillCircle(size - radius, size - radius / 2, radius / 2)
+            // outline ring — navy, tint-multiplies dark on any fill color
+            p.setColor(0.10f, 0.12f, 0.27f, 1f)
+            fillRoundRect(p, 1, 1, size - 2, size - 2, r)
+            // base fill (white → tinted per draw)
+            p.setColor(1f, 1f, 1f, 1f)
+            fillRoundRect(p, 5, 5, size - 10, size - 10, (r - 4).coerceAtLeast(6))
+            // chunky bottom lip — darker band hugging the inside bottom
+            p.setColor(0f, 0f, 0f, 0.22f)
+            fillRoundRect(p, 5, size - 16, size - 10, 11, 6)
+            // top gloss band
+            p.setColor(1f, 1f, 1f, 0.34f)
+            fillRoundRect(p, 9, 8, size - 18, 9, 5)
+            // gloss corner dot (candy sparkle)
+            p.setColor(1f, 1f, 1f, 0.5f)
+            p.fillCircle(15, 12, 3)
+        } else {
+            // panels: soft frosted card — white base, faint top sheen,
+            // whisper of bottom shade (tinted periwinkle/navy per draw)
+            p.setColor(1f, 1f, 1f, 1f)
+            fillRoundRect(p, 1, 1, size - 2, size - 2, r)
+            p.setColor(1f, 1f, 1f, 0.18f)
+            fillRoundRect(p, 4, 3, size - 8, 8, 4)
+            p.setColor(0f, 0f, 0f, 0.10f)
+            fillRoundRect(p, 3, size - 11, size - 6, 8, 4)
         }
         val t = Texture(p); p.dispose()
-        val m = radius + 2
+        val m = radius + 3
         return NinePatch(t, m, m, m, m)
+    }
+
+    /**
+     * v5.3 SS ROUND BUTTON — jelly circle for pause/gear/menu floaters:
+     * navy ring, white fill (tinted), bottom lip via a lower dark disc that
+     * only peeks under the fill disc, round gloss dot top-center.
+     */
+    private fun circleNine(): NinePatch {
+        val s = 64
+        val p = Pixmap(s, s, Pixmap.Format.RGBA8888)
+        val c = s / 2f
+        // outline ring
+        p.setColor(0.10f, 0.12f, 0.27f, 1f)
+        p.fillCircle(c.toInt(), c.toInt(), s / 2 - 1)
+        // bottom lip disc (drawn first, only its bottom sliver stays visible)
+        p.setColor(0f, 0f, 0f, 0.26f)
+        p.fillCircle(c.toInt(), (c + 3).toInt(), s / 2 - 5)
+        // base fill
+        p.setColor(1f, 1f, 1f, 1f)
+        p.fillCircle(c.toInt(), c.toInt(), s / 2 - 5)
+        // gloss band (a rounded strip that stays inside the disc silhouette)
+        p.setColor(1f, 1f, 1f, 0.34f)
+        fillRoundRect(p, 20, 10, 24, 8, 4)
+        val t = Texture(p); p.dispose()
+        return NinePatch(t, 22, 22, 22, 22)
+    }
+
+    /** v5.3 white play triangle for RUN / RESUME jelly buttons. */
+    private fun playGlyph(): Texture {
+        val s = 64
+        val p = Pixmap(s, s, Pixmap.Format.RGBA8888)
+        p.setColor(1f, 1f, 1f, 1f)
+        p.fillTriangle(16, 8, 16, 56, 54, 32)
+        val t = Texture(p); p.dispose()
+        return t
     }
 
     // ── SS-chibi character portraits (menu + shop) ─────────────────────
