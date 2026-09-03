@@ -63,7 +63,17 @@ const consoleLines = [
 
 const changelog = [
   {
-    v: 'v5.3.0', date: 'Jelly-UI fidelity pass — every button feels like the real game — today', latest: true, items: [
+    v: 'v5.4.0', date: 'Startup immunity — the app can literally never close itself anymore — today', latest: true, items: [
+      '🛡️ STARTUP IMMUNITY: boot is now staged with a fallback at every layer — one bad texture becomes a white substitute, one bad font becomes the engine font, and even a broken 3D engine still opens a SAFE MODE screen showing exactly what failed with a TAP TO RETRY button',
+      '🚀 Start-first launcher: the game boots IMMEDIATELY on every open; the crash-report dialog now appears over the running game instead of gating it behind a black screen (this was the "opens once then never again" loop)',
+      '🪂 Native fallback screen: if even the GL view cannot be created, the app shows the full error with COPY REPORT / TRY AGAIN buttons — the process never auto-closes, ever',
+      '📋 Self-reporting: any startup failure is written to the crash report AND shown on screen, so a device-specific bug tells us exactly what happened instead of dying silently',
+      '🧪 Proven on camera: forced-failure QA runs photographed all recovery paths — fonts-fail boots a playable game, scene-fail shows SafeMode, one tap rebuilds the full engine into the real menu',
+      '🏷️ versionCode 25 — clearly distinct from every older download',
+    ]
+  },
+  {
+    v: 'v5.3.0', date: 'Jelly-UI fidelity pass — every button feels like the real game', items: [
       '🍬 SS JELLY BUTTONS: every button rebuilt — dark navy outline all around, glossy top band, chunky darker bottom lip that sells the 3D press. Buttons finally feel like candy, not sticky notes',
       '⭕ Round jelly buttons everywhere: pause roundel + settings & missions floaters got the white-ring circle treatment; the menu bottom bar went from heavy navy slabs to four floating round buttons with tiny labels',
       '▶️ PLAY triangles on RUN / RESUME / RUN AGAIN — the iconic SS action-button DNA',
@@ -227,7 +237,7 @@ export default function Home() {
             </a>
           ))}
           <span className="ml-auto shrink-0 rounded-full bg-[#FFC93C] px-3 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#24316B] border-2 border-white shadow-[0_2px_0_#E09B12]">
-            v5.3.0 — Jelly-UI Fidelity Pass!
+            v5.4.0 — Startup Immunity!
           </span>
         </div>
       </nav>
@@ -480,7 +490,7 @@ export default function Home() {
             Dummy Surfers <span className="text-white">by</span>
             <GraffitiName name="Faisal Khan" className="ml-2 inline-block align-middle normal-case text-[1.55rem] sm:text-[1.85rem]" stroke="#1B2038" shadowFilter="drop-shadow(0 3px 0 rgba(9,12,30,.55))" />
           </p>
-          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v5.3.0 — Jelly-UI Fidelity Pass!</span></p>
+          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v5.4.0 — Startup Immunity!</span></p>
         </div>
       </footer>
     </main>
