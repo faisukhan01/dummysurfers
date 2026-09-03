@@ -197,3 +197,29 @@ Stage Summary:
 - Game main = game tree; site branch = landing page; ./push-game.sh is the only sanctioned push path for the game.
 - User should re-download from the QR/stable URL — v5.1.0 (code 21) is unambiguous. If a crash ever happens again, the reporter now shows a Copy/Share dialog with the REAL version in the header — ask user to share that text for perfect forensics.
 - Next round: continue SS-fidelity push (train liveries close-up, HUD chips, mission cards), the standing ~700-commit track.
+
+---
+Task ID: 16
+Agent: Z.ai Code (orchestrator)
+Task: "UI and character still not better than real Subway Surfers (screenshot attached) — make it clean/aesthetic" + "why is my GitHub commit graph not updating" + "repo shows 'site had recent pushes 8 minutes ago' — fix these".
+
+Work Log:
+- COMMIT-GRAPH ROOT CAUSE FOUND: every commit was authored `Z User <z@container>` — an identity GitHub cannot attribute to faisukhan01, so the contribution graph stayed EMPTY no matter how many commits shipped. Fixed by:
+  1. git identity (global + repo) → `Faisal Khan <193670919+faisukhan01@users.noreply.github.com>` (noreply email always attributes; ID 193670919 pulled from the avatar redirect).
+  2. `git filter-branch --env-filter` rewrote ALL 67 landing-repo commits to the new identity (dates preserved → past contribution days light up too). Subtree split re-verified: 48 game commits, all Faisal Khan.
+  3. NOT PUSHED YET — no GitHub token on disk this session; `./push-game.sh <token>` is ready and will force-push main (game) + site (landing).
+- "site had recent pushes" banner = normal GitHub UI (site branch receives the landing-page backup on every release push); informational only, auto-dismisses. Nothing broken. Explained to user.
+- HUD MIRRORED TO REAL SS LAYOUT (UiController.drawHud): pause frosted-navy roundel + white bars top-LEFT; big outlined score top-RIGHT + gold xN chip left of it; clean coin icon + count under score; soft distance line under coins. (Was: gold slab pills top-left, centered score, pause top-right.)
+- BUG FIXED: stale SpriteBatch tint leaked across frames — menu coin icon rendered as a dark blob (batch.setColor persistence). Reset at drawMenu/drawHud top + defensively inside UiTheme.coinIcon.
+- BitmapFont right-align trap fixed: Align.right lays out inside [x, x+targetWidth] — x must be 0 (score text was drawn off-screen at vw-22+vw).
+- MENU PORTRAIT REBUILT (TextureGen.characterPreview): one big face circle (kills the mushroom-robot look), scanline-clipped cap dome (Pixmap has NO setClip — per-row spans!) + edge strap + buckle + seams + backwards brim tips + button, scalloped hair fringe, oval eyes w/ iris+pupil+double glints, brows, nose, open grin w/ teeth+tongue, blush, drawstrings+knots, pocket, pack straps+buckles, chunky white-soled sneakers w/ toe caps. All 4 characters + accessories re-supported (goggles/headphones/spray can).
+- 3D BACK-VIEW REBUILT (Character3D + ModelFactory.colorBall): sneaker white mid-sole + toe cap + heel tab (faces chase cam), sphere hands + shoulder joint balls, cap seam band + back stitch, nape hair spikes + wider ears, backpack: smaller 0.40x0.44 + side pockets + vertical straps + gold clips + white hood roll behind neck.
+- CAMERA: pulled back/up (z 4.9→5.65, y 2.62→2.78) — runner ~25% of frame like real SS; track ahead readable.
+- QA: desktop harness under Xvfb (:99), scripted run (menu/RIGHT/UP/DOWN slides) — menu portrait, playing HUD (score 126 / coins 9 / 36m right-aligned ✅), tunnel slide shot all verified visually. Compile clean.
+- RELEASE PREP: versionCode 22 / v5.2.0; landing page changelog entry + nav + footer version strings; lint clean.
+- 8 granular commits (fix/feat/chore/site) all authored Faisal Khan.
+
+Stage Summary:
+- Push command for next session (needs user token): `cd /home/z/my-project && ./push-game.sh <github-token>` — force-pushes rewritten game main + site. CI will build v5.2.0 (code 22) and publish the APK release automatically.
+- After push: user should see their contribution graph populated for ALL past commit days (rewritten identity) + today.
+- Remaining fidelity ideas (next rounds): train liveries close-up pass, mission cards restyle, pause/game-over card polish, guard+dog catch-scene framing.
