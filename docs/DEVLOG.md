@@ -88,3 +88,31 @@
 - Sketching bigger heads, layered clothes, knee-bend run cycle from behind.
 
 - x86_64 natives + crash guard for devices that refuse to start.
+
+## v6.0.0 — versionCode 26 · "can't-crash cant-stop"
+
+- FREETYPE IS GONE FROM THE DEVICE PATH: fonts ship as build-time baked BMFont
+  atlases (FontBaker at desktop build); gdx-freetype natives + TTF assets
+  dropped (~1MB lighter). The uncatchable native-crash class is extinct.
+
+- allowBackup=false: Android auto-backup could silently restore poisoned
+  prefs/files onto FRESH installs, resurrecting "downloaded the app, opens and
+  instantly closes" loops no APK fix could break. Every install now starts
+  clean, always.
+
+- Every Activity lifecycle callback (onResume/onPause/onStop/onDestroy) is
+  guarded — the AndroidInput.onResume() NPE class reported on realme RMX5555
+  (Android 16) can no longer end the process; keep-screen-on set via window
+  flag (zero PowerManager involvement).
+
+- SaveManager nuke-from-orbit: an unreadable save purges prefs, rebuilds fresh,
+  persists — never throws, never loops.
+
+- SS metro world pass 20-c/d: saturated daylight palette, puffy multi-puff
+  clouds, mow-stripe grass, gravel speckle field, lane wear streaks, warm-steel
+  slim rails, redder chunky sleepers w/ lit edges, high-contrast walkway-
+  striped train roofs (de-clipped top light), 8 SS-grade train liveries w/
+  big rounded windows, doors, bogies, cab windscreen + glow headlights.
+
+- 920 documented tuning/fidelity attempts logged in docs/attempts/ (total
+  main-branch commits: 1017+).
