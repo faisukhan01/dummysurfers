@@ -89,6 +89,41 @@ class UiTheme {
         val sh = h * scale
         np.setColor(npColor.set(color.r, color.g, color.b, color.a))
         np.draw(batch, cx - sw / 2f, cy - sh / 2f, sw, sh)
+        np.setColor(npColor.set(1f, 1f, 1f, 1f))
+    }
+
+    /**
+     * v5.3 SS round jelly button (pause / gear / menu floaters). Pressed =
+     * squash toward the finger like the real game.
+     */
+    fun circleButton(batch: SpriteBatch, x: Float, y: Float, size: Float, color: Color, pressed: Boolean) {
+        val np = TextureGen.circleNine
+        val scale = if (pressed) 0.92f else 1f
+        val cx = x + size / 2f
+        val cy = y + size / 2f
+        val s = size * scale
+        np.setColor(npColor.set(color.r, color.g, color.b, color.a))
+        np.draw(batch, cx - s / 2f, cy - s / 2f, s, s)
+        np.setColor(npColor.set(1f, 1f, 1f, 1f))
+    }
+
+    /**
+     * v5.3 soft drop shadow under cards/buttons — the dark translucent
+     * panel ninepatch, nudged down. SS floats every card on one of these;
+     * without it cards look pasted onto the world.
+     */
+    fun cardShadow(batch: SpriteBatch, x: Float, y: Float, w: Float, h: Float) {
+        val np = TextureGen.panelNine
+        np.setColor(npColor.set(0.05f, 0.06f, 0.14f, 0.38f))
+        np.draw(batch, x - 4f, y - 14f, w + 8f, h + 12f)
+        np.setColor(npColor.set(1f, 1f, 1f, 1f))
+    }
+
+    /** v5.3 white play triangle glyph, tinted. */
+    fun playIcon(batch: SpriteBatch, x: Float, y: Float, size: Float, color: Color = Color.WHITE) {
+        batch.setColor(color.r, color.g, color.b, color.a)
+        batch.draw(TextureGen.play, x, y, size, size)
+        batch.setColor(1f, 1f, 1f, 1f)
     }
 
     fun progressBar(sr: ShapeRenderer, x: Float, y: Float, w: Float, h: Float, t: Float, color: Color) {
