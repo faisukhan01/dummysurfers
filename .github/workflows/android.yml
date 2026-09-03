@@ -83,7 +83,7 @@ jobs:
           tag_name: v${{ steps.ver.outputs.version }}
           name: Dummy Surfers v${{ steps.ver.outputs.version }}
           body: |
-            Dummy Surfers by FSK — v${{ steps.ver.outputs.version }} (versionCode auto)
+            Dummy Surfers by Faisal Khan — v${{ steps.ver.outputs.version }} (versionCode auto)
             True-3D endless runner. Install: download DummySurfers.apk and allow unknown sources.
           files: DummySurfers.apk
           overwrite_files: true
