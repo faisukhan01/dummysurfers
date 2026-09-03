@@ -63,7 +63,18 @@ const consoleLines = [
 
 const changelog = [
   {
-    v: 'v5.2.0', date: 'Real-SS HUD + character rebuild — today', latest: true, items: [
+    v: 'v5.2.1', date: 'Cap-dome rebuild + portrait cuteness pass — today', latest: true, items: [
+      '🧢 THE red brick is dead: the in-game cap was a flat slab floating above the head — now a real rounded dome (squashed low-poly sphere) that hugs the skull like a baseball cap, with back stitch + top button',
+      '😍 Menu portrait cuteness pass: symmetric arch brows, bigger centered irises w/ one big sparkle glint (no more googly eyes), narrowed teeth band, weird side "brim-tip" blobs removed, clean white rounded-square cap badge like the app icon',
+      '🎒 Backpack focal detail: light front pocket + gold zipper replace the two dark harness straps; goggles & headphones re-fitted around the new spherical dome',
+      '🪙 HUD coin counter now sits in a frosted navy pill — matching the pause roundel, straight off the real SS screen',
+      '🌞 Menu daylight lift: soft white + sky wash brightens the title screen (no more grey/moody backdrop)',
+      '🌥️ Runner shadow softened + tightened — no more dark hole under the character',
+      '🏷️ versionCode 23 — clearly distinct from every older download',
+    ]
+  },
+  {
+    v: 'v5.2.0', date: 'Real-SS HUD + character rebuild', items: [
       '🎮 HUD mirrored to the REAL Subway Surfers layout: pause roundel top-LEFT (frosted navy, white bars), big outlined score top-RIGHT with gold ×N chip, clean coin icon + count beneath, distance under that — no more gold slab pills',
       '🧑‍🎨 Menu portrait rebuilt from scratch: one big face circle (no more mushroom robot), clipped cap dome w/ strap + seams + backwards brim tips, scalloped hair fringe, oval eyes w/ iris + double glints, open grin w/ teeth + tongue, blush, drawstrings, chunky white-soled sneakers',
       '🎒 Gameplay back-view rebuild: sneaker white mid-sole + heel tabs, sphere hands + shoulder joints, cap seam band + back stitch, nape hair spikes, wider ears, smaller pack with side pockets, vertical straps + gold clips, hood roll behind the neck',
@@ -204,7 +215,7 @@ export default function Home() {
             </a>
           ))}
           <span className="ml-auto shrink-0 rounded-full bg-[#FFC93C] px-3 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#24316B] border-2 border-white shadow-[0_2px_0_#E09B12]">
-            v5.2.0 — Real-SS HUD + Character Rebuild!
+            v5.2.1 — Cap-Dome Rebuild + Portrait Cuteness!
           </span>
         </div>
       </nav>
@@ -457,7 +468,7 @@ export default function Home() {
             Dummy Surfers <span className="text-white">by</span>
             <GraffitiName name="Faisal Khan" className="ml-2 inline-block align-middle normal-case text-[1.55rem] sm:text-[1.85rem]" stroke="#1B2038" shadowFilter="drop-shadow(0 3px 0 rgba(9,12,30,.55))" />
           </p>
-          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v5.2.0 — Real-SS HUD + Character Rebuild!</span></p>
+          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v5.2.1 — Cap-Dome Rebuild + Portrait Cuteness!</span></p>
         </div>
       </footer>
     </main>
