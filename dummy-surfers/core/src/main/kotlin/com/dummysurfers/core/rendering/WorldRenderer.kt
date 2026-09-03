@@ -24,9 +24,30 @@ class WorldRenderer(
     private val sr: ShapeRenderer
 ) {
     private val tmpC = Color()
+    private val tmpC2 = Color()
     private val birdC = Color()
     var menuDim = 0f // extra darkening when menus are open
     var time = 0f    // set from game each frame (bird flap phase)
+
+    // ── 20-c ballast speckle field — precomputed ONCE (z, wx, shade), zero
+    // per-frame allocation: scrolled by the run distance and wrapped by modulo
+    private val SPECK_COUNT = 200
+    private val SPECK_SPAN = GameConfig.VIEW_DISTANCE + 8f
+    private val speckZ = FloatArray(SPECK_COUNT)
+    private val speckX = FloatArray(SPECK_COUNT)
+    private val speckS = FloatArray(SPECK_COUNT)
+
+    init {
+        val rng = java.util.Random(20260903L)
+        val halfTrack = GameConfig.LANE_WIDTH * 1.5f
+        for (i in 0 until SPECK_COUNT) {
+            speckZ[i] = -8f + rng.nextFloat() * SPECK_SPAN
+            // sprinkle the gravel shoulders just outside the path slabs
+            val edge = halfTrack - 0.7f
+            speckX[i] = (edge + 0.05f + rng.nextFloat() * 1.1f) * (if (rng.nextBoolean()) 1f else -1f)
+            speckS[i] = rng.nextFloat()
+        }
+    }
 
     fun render(
         distance: Float,
@@ -48,10 +69,11 @@ class WorldRenderer(
         batch.setColor(1f, 0.98f, 0.88f, 0.95f)
         batch.draw(TextureGen.glow, sunX - 42f, proj.horizonY + 40f - 42f, 84f, 84f)
         val t = distance * 0.02f
-        drawCloud(TextureGen.cloudA, t * 8f + 40f, vh * 0.86f, 1f, 0.85f, shakeX)
-        drawCloud(TextureGen.cloudA, t * 5f + 520f, vh * 0.92f, 0.8f, 0.7f, shakeX)
-        drawCloud(TextureGen.cloudB, t * 12f + 240f, vh * 0.78f, 0.9f, 0.55f, shakeX)
-        drawCloud(TextureGen.cloudB, t * 9f + 640f, vh * 0.83f, 0.7f, 0.5f, shakeX)
+        // 20-c: bigger, puffier clouds (new textures are 340x120/280x100)
+        drawCloud(TextureGen.cloudA, t * 8f + 40f, vh * 0.88f, 1.15f, 0.92f, shakeX)
+        drawCloud(TextureGen.cloudA, t * 5f + 520f, vh * 0.93f, 0.9f, 0.75f, shakeX)
+        drawCloud(TextureGen.cloudB, t * 12f + 240f, vh * 0.80f, 1.0f, 0.62f, shakeX)
+        drawCloud(TextureGen.cloudB, t * 9f + 640f, vh * 0.84f, 0.8f, 0.55f, shakeX)
 
         // ── Layer 2-3: skyline silhouettes (tiled parallax) ────────────
         drawTiled(TextureGen.skylineFar, distance * 1.6f, proj.horizonY - 6f, 0.9f, shakeX, shakeY)
@@ -156,6 +178,26 @@ class WorldRenderer(
         sr.setColor(tmpC)
         sr.rect(0f, -2f, vw, horizon + 2f)
 
+        // 20-c: scrolling mow-stripes on the grass (alternating lighter bands —
+        // the old flat green slab read as painted plastic)
+        run {
+            val bandLen = 3.6f
+            var gz = distance % (bandLen * 2f)
+            var idx = (distance / bandLen).toInt()
+            while (gz < GameConfig.VIEW_DISTANCE) {
+                val gz1 = gz + bandLen
+                val yN = proj.groundY(gz.coerceAtLeast(-7f)) + sy
+                val yF = proj.groundY(gz1) + sy
+                if (idx % 2 == 0 && yF < yN) {
+                    DecoRenderer.fogged(proj, tmpC2, Palette.GRASS, (gz + gz1) * 0.5f)
+                    tmpC2.mul(1.09f).a = 0.55f
+                    sr.setColor(tmpC2)
+                    sr.rect(0f, yF, vw, yN - yF)
+                }
+                gz = gz1; idx++
+            }
+        }
+
         // track ballast (converging trapezoid, warm terracotta) — near edge
         // extends below the player line so no void shows under the camera
         val farScale = proj.scale(GameConfig.VIEW_DISTANCE)
@@ -170,6 +212,28 @@ class WorldRenderer(
         // full-width safety fill under the trapezoid (screen bottom)
         if (nearY < vh) {
             sr.rect(0f, -2f, vw, nearY + 2f)
+        }
+
+        // 20-c: gravel speckle — tiny precomputed chips scrolled with distance,
+        // wrapped by modulo, skipped when too small/far to read (no clutter at
+        // the horizon, no per-frame allocation)
+        run {
+            for (i in 0 until SPECK_COUNT) {
+                var rel = (speckZ[i] - distance) % SPECK_SPAN
+                if (rel < 0f) rel += SPECK_SPAN
+                rel += -8f
+                if (rel < 0.2f) continue
+                val sc = proj.scale(rel)
+                if (sc < 0.18f) continue
+                val px = proj.screenX(speckX[i], rel) + sx
+                val py = proj.groundY(rel) + sy
+                val sz = 0.11f * proj.ppu * sc
+                val fade = 1f - proj.fog(rel) * 0.75f
+                if (speckS[i] < 0.5f) tmpC.set(0x5a4832ff.toInt()) else tmpC.set(0xf0e0b8ff.toInt())
+                tmpC.a = 0.75f * fade
+                sr.setColor(tmpC)
+                sr.rect(px, py, sz, sz * 0.85f)
+            }
         }
 
         // SS path patches: alternating cream/orange blocks rushing past
@@ -194,6 +258,30 @@ class WorldRenderer(
             }
         }
 
+        // 20-c: subtle rubber/oil wear streak down each lane center (long thin
+        // translucent band — breaks up the sterile lane symmetry)
+        run {
+            var lz = 0.8f
+            while (lz < 40f) {
+                val lz1 = (lz + 4.5f).coerceAtMost(40f)
+                tmpC2.set(0x1e160eff.toInt())
+                tmpC2.a = 0.16f * (1f - proj.fog((lz + lz1) * 0.5f))
+                sr.setColor(tmpC2)
+                for (lane in -1..1) {
+                    val wx = lane * GameConfig.LANE_WIDTH
+                    val xa0 = proj.screenX(wx - 0.13f, lz) + sx
+                    val xb0 = proj.screenX(wx + 0.13f, lz) + sx
+                    val xa1 = proj.screenX(wx - 0.09f, lz1) + sx
+                    val xb1 = proj.screenX(wx + 0.09f, lz1) + sx
+                    val y0 = proj.groundY(lz) + sy
+                    val y1 = proj.groundY(lz1) + sy
+                    sr.triangle(xa0, y0, xb0, y0, xb1, y1)
+                    sr.triangle(xa0, y0, xb1, y1, xa1, y1)
+                }
+                lz = lz1
+            }
+        }
+
         // sleepers rushing past (primary speed cue) — from just behind the
         // player (closer than that they explode in size and swamp the screen)
         val spacing = GameConfig.SLEEPER_SPACING
@@ -208,13 +296,17 @@ class WorldRenderer(
             DecoRenderer.fogged(proj, tmpC, Palette.SLEEPER, z.coerceAtLeast(0f))
             sr.setColor(tmpC)
             sr.rect(cx - w, y, w * 2f, h)
-            tmpC.a = 0.25f
+            // 20-c: lit top edge (redder brown + highlight sells chunky wood)
+            tmpC2.set(1f, 0.92f, 0.78f, 0.30f)
+            sr.setColor(tmpC2)
+            sr.rect(cx - w, y, w * 2f, h * 0.34f)
+            tmpC.a = 0.28f
             sr.setColor(tmpC)
-            sr.rect(cx - w, y + h * 0.6f, w * 2f, h * 0.4f)
+            sr.rect(cx - w, y + h * 0.62f, w * 2f, h * 0.38f)
             z += spacing
         }
 
-        // 3 tracks x 2 rails: rust base + silver head (SS look) — full span
+        // 3 tracks x 2 rails: dark steel base + near-white head (SS look) — full span
         val railOffsets = floatArrayOf(-0.88f, 0.88f)
         var z0 = nearZ
         while (z0 < GameConfig.VIEW_DISTANCE) {
@@ -226,16 +318,16 @@ class WorldRenderer(
                     val x1 = proj.screenX(wx, z1) + sx
                     val y0 = proj.groundY(z0) + sy
                     val y1 = proj.groundY(z1) + sy
-                    // rust base (wider)
-                    val bw0 = 0.2f * proj.ppu * proj.scale(z0)
-                    val bw1 = 0.2f * proj.ppu * proj.scale(z1)
+                    // dark steel base (wider) — 20-d: slimmed so rails read as steel, not ribbons
+                    val bw0 = 0.21f * proj.ppu * proj.scale(z0)
+                    val bw1 = 0.21f * proj.ppu * proj.scale(z1)
                     DecoRenderer.fogged(proj, tmpC, Palette.RAIL_SIDE, z0.coerceAtLeast(0f))
                     sr.setColor(tmpC)
                     sr.triangle(x0 - bw0, y0, x0 + bw0, y0, x1 + bw1, y1)
                     sr.triangle(x0 - bw0, y0, x1 + bw1, y1, x1 - bw1, y1)
-                    // silver head
-                    val w0 = 0.09f * proj.ppu * proj.scale(z0)
-                    val w1 = 0.09f * proj.ppu * proj.scale(z1)
+                    // warm steel head
+                    val w0 = 0.095f * proj.ppu * proj.scale(z0)
+                    val w1 = 0.095f * proj.ppu * proj.scale(z1)
                     DecoRenderer.fogged(proj, tmpC, Palette.RAIL, z0.coerceAtLeast(0f))
                     sr.setColor(tmpC)
                     sr.triangle(x0 - w0, y0, x0 + w0, y0, x1 + w1, y1)
