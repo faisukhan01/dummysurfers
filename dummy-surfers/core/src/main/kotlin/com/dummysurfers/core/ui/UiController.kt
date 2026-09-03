@@ -209,10 +209,16 @@ class UiController(val theme: UiTheme) : InputAdapter() {
     // ════════════════════════════════════════════════════════════════════
     fun drawMenu(time: Float) {
         val b = bridge!!
+        batch.setColor(1f, 1f, 1f, 1f)
         // top currency pills (navy/gold, SS style)
         chipCoins(vw - 250f, vh - 96f)
-        // settings gear shortcut top-left
-        if (btn("gear", 24f, vh - 100f, 76f, 76f, Palette.UI_NAVY, "O", theme.fontMed)) b.openPanel(MenuPanel.SETTINGS)
+        // settings gear shortcut top-left — v5.2: real white gear glyph (the
+        // bare "O" letter read as a broken button in QA)
+        hits.add(HitRect("gear", 24f, vh - 100f, 76f, 76f) {})
+        theme.button(batch, 24f, vh - 100f, 76f, 76f, Palette.UI_NAVY, pressedId == "gear")
+        batch.setColor(1f, 1f, 1f, 1f)
+        batch.draw(TextureGen.navIcons[3], 24f + 14f, vh - 100f + 14f, 48f, 48f)
+        if (clickId == "gear") { bridge!!.click(); b.openPanel(MenuPanel.SETTINGS) }
 
         // v3.0: warm sun glow behind the logo block (SS title-screen warmth)
         val glowPulse = 0.30f + sin(time * 1.4f) * 0.05f
@@ -311,25 +317,38 @@ class UiController(val theme: UiTheme) : InputAdapter() {
     // ════════════════════════════════════════════════════════════════════
     fun drawHud(time: Float) {
         val b = bridge!!
-        // gold coin pill — top-left (SS style)
-        val pillH = 60f
-        val pillW = max(170f, theme.textWidth(theme.fontMed, "${b.runCoins}") + 100f)
-        theme.button(batch, 20f, vh - 96f, pillW, pillH, Palette.UI_GOLD_BTN, false)
-        theme.coinIcon(batch, 32f, vh - 87f, 42f)
-        theme.text(batch, theme.fontMed, "${b.runCoins}", 84f, vh - 54f, Color.WHITE)
+        // v5.2: SpriteBatch tint persists across frames (whatever the previous
+        // frame ended with tints the first texture draws) — the menu coin icon
+        // rendered as a dark blob because of exactly that. Reset every HUD/menu.
+        batch.setColor(1f, 1f, 1f, 1f)
 
-        // big score — top-center, white w/ navy outline (font baked)
-        theme.text(batch, theme.fontHuge, "${b.score}", 0f, vh - 34f, Color.WHITE, Align.center, vw)
-        // x2 star chip beside score when multiplier is up
+        // ── top-left: PAUSE — frosted deep-navy roundel + white bars (SS DNA)
+        val pauseX = 20f
+        val pauseY = vh - 96f
+        hits.add(HitRect("pause", pauseX, pauseY, 68f, 68f) {})
+        theme.pill(batch, pauseX, pauseY, 68f, 68f, Palette.UI_PANEL_DEEP, 0.74f)
+        theme.rect(batch, pauseX + 22f, pauseY + 18f, 8f, 32f, Color.WHITE)
+        theme.rect(batch, pauseX + 38f, pauseY + 18f, 8f, 32f, Color.WHITE)
+
+        // ── top-RIGHT cluster: score → coins → distance (real SS layout)
+        // big white score with the baked navy outline, right-aligned
+        theme.text(batch, theme.fontHuge, "${b.score}", 0f, vh - 24f, Color.WHITE, Align.right, vw - 22f)
+        // xN gold chip sits LEFT of the score while the multiplier is up
         if (b.multiplier > 1) {
-            val chipW = 74f
+            val chipW = 86f
             val scoreW = theme.textWidth(theme.fontHuge, "${b.score}")
-            val chipX = vw / 2f - scoreW / 2f - chipW - 16f
-            theme.button(batch, chipX, vh - 96f, chipW, 58f, Palette.UI_GOLD_BTN, false)
+            val chipX = vw - 22f - scoreW - chipW - 14f
+            theme.button(batch, chipX, vh - 92f, chipW, 58f, Palette.UI_GOLD_BTN, false)
             theme.text(batch, theme.fontSmall, "x${b.multiplier}", chipX, vh - 55f, Color.WHITE, Align.center, chipW)
         }
-        // distance under score
-        theme.text(batch, theme.fontSmall, "${b.distance.toInt()}m", 0f, vh - 118f, Color.WHITE, Align.center, vw)
+        // coins row: clean gold coin + outlined number over the scene (no slab
+        // pill — the real SS HUD keeps this minimal)
+        val coinStr = "${b.runCoins}"
+        val coinStrW = theme.textWidth(theme.fontMed, coinStr)
+        theme.coinIcon(batch, vw - 22f - coinStrW - 50f, vh - 122f, 42f)
+        theme.text(batch, theme.fontMed, coinStr, 0f, vh - 86f, Color.WHITE, Align.right, vw - 22f)
+        // distance, small + soft, under the coins
+        theme.text(batch, theme.fontSmall, "${b.distance.toInt()}m", 0f, vh - 146f, Color(1f, 1f, 1f, 0.85f), Align.right, vw - 22f)
 
         // v3.0: live "BEST!" flag the moment the current run passes the record
         if (!b.newBest && b.save.best > 0 && b.score > b.save.best) {
@@ -339,14 +358,6 @@ class UiController(val theme: UiTheme) : InputAdapter() {
             theme.button(batch, bx, vh - 200f + bob, bw, 54f, Palette.UI_GREEN, false)
             theme.text(batch, theme.fontSmall, "★ BEST!", bx, vh - 163f + bob, Color.WHITE, Align.center, bw)
         }
-
-        // pause button — white frosted rounded square, navy bars (SS top-right)
-        val pauseX = vw - 92f
-        val pauseY = vh - 96f
-        hits.add(HitRect("pause", pauseX, pauseY, 68f, 68f) {})
-        theme.pill(batch, pauseX, pauseY, 68f, 68f, Palette.UI_PANEL_LIGHT, 0.85f)
-        theme.rect(batch, pauseX + 21f, pauseY + 17f, 8f, 34f, Palette.UI_NAVY)
-        theme.rect(batch, pauseX + 39f, pauseY + 17f, 8f, 34f, Palette.UI_NAVY)
 
         // hoverboard chip — bottom-right: tap it (or double-tap anywhere) to ride
         val boards = b.save.hoverboards
