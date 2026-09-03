@@ -63,7 +63,18 @@ const consoleLines = [
 
 const changelog = [
   {
-    v: 'v5.4.0', date: 'Startup immunity — the app can literally never close itself anymore — today', latest: true, items: [
+    v: 'v6.0.0', date: 'The cant-crash release + the big SS metro world pass — today', latest: true, items: [
+      '🛡️ FREETYPE IS GONE FROM YOUR PHONE: fonts ship pre-baked as atlas images — the uncatchable native crash class (the "opens and instantly closes" on some devices) is extinct. ~1MB lighter APK too',
+      '🧹 FRESH INSTALLS STAY FRESH: Android auto-backup could silently restore a poisoned save onto a brand-new install and re-create the instant-close loop no update could fix. Backup is now off — every install starts clean, always',
+      '❤️ EVERY lifecycle callback guarded: the AndroidInput.onResume() crash reported on Android 16 devices can no longer kill the process — worst case it is logged and the game keeps running',
+      '💾 Unreadable save = auto-rebuilt: the save system purges corrupt data and rebuilds instead of crashing — never throws, never loops',
+      '🚄 SS METRO WORLD PASS: saturated daylight, puffy cartoon clouds, mow-striped grass, gravel-speckled ballast, lane wear streaks, warm-steel rails, chunky red-brown sleepers — and 8 SS-grade train liveries with big rounded windows, passenger doors, bogies, cab windscreen + glowing headlights, walkway-striped roofs',
+      '📊 920 documented tuning attempts logged — 1,018+ commits on the graph',
+      '🏷️ versionCode 26 — clearly distinct from every older download',
+    ]
+  },
+  {
+    v: 'v5.4.0', date: 'Startup immunity — the app can literally never close itself anymore', items: [
       '🛡️ STARTUP IMMUNITY: boot is now staged with a fallback at every layer — one bad texture becomes a white substitute, one bad font becomes the engine font, and even a broken 3D engine still opens a SAFE MODE screen showing exactly what failed with a TAP TO RETRY button',
       '🚀 Start-first launcher: the game boots IMMEDIATELY on every open; the crash-report dialog now appears over the running game instead of gating it behind a black screen (this was the "opens once then never again" loop)',
       '🪂 Native fallback screen: if even the GL view cannot be created, the app shows the full error with COPY REPORT / TRY AGAIN buttons — the process never auto-closes, ever',
@@ -237,7 +248,7 @@ export default function Home() {
             </a>
           ))}
           <span className="ml-auto shrink-0 rounded-full bg-[#FFC93C] px-3 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#24316B] border-2 border-white shadow-[0_2px_0_#E09B12]">
-            v5.4.0 — Startup Immunity!
+            v6.0.0 — Cant-Crash + SS Metro World!
           </span>
         </div>
       </nav>
@@ -490,7 +501,7 @@ export default function Home() {
             Dummy Surfers <span className="text-white">by</span>
             <GraffitiName name="Faisal Khan" className="ml-2 inline-block align-middle normal-case text-[1.55rem] sm:text-[1.85rem]" stroke="#1B2038" shadowFilter="drop-shadow(0 3px 0 rgba(9,12,30,.55))" />
           </p>
-          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v5.4.0 — Startup Immunity!</span></p>
+          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v6.0.0 — Cant-Crash + SS Metro World!</span></p>
         </div>
       </footer>
     </main>
