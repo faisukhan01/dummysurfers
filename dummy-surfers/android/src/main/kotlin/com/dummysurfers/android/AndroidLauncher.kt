@@ -5,10 +5,18 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Bundle
+import android.view.Gravity
+import android.view.ViewGroup
+import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import android.widget.Toast
 import com.badlogic.gdx.backends.android.AndroidApplication
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration
 import com.dummysurfers.core.DummySurfersGame
@@ -22,58 +30,62 @@ import java.util.Locale
 /**
  * Android entry point — portrait, GL ES 2.0, immersive.
  *
- * v1.2.0 hardening:
- *  - FIXED launch crash: v1.1.1 set `resolutionStrategy = null`, which
- *    NPEs inside GLSurfaceView20.onMeasure() on the very first frame —
- *    the app closed the instant it opened. Never touch that field.
- *  - NEW in-app crash reporter: any future crash is written to internal
- *    storage and offered as a copy/share dialog on the next launch.
- *
- * v5.1.0 hardening (the "opens once, then never again" crash loop):
- *  - The crash file is DELETED the moment it is read. Showing the dialog
- *    used to keep the file around forever, and worse — if anything in the
- *    dialog path threw, onCreate died BEFORE the game started, so every
- *    subsequent launch crashed instantly too. Now:
- *      1. crash file is consumed atomically (read → delete → then show),
- *      2. the whole dialog flow is wrapped — ANY failure falls back to
- *         starting the game normally,
- *      3. the game can therefore never be held hostage by its own reporter.
- *  - Report header reads the real versionName/versionCode from the
- *    PackageManager (the old hardcoded "1.2.0 (code 4)" lied).
+ * v5.4.0 "the app can never close itself" contract:
+ *  1. The game starts IMMEDIATELY on every launch. The crash-report dialog,
+ *     when a report exists, is posted 600ms later OVER the running game — it
+ *     can no longer gate the game behind a black screen.
+ *  2. If even initialize() throws (EGL/GLSurfaceView-level failure), a native
+ *     Android fallback screen shows the full error with COPY / TRY AGAIN —
+ *     the process stays alive and the player sees exactly why.
+ *  3. Inside the game, boot is staged with per-stage fallbacks (fonts →
+ *     engine font, textures → white substitutes, core → SafeMode screen with
+ *     tap-to-retry). See DummySurfersGame.
+ *  4. Any crash is still written to filesDir/crash-last.txt and offered as
+ *     Copy/Share on the next launch.
  */
 class AndroidLauncher : AndroidApplication() {
 
-    private lateinit var crashFile: File
+    private lateinit var game: DummySurfersGame
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         installCrashGuard()
-        crashFile = File(filesDir, "crash-last.txt")
 
-        // Consume the crash report FIRST (read + delete in one place) so no
-        // failure below can ever resurrect it into a launch loop.
-        val last = try {
-            crashFile.takeIf { it.isFile }?.readText()?.take(6000).also {
-                if (it != null) crashFile.delete()
-            }
+        // Consume the last crash report (read + delete atomically) BEFORE the
+        // game boots so nothing below can resurrect it into a launch loop.
+        val report = try {
+            val f = File(filesDir, "crash-last.txt")
+            if (f.isFile) {
+                val text = f.readText().take(6000)
+                f.delete()
+                text
+            } else null
         } catch (_: Throwable) {
-            try { crashFile.delete() } catch (_: Throwable) {}
+            try { File(filesDir, "crash-last.txt").delete() } catch (_: Throwable) {}
             null
         }
 
-        if (last != null) {
-            try {
-                askToReport(last)
-            } catch (_: Throwable) {
-                // The reporter must never become the crash. Straight into the game.
-                startGame()
-            }
-        } else {
+        try {
             startGame()
+        } catch (t: Throwable) {
+            // initialize() itself died (GL view / EGL level). Show a real
+            // Android screen with the reason + retry — NEVER auto-close.
+            writeCrashFile("Java-side launch failure", t)
+            showFallbackScreen(t)
+            return
+        }
+
+        if (report != null) {
+            // Game is already booting behind the GL surface — offer the last
+            // report non-blockingly. If anything here fails, the game goes on.
+            window.decorView.postDelayed({
+                try { askToReport(report) } catch (_: Throwable) {}
+            }, 600)
         }
     }
 
     private fun startGame() {
+        game = DummySurfersGame()
         val config = AndroidApplicationConfiguration().apply {
             useAccelerometer = false
             useCompass = false
@@ -83,7 +95,77 @@ class AndroidLauncher : AndroidApplication() {
             // DO NOT set resolutionStrategy = null: GLSurfaceView20.onMeasure()
             // dereferences it → instant NPE on first frame. Default (Fill) is right.
         }
-        initialize(DummySurfersGame(), config)
+        initialize(game, config)
+    }
+
+    /** v5.4: full-native last resort when the GL view cannot even be created. */
+    private fun showFallbackScreen(t: Throwable) {
+        val ctx = this
+        val root = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(48, 64, 48, 48)
+            setBackgroundColor(Color.parseColor("#141830"))
+        }
+        fun title(text: String, size: Float, color: String, bold: Boolean = true): TextView =
+            TextView(ctx).apply {
+                this.text = text
+                textSize = size
+                setTextColor(Color.parseColor(color))
+                setTypeface(typeface, if (bold) Typeface.BOLD else Typeface.NORMAL)
+                gravity = Gravity.CENTER_HORIZONTAL
+                setPadding(0, 16, 0, 16)
+            }
+        root.addView(title("DUMMY SURFERS", 30f, "#FFC93C"))
+        root.addView(title("v${versionLabel()} — couldn't start the 3D engine", 15f, "#C9CFF2", bold = false))
+        root.addView(title("The app stays open. Share this error to get it fixed:", 14f, "#FFFFFF", bold = false))
+
+        val body = TextView(ctx).apply {
+            setText(reportText("Engine start failure", t))
+            setTextIsSelectable(true)
+            typeface = Typeface.MONOSPACE
+            textSize = 11f
+            setTextColor(Color.parseColor("#FFFFFF"))
+            setPadding(32, 24, 32, 24)
+        }
+        val scroll = ScrollView(ctx).apply {
+            addView(body)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f).apply { setMargins(0, 8, 0, 8) }
+        }
+        root.addView(scroll)
+
+        fun chip(label: String, bg: String, action: () -> Unit): Button =
+            Button(ctx).apply {
+                this.text = label
+                textSize = 15f
+                setTextColor(Color.WHITE)
+                background = GradientDrawable().apply {
+                    setColor(Color.parseColor(bg))
+                    cornerRadius = 28f
+                }
+                setOnClickListener { try { action() } catch (_: Throwable) {} }
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                    setMargins(0, 12, 0, 0)
+                }
+            }
+        root.addView(chip("COPY REPORT", "#4A529E") {
+            copy(reportText("Engine start failure", t))
+            Toast.makeText(ctx, "Report copied", Toast.LENGTH_SHORT).show()
+        })
+        root.addView(chip("TRY AGAIN", "#3DBB5A") {
+            try {
+                startGame()
+            } catch (again: Throwable) {
+                writeCrashFile("Java-side launch failure (retry)", again)
+                Toast.makeText(ctx, "Still failing — report copied", Toast.LENGTH_SHORT).show()
+                copy(reportText("Engine start failure (retry)", again))
+            }
+        })
+        root.addView(chip("CLOSE APP", "#3A4060") { finish() })
+
+        setContentView(root)
     }
 
     // ── Crash reporter ──────────────────────────────────────────────────
@@ -91,31 +173,35 @@ class AndroidLauncher : AndroidApplication() {
     private fun installCrashGuard() {
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { t, e ->
-            try {
-                File(filesDir, "crash-last.txt").writeText(buildReport(t, e))
-            } catch (_: Throwable) {
-            }
+            writeCrashFile("uncaught exception on ${t.name}", e)
             previous?.uncaughtException(t, e) ?: Runtime.getRuntime().exit(10)
+        }
+    }
+
+    private fun writeCrashFile(what: String, e: Throwable) {
+        try {
+            File(filesDir, "crash-last.txt").writeText(reportText(what, e))
+        } catch (_: Throwable) {
         }
     }
 
     private fun versionLabel(): String = try {
         val pi = packageManager.getPackageInfo(packageName, 0)
         val code = if (Build.VERSION.SDK_INT >= 28) pi.longVersionCode else @Suppress("DEPRECATION") pi.versionCode
-        "v${pi.versionName} (code $code)"
+        "${pi.versionName} (code $code)"
     } catch (_: Throwable) {
         "unknown"
     }
 
-    private fun buildReport(t: Thread, e: Throwable): String {
+    private fun reportText(what: String, e: Throwable): String {
         val sw = StringWriter()
         e.printStackTrace(PrintWriter(sw))
         val at = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())
         return buildString {
             appendLine("Dummy Surfers crash report — $at")
+            appendLine("what: $what")
             appendLine("device: ${Build.MANUFACTURER} ${Build.MODEL} (Android ${Build.VERSION.RELEASE}, API ${Build.VERSION.SDK_INT})")
-            appendLine("version: ${versionLabel()}")
-            appendLine("thread: ${t.name}")
+            appendLine("version: v${versionLabel()}")
             appendLine()
             append(sw.toString())
         }
@@ -123,13 +209,13 @@ class AndroidLauncher : AndroidApplication() {
 
     private fun askToReport(report: String) {
         val body = TextView(this).apply {
-            setText("Something went wrong last time.\nSend this report to the developer (Copy or Share), then tap Start game.\n\n$report")
+            setText("Something went wrong last time.\nSend this report to the developer (Copy or Share) — it names the exact failure.\n\n$report")
             setTextIsSelectable(true)
             setPadding(48, 24, 48, 24)
         }
         val scroll = ScrollView(this).apply { addView(body) }
         AlertDialog.Builder(this)
-            .setTitle("Oops — Dummy Surfers crashed")
+            .setTitle("Oops — Dummy Surfers hit a snag")
             .setView(scroll)
             .setPositiveButton("Copy report") { _, _ -> copy(report) }
             .setNegativeButton("Share…") { _, _ ->
@@ -143,8 +229,7 @@ class AndroidLauncher : AndroidApplication() {
                 } catch (_: Throwable) {
                 }
             }
-            .setNeutralButton("Start game", null)
-            .setOnDismissListener { startGame() }
+            .setNeutralButton("Keep playing", null)
             .show()
     }
 
