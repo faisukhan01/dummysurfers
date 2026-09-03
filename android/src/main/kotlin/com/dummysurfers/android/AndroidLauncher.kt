@@ -27,8 +27,19 @@ import java.util.Locale
  *    NPEs inside GLSurfaceView20.onMeasure() on the very first frame —
  *    the app closed the instant it opened. Never touch that field.
  *  - NEW in-app crash reporter: any future crash is written to internal
- *    storage and offered as a copy/share dialog on the next launch, so
- *    bug reports work without adb.
+ *    storage and offered as a copy/share dialog on the next launch.
+ *
+ * v5.1.0 hardening (the "opens once, then never again" crash loop):
+ *  - The crash file is DELETED the moment it is read. Showing the dialog
+ *    used to keep the file around forever, and worse — if anything in the
+ *    dialog path threw, onCreate died BEFORE the game started, so every
+ *    subsequent launch crashed instantly too. Now:
+ *      1. crash file is consumed atomically (read → delete → then show),
+ *      2. the whole dialog flow is wrapped — ANY failure falls back to
+ *         starting the game normally,
+ *      3. the game can therefore never be held hostage by its own reporter.
+ *  - Report header reads the real versionName/versionCode from the
+ *    PackageManager (the old hardcoded "1.2.0 (code 4)" lied).
  */
 class AndroidLauncher : AndroidApplication() {
 
@@ -39,8 +50,27 @@ class AndroidLauncher : AndroidApplication() {
         installCrashGuard()
         crashFile = File(filesDir, "crash-last.txt")
 
-        val last = crashFile.takeIf { it.isFile }?.readText()?.take(6000)
-        if (last != null) askToReport(last) else startGame()
+        // Consume the crash report FIRST (read + delete in one place) so no
+        // failure below can ever resurrect it into a launch loop.
+        val last = try {
+            crashFile.takeIf { it.isFile }?.readText()?.take(6000).also {
+                if (it != null) crashFile.delete()
+            }
+        } catch (_: Throwable) {
+            try { crashFile.delete() } catch (_: Throwable) {}
+            null
+        }
+
+        if (last != null) {
+            try {
+                askToReport(last)
+            } catch (_: Throwable) {
+                // The reporter must never become the crash. Straight into the game.
+                startGame()
+            }
+        } else {
+            startGame()
+        }
     }
 
     private fun startGame() {
@@ -69,6 +99,14 @@ class AndroidLauncher : AndroidApplication() {
         }
     }
 
+    private fun versionLabel(): String = try {
+        val pi = packageManager.getPackageInfo(packageName, 0)
+        val code = if (Build.VERSION.SDK_INT >= 28) pi.longVersionCode else @Suppress("DEPRECATION") pi.versionCode
+        "v${pi.versionName} (code $code)"
+    } catch (_: Throwable) {
+        "unknown"
+    }
+
     private fun buildReport(t: Thread, e: Throwable): String {
         val sw = StringWriter()
         e.printStackTrace(PrintWriter(sw))
@@ -76,7 +114,7 @@ class AndroidLauncher : AndroidApplication() {
         return buildString {
             appendLine("Dummy Surfers crash report — $at")
             appendLine("device: ${Build.MANUFACTURER} ${Build.MODEL} (Android ${Build.VERSION.RELEASE}, API ${Build.VERSION.SDK_INT})")
-            appendLine("version: 1.2.0 (code 4)")
+            appendLine("version: ${versionLabel()}")
             appendLine("thread: ${t.name}")
             appendLine()
             append(sw.toString())
@@ -95,12 +133,15 @@ class AndroidLauncher : AndroidApplication() {
             .setView(scroll)
             .setPositiveButton("Copy report") { _, _ -> copy(report) }
             .setNegativeButton("Share…") { _, _ ->
-                val i = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_SUBJECT, "Dummy Surfers crash report")
-                    putExtra(Intent.EXTRA_TEXT, report)
+                try {
+                    val i = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_SUBJECT, "Dummy Surfers crash report")
+                        putExtra(Intent.EXTRA_TEXT, report)
+                    }
+                    startActivity(Intent.createChooser(i, "Share crash report"))
+                } catch (_: Throwable) {
                 }
-                startActivity(Intent.createChooser(i, "Share crash report"))
             }
             .setNeutralButton("Start game", null)
             .setOnDismissListener { startGame() }
@@ -108,7 +149,10 @@ class AndroidLauncher : AndroidApplication() {
     }
 
     private fun copy(text: String) {
-        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        cm.setPrimaryClip(ClipData.newPlainText("Dummy Surfers crash report", text))
+        try {
+            val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            cm.setPrimaryClip(ClipData.newPlainText("Dummy Surfers crash report", text))
+        } catch (_: Throwable) {
+        }
     }
 }
