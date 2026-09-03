@@ -220,7 +220,7 @@ class EntityRenderer(
             fogged(tmpC, whiteC, (zFn + zBn) * 0.5f)
             pc1.set(tmpC)                  // front tint
             pc2.set(tmpC).mul(0.84f)       // side shade (was 0.78 — muddy)
-            pc3.set(tmpC).mul(1.12f)       // top light
+            pc3.set(tmpC).mul(1.05f)       // top light (20-d: 1.12 clipped the grey roof to white)
             pc5.set(tmpC).mul(0.80f)       // trailer rear (was 0.72)
 
             for (lane in t.lanes) {

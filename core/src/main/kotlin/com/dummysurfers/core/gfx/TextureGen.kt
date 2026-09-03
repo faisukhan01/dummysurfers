@@ -19,8 +19,9 @@ import kotlin.random.Random
  */
 object Palette {
     // ── Sky & atmosphere ──
-    val SKY_TOP = Color(0x3fb8f5ff.toInt())      // vivid cyan zenith
-    val SKY_MID = Color(0x8fd8f8ff.toInt())      // light azure
+    // 20-c: punchier zenith/azure (real-SS saturated daylight), same warm cream horizon
+    val SKY_TOP = Color(0x2fa7efff.toInt())      // vivid cyan zenith
+    val SKY_MID = Color(0x7ccdffff.toInt())      // light azure
     val SKY_LOW = Color(0xffe9c2ff.toInt())      // warm cream horizon
     val FOG = Color(0xffe4bcff.toInt())          // light warm haze
 
@@ -30,12 +31,12 @@ object Palette {
     // (the v3.0 lesson stands), just chroma back in the sand family.
     val GROUND = Color(0xbfa07aff.toInt())       // warm sand-brown ballast
     val GROUND_FAR = Color(0xd0b48cff.toInt())   // lighter far ballast
-    val GRASS = Color(0x5fbf4aff.toInt())        // vivid trackside grass
+    val GRASS = Color(0x54c842ff.toInt())        // 20-c: vivid trackside grass
     val PATH_CREAM = Color(0xe8dab2ff.toInt())   // concrete slab A
     val PATH_ORANGE = Color(0xd6bc8eff.toInt())  // concrete slab B
-    val SLEEPER = Color(0x59422fff.toInt())      // dark brown ties
-    val RAIL = Color(0xece8deff.toInt())         // shiny silver rail head
-    val RAIL_SIDE = Color(0x6e675eff.toInt())    // dark steel rail base
+    val SLEEPER = Color(0x6b4634ff.toInt())      // 20-c: redder brown ties
+    val RAIL = Color(0xded9cbff.toInt())         // 20-d: warm steel (pure white read as plastic strips)
+    val RAIL_SIDE = Color(0x5a544cff.toInt())    // 20-c: darker steel rail base
 
     // ── Accents ──
     val GOLD = Color(0xffc93cff.toInt())
@@ -75,7 +76,7 @@ object Palette {
         intArrayOf(0x18b7a8ff.toInt(), 0x0d7f74ff.toInt(), 0xfff6e0ff.toInt()), // teal harbor line
         intArrayOf(0x9aa4b4ff.toInt(), 0x4e5763ff.toInt(), 0xffd23eff.toInt())  // graphite night express, gold band
     )
-    val TRAIN_ROOF = Color(0xb2b7bfff.toInt())
+    val TRAIN_ROOF = Color(0x99a0aaff.toInt())       // 20-d: darker deck so details survive the top-light tint
     val TRAIN_FRONT = Color(0xffd21cff.toInt())
 
     val BUILDING_COLORS = intArrayOf(
@@ -174,8 +175,8 @@ object TextureGen {
         softShadow = tex("softShadow") { radial(128, Color(0f, 0f, 0f, 0.55f), 0.25f) }
         sky = tex("sky") { verticalGradient(8, 512, Palette.SKY_TOP, Palette.SKY_MID, Palette.SKY_LOW) }
         fog = tex("fog") { verticalGradientFade(8, 256, Palette.FOG) }
-        cloudA = tex("cloudA") { cloud(260, 90, 42L) }
-        cloudB = tex("cloudB") { cloud(200, 70, 77L) }
+        cloudA = tex("cloudA") { cloud(340, 120, 42L) }
+        cloudB = tex("cloudB") { cloud(280, 100, 77L) }
         // SS-style distant city: soft blue-violet haze silhouettes
         skylineFar = tex("skylineFar") { skyline(1024, 190, 5L, dark = 0xaebbe8, alpha = 0.8f, dense = false) }
         skylineNear = tex("skylineNear") { skyline(1024, 240, 11L, dark = 0x8b9cdd, alpha = 0.9f, dense = true) }
@@ -448,18 +449,50 @@ object TextureGen {
         val tex = Texture(p); p.dispose(); return tex
     }
 
+    /** v20-c PUFFY SS CLOUD — overlapping soft-edged radial blobs (7-9 puffs)
+     *  with a brighter white core pass and a gently flattened base. Replaces
+     *  the old hard-edged 5-circle stamp that read as blurred ovals. */
     private fun cloud(w: Int, h: Int, seed: Long): Texture {
         val p = Pixmap(w, h, Pixmap.Format.RGBA8888)
         val rng = Random(seed)
-        p.setColor(1f, 1f, 1f, 0.9f)
-        val puffs = 5 + rng.nextInt(3)
+        val puffs = 7 + rng.nextInt(3)
+        // blob layout along a low baseline: flat-ish bottom, puffy shoulders,
+        // a big center boss
+        val cs = FloatArray(puffs * 3)
         for (i in 0 until puffs) {
-            val cx = w * (0.18f + 0.64f * i / (puffs - 1f)) + rng.nextInt(20) - 10
-            val cy = h * (0.45f + rng.nextFloat() * 0.18f)
-            val r = h * (0.22f + rng.nextFloat() * 0.24f)
-            p.fillCircle(cx.toInt(), (h - cy).toInt(), r.toInt())
+            val fx = (i + 0.5f) / puffs
+            cs[i * 3] = w * (0.10f + 0.80f * fx) + rng.nextInt(16) - 8
+            cs[i * 3 + 1] = h * (0.58f + rng.nextFloat() * 0.16f)
+            val boss = if (i == puffs / 2) 1.30f else 1f
+            cs[i * 3 + 2] = h * (0.26f + rng.nextFloat() * 0.20f) * boss
         }
-        val t = Texture(p); p.dispose(); return t
+        // soft shading pass (feathered discs)
+        for (i in 0 until puffs) softDisc(p, cs[i * 3], cs[i * 3 + 1], cs[i * 3 + 2], 0.66f)
+        // flattened base slab
+        softDisc(p, w * 0.5f, h * 0.74f, w * 0.36f, 0.60f)
+        // bright white core pass (smaller, hotter)
+        for (i in 0 until puffs) softDisc(p, cs[i * 3] - cs[i * 3 + 2] * 0.08f, cs[i * 3 + 1] - cs[i * 3 + 2] * 0.22f, cs[i * 3 + 2] * 0.70f, 0.95f)
+        return tex(p)
+    }
+
+    /** Feathered disc stamp used by [cloud] — smoothstep radial falloff. */
+    private fun softDisc(p: Pixmap, cx: Float, cy: Float, r: Float, alpha: Float) {
+        val r2 = r * r
+        val x0 = (cx - r).toInt().coerceAtLeast(0)
+        val x1 = (cx + r).toInt().coerceAtMost(p.width - 1)
+        val y0 = (cy - r).toInt().coerceAtLeast(0)
+        val y1 = (cy + r).toInt().coerceAtMost(p.height - 1)
+        for (y in y0..y1) {
+            for (x in x0..x1) {
+                val dx = x - cx; val dy = y - cy
+                val d2 = dx * dx + dy * dy
+                if (d2 > r2) continue
+                val t = (kotlin.math.sqrt(d2) / r).coerceIn(0f, 1f)
+                val a = (1f - t) * (1f - t) * (3f - 2f * (1f - t))
+                p.setColor(1f, 1f, 1f, a * alpha)
+                p.drawPixel(x, y)
+            }
+        }
     }
 
     /** City silhouette strip, wraps horizontally for parallax scrolling. */
@@ -1322,31 +1355,36 @@ object TextureGen {
         return tex(p)
     }
 
-    /** Roof — 20-c: light grey deck, 2 raised AC units w/ vent ribs, center
-     *  pod, panel seams + sun glint. FaceBatch.faceTop: image TOP row = FAR
-     *  edge of the roof, bottom row = NEAR edge. */
+    /** Roof — 20-d: mid-grey deck w/ YELLOW WALKWAY EDGE STRIPES down both
+     *  eaves (reads even when magnified blurry), 2 raised AC units w/ high
+     *  contrast ribs, center pod, panel seams + sun glint. FaceBatch.faceTop:
+     *  image TOP row = FAR edge of the roof, bottom row = NEAR edge. */
     private fun trainRoof(): Texture {
         val w = 128; val h = 64
         val p = Pixmap(w, h, Pixmap.Format.RGBA8888)
         p.setColor(Palette.TRAIN_ROOF); p.fillRectangle(0, 0, w, h)
         // panel seams
-        p.setColor(0f, 0f, 0f, 0.10f)
-        for (x in 0 until w step 32) p.fillRectangle(x, 0, 1, h)
-        p.setColor(1f, 1f, 1f, 0.18f); p.fillRectangle(0, 0, w, 3)
-        p.setColor(0f, 0f, 0f, 0.12f); p.fillRectangle(0, h - 3, w, 3)
-        // raised AC units (shadow outline + lighter deck + vent ribs + front lip)
-        for (vx in intArrayOf(14, 82)) {
-            p.setColor(0x767c85ff.toInt()); fillRoundRect(p, vx - 2, 12, 36, 32, 5)
-            p.setColor(0xc6cbd2ff.toInt()); fillRoundRect(p, vx, 14, 32, 28, 4)
-            p.setColor(0x8f959dff.toInt())
+        p.setColor(0f, 0f, 0f, 0.14f)
+        for (x in 0 until w step 24) p.fillRectangle(x, 0, 1, h)
+        p.setColor(1f, 1f, 1f, 0.16f); p.fillRectangle(0, 0, w, 3)
+        p.setColor(0f, 0f, 0f, 0.15f); p.fillRectangle(0, h - 3, w, 3)
+        // 20-d: yellow safety edge along BOTH eaves (dark outline + hot core)
+        p.setColor(0x8f6a00ff.toInt()); p.fillRectangle(0, 0, 5, h); p.fillRectangle(w - 5, 0, 5, h)
+        p.setColor(0xffd21cff.toInt()); p.fillRectangle(1, 0, 3, h); p.fillRectangle(w - 4, 0, 3, h)
+        p.setColor(1f, 1f, 1f, 0.25f); p.fillRectangle(1, 0, 1, h); p.fillRectangle(w - 4, 0, 1, h)
+        // raised AC units (deep shadow + bright deck + crisp ribs + front lip)
+        for (vx in intArrayOf(16, 80)) {
+            p.setColor(0x5f656dff.toInt()); fillRoundRect(p, vx - 2, 12, 36, 32, 5)
+            p.setColor(0xd4d9dfff.toInt()); fillRoundRect(p, vx, 14, 32, 28, 4)
+            p.setColor(0x82888fff.toInt())
             for (i in 0 until 4) p.fillRectangle(vx + 4, 20 + i * 6, 24, 2)
-            p.setColor(0x70767eff.toInt()); p.fillRectangle(vx, 38, 32, 4)
-            p.setColor(1f, 1f, 1f, 0.30f); p.fillRectangle(vx, 14, 32, 3)
+            p.setColor(0x62686fff.toInt()); p.fillRectangle(vx, 38, 32, 4)
+            p.setColor(1f, 1f, 1f, 0.38f); p.fillRectangle(vx, 14, 32, 3)
         }
         // center pod
-        p.setColor(0x8a9098ff.toInt()); fillRoundRect(p, 54, 18, 20, 24, 4)
-        p.setColor(0xb4bac2ff.toInt()); fillRoundRect(p, 56, 20, 16, 20, 3)
-        p.setColor(0x7a8088ff.toInt())
+        p.setColor(0x767c84ff.toInt()); fillRoundRect(p, 54, 18, 20, 24, 4)
+        p.setColor(0xb9bfc7ff.toInt()); fillRoundRect(p, 56, 20, 16, 20, 3)
+        p.setColor(0x686e76ff.toInt())
         for (i in 0 until 3) p.fillRectangle(58, 25 + i * 6, 12, 2)
         return tex(p)
     }
