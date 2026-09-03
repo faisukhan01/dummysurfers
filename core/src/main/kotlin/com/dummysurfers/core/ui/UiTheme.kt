@@ -19,13 +19,29 @@ class UiTheme {
     lateinit var fontSmall: BitmapFont  // 16 — labels
     lateinit var fontTiny: BitmapFont   // 8 — fine print
 
+    /** v5.4: true when freetype failed and the default engine font is in use. */
+    var fontsFallback = false; private set
+
     private val layout = GlyphLayout()
 
     fun create() {
         // SS-style fonts: chunky comic display (Luckiest Guy) + rounded sport
         // body (Fugaz One), navy outline + soft shadow (see docs/DESIGN_BIBLE.md)
-        val display = FreeTypeFontGenerator(com.badlogic.gdx.Gdx.files.internal("fonts/LuckiestGuy-Regular.ttf"))
-        val body = FreeTypeFontGenerator(com.badlogic.gdx.Gdx.files.internal("fonts/FugazOne-Regular.ttf"))
+        //
+        // v5.4 STARTUP IMMUNITY: gdx-freetype is a NATIVE library — on a device
+        // with a broken/quirky freetype (or a font glyph edge case) generateFont
+        // used to throw inside create() → the app closed instantly at launch,
+        // every launch. Each font now falls back to the libgdx built-in engine
+        // font (scaled); the game boots with plainer text instead of dying.
+        var display: FreeTypeFontGenerator? = null
+        var body: FreeTypeFontGenerator? = null
+        try {
+            display = FreeTypeFontGenerator(com.badlogic.gdx.Gdx.files.internal("fonts/LuckiestGuy-Regular.ttf"))
+            body = FreeTypeFontGenerator(com.badlogic.gdx.Gdx.files.internal("fonts/FugazOne-Regular.ttf"))
+        } catch (t: Throwable) {
+            com.badlogic.gdx.Gdx.app.error("DS-Theme", "FreeType generator unavailable — default fonts", t)
+            fontsFallback = true
+        }
         fun param(size: Int, border: Int = 0, shadow: Int = 3): FreeTypeFontGenerator.FreeTypeFontParameter {
             val p = FreeTypeFontGenerator.FreeTypeFontParameter()
             p.size = size
@@ -40,18 +56,47 @@ class UiTheme {
             p.characters = FreeTypeFontGenerator.DEFAULT_CHARS + "←→↑↓×★•|/+-–—…!?,.%&()'\"«»"
             return p
         }
-        fontHuge = display.generateFont(param(52, border = 5, shadow = 4))
-        fontLarge = display.generateFont(param(34, border = 3))
-        fontMed = display.generateFont(param(24, border = 3))
-        fontSmall = body.generateFont(param(18, border = 2, shadow = 2))
-        fontTiny = body.generateFont(param(14, shadow = 2))
-        display.dispose()
-        body.dispose()
+        fontHuge = genFont(display, param(52, border = 5, shadow = 4), 3.4f)
+        fontLarge = genFont(display, param(34, border = 3), 2.2f)
+        fontMed = genFont(display, param(24, border = 3), 1.6f)
+        fontSmall = genFont(body, param(18, border = 2, shadow = 2), 1.2f)
+        fontTiny = genFont(body, param(14, shadow = 2), 0.95f)
+        try { display?.dispose() } catch (_: Throwable) {}
+        try { body?.dispose() } catch (_: Throwable) {}
+    }
+
+    /** Generate one freetype font; on failure fall back to the engine font. */
+    private fun genFont(g: FreeTypeFontGenerator?, p: FreeTypeFontGenerator.FreeTypeFontParameter, fallbackScale: Float): BitmapFont {
+        if (g != null) {
+            try { return g.generateFont(p) } catch (t: Throwable) {
+                com.badlogic.gdx.Gdx.app.error("DS-Theme", "font size ${p.size} failed — default font fallback", t)
+                fontsFallback = true
+            }
+        }
+        return try {
+            BitmapFont().apply { data.setScale(fallbackScale) }
+        } catch (t: Throwable) {
+            // Even the engine font failed (GL totally broken) — rethrow and let
+            // the game's SafeMode take over.
+            throw t
+        }
+    }
+
+    /** Last-resort: rebuild ALL fonts from the engine default (retry path). */
+    fun fallbackFonts() {
+        fontsFallback = true
+        val scales = floatArrayOf(3.4f, 2.2f, 1.6f, 1.2f, 0.95f)
+        val olds = try { arrayOf(fontHuge, fontLarge, fontMed, fontSmall, fontTiny) } catch (_: Throwable) { null }
+        val news = scales.map { s -> BitmapFont().apply { data.setScale(s) } }
+        // only swap once every replacement exists — never leave lateinit unset
+        fontHuge = news[0]; fontLarge = news[1]; fontMed = news[2]; fontSmall = news[3]; fontTiny = news[4]
+        olds?.forEach { try { it.dispose() } catch (_: Throwable) {} }
     }
 
     fun dispose() {
-        fontHuge.dispose(); fontLarge.dispose(); fontMed.dispose()
-        fontSmall.dispose(); fontTiny.dispose()
+        // v5.4: safe on partially-initialized themes (retry path)
+        val fonts = try { arrayOf(fontHuge, fontLarge, fontMed, fontSmall, fontTiny) } catch (_: Throwable) { return }
+        fonts.forEach { try { it.dispose() } catch (_: Throwable) {} }
     }
 
     // ── Text with baked shadow ─────────────────────────────────────────
