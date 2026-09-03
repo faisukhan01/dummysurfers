@@ -136,22 +136,22 @@ class Human3D(
             2 -> {
                 // cap goggles: strap around the dome + teal lens on the true front
                 val strapM = f.colorBox("gogStrap$accent", 0.05f, 0.055f, 0.5f, 0x22262cff.toInt())
-                rig.add(ModelInstance(strapM), head, -0.31f, 0.6f, 0f)
-                rig.add(ModelInstance(strapM), head, 0.31f, 0.6f, 0f)
+                rig.add(ModelInstance(strapM), head, -0.345f, 0.6f, 0f)
+                rig.add(ModelInstance(strapM), head, 0.345f, 0.6f, 0f)
                 // v4.7: BACK segment across the dome — the side straps were
                 // edge-on from the chase cam, so VOLT's goggles were invisible
                 // in every in-game shot (only the CHARS portrait showed them)
                 val strapBackM = f.colorBox("gogStrapBack$accent", 0.62f, 0.055f, 0.05f, 0x22262cff.toInt())
-                rig.add(ModelInstance(strapBackM), head, 0f, 0.6f, 0.26f)
+                rig.add(ModelInstance(strapBackM), head, 0f, 0.6f, 0.32f) // v5.2.1: outside the dome
                 val lensM = f.colorBox("gogLens$accent", 0.4f, 0.13f, 0.05f, accent)
-                rig.add(ModelInstance(lensM), head, 0f, 0.61f, -0.3f)
+                rig.add(ModelInstance(lensM), head, 0f, 0.61f, -0.325f)
                 val rimM = f.colorBox("gogRim$accent", 0.44f, 0.17f, 0.03f, 0x22262cff.toInt())
-                rig.add(ModelInstance(rimM), head, 0f, 0.61f, -0.33f)
+                rig.add(ModelInstance(rimM), head, 0f, 0.61f, -0.355f)
             }
             3 -> {
                 // headphones: over-cap band + cups that show from behind
                 val bandM = f.colorBox("hpBand$accent", 0.68f, 0.06f, 0.09f, 0x22262cff.toInt())
-                rig.add(ModelInstance(bandM), head, 0f, 0.76f, 0f)
+                rig.add(ModelInstance(bandM), head, 0f, 0.82f, 0f) // v5.2.1: rides the dome crown
                 val cupM = f.colorBox("hpCup$accent", 0.09f, 0.2f, 0.17f, 0x22262cff.toInt())
                 rig.add(ModelInstance(cupM), head, -0.35f, 0.56f, 0f)
                 rig.add(ModelInstance(cupM), head, 0.35f, 0.56f, 0f)
@@ -246,13 +246,12 @@ class Human3D(
             mpb = mb.part("packPocket", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(mul(backpack, 0.72f)))
             mpb.cbox(-0.235f, 0.27f, 0.27f, 0.09f, 0.2f, 0.16f)
             mpb.cbox(0.235f, 0.27f, 0.27f, 0.09f, 0.2f, 0.16f)
-            // vertical straps + gold clips on the pack face
-            mpb = mb.part("packStrapV", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(mul(backpack, 0.45f)))
-            mpb.cbox(-0.1f, 0.32f, 0.377f, 0.06f, 0.34f, 0.02f)
-            mpb.cbox(0.1f, 0.32f, 0.377f, 0.06f, 0.34f, 0.02f)
-            mpb = mb.part("packClip", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(accent))
-            mpb.cbox(-0.1f, 0.455f, 0.377f, 0.08f, 0.05f, 0.02f)
-            mpb.cbox(0.1f, 0.455f, 0.377f, 0.08f, 0.05f, 0.02f)
+            // v5.2.1: light front pocket + gold zip — the pack face finally has
+            // a focal detail (the old two dark straps read as a chest harness)
+            mpb = mb.part("packPocketFront", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(mul(backpack, 1.3f)))
+            mpb.cbox(0f, 0.24f, 0.37f, 0.24f, 0.12f, 0.02f)
+            mpb = mb.part("packZip", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(accent))
+            mpb.cbox(0f, 0.298f, 0.382f, 0.24f, 0.022f, 0.012f)
             // hood roll behind the neck (white lining) — Jake DNA from behind
             mpb = mb.part("hoodRoll", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(if (hoodLining != 0) hoodLining else mul(hoodie, 1.3f)))
             mpb.cbox(0f, 0.565f, 0.19f, 0.34f, 0.09f, 0.1f)
@@ -291,21 +290,23 @@ class Human3D(
         mpb.cbox(0f, 0.29f, 0.25f, 0.52f, 0.34f, 0.03f)
         mpb.cbox(-0.12f, 0.14f, 0.25f, 0.1f, 0.09f, 0.03f)
         mpb.cbox(0.12f, 0.14f, 0.25f, 0.1f, 0.09f, 0.03f)
-        // cap dome + brim (BACKWARDS: brim points +z, at the chase camera) + ridge
+        // v5.2.1 CAP REBUILD — the old 0.16-thick box slab floated above the
+        // head and read as a red BRICK from the chase cam (QA hud.png). A
+        // squashed low-poly sphere hugs the skull like a real baseball-cap
+        // dome; baked at the head origin via setVertexTransform (the same
+        // trick the train wheels already use).
         mpb = mb.part("cap", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(cap))
-        mpb.cbox(0f, 0.63f, -0.01f, 0.62f, 0.16f, 0.54f)
-        mpb.cbox(0f, 0.575f, 0.31f, 0.56f, 0.07f, 0.15f) // backwards brim — visible from behind
-        mpb.cbox(0f, 0.72f, -0.01f, 0.22f, 0.05f, 0.18f) // top button-ish ridge
-        // v5.2: cap seam band + back stitch line — from the chase cam the cap
-        // was a flat colored slab; two subtle tone breaks make it read as a
-        // sewn baseball cap
-        mpb = mb.part("capSeam", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(cap, 1.22f))
-        mpb.cbox(0f, 0.685f, -0.01f, 0.63f, 0.035f, 0.55f)
+        mpb.setVertexTransform(com.badlogic.gdx.math.Matrix4().translate(0f, 0.57f, -0.005f))
+        mpb.sphere(0.72f, 0.37f, 0.63f, 14, 9)
+        mpb.setVertexTransform(null)
+        mpb.cbox(0f, 0.53f, 0.345f, 0.54f, 0.07f, 0.16f)   // backwards brim — proud to the chase cam
+        mpb.cbox(0f, 0.755f, -0.005f, 0.13f, 0.05f, 0.11f) // top button stud
+        // back stitch line under the brim — reads as the cap's rear seam
         mpb = mb.part("capStitch", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(cap, 0.78f))
-        mpb.cbox(0f, 0.615f, 0.27f, 0.05f, 0.16f, 0.02f)
+        mpb.cbox(0f, 0.62f, 0.315f, 0.05f, 0.13f, 0.02f)
         if (capPanel != 0) {
             mpb = mb.part("panel", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, ModelFactory.ATTRS, f.matColor(capPanel))
-            mpb.cbox(0f, 0.63f, -0.28f, 0.38f, 0.13f, 0.03f) // true front — hidden from the chase cam
+            mpb.cbox(0f, 0.62f, -0.315f, 0.30f, 0.14f, 0.03f) // true front badge — menu/face-off view
         }
         if (isGuard) {
             // gold badge on the cap + mustache — true front (-z)
