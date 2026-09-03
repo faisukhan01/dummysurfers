@@ -63,7 +63,17 @@ const consoleLines = [
 
 const changelog = [
   {
-    v: 'v5.0.0', date: 'Playability overhaul — today', latest: true, items: [
+    v: 'v5.1.0', date: 'Crash-fix + thumbnail hero — today', latest: true, items: [
+      '🛡️ THE crash-loop fix: the in-app crash reporter could crash the launcher itself (crash file never consumed + unguarded dialog) — after one crash the app died on every launch. Report is now consumed atomically and the dialog path is fully guarded',
+      '🎧 Audio-thread immunity: a dying audio device (background/foreground races, audio-focus) used to kill the whole process mid-run — the mixer now degrades to silence instead',
+      '🧯 Render safety net: a failed gameplay tick recovers to the menu instead of ending the process; corrupt save files fall back to a fresh start instead of crashing at boot',
+      '🧑‍🎨 JACK is now the thumbnail character: blue pack, dark navy jeans, red sneakers, big cartoon eyes + smile, hoodie drawstrings — menu portrait & gameplay match the app icon',
+      '🌄 Warmer world: sand-brown ballast replaces the washed-out gray; menu shows BY FAISAL KHAN',
+      '🏷️ versionCode 21 — clearly distinct from every older download',
+    ]
+  },
+  {
+    v: 'v5.0.0', date: 'Playability overhaul', items: [
       '🖱️ THE menu fix: RUN/CHARS/SHOP/TASKS/SETUP were dead on touch devices — touch events now use real event coordinates (verified end-to-end by scripted taps)',
       '🔊 Audio engine crash fix: sample-index overflow in the mixer thread + realtime pacing for weird audio devices',
       '⚖️ Fair obstacle rules: jump→slide combos can no longer spawn closer than the jump arc allows',
@@ -184,7 +194,7 @@ export default function Home() {
             </a>
           ))}
           <span className="ml-auto shrink-0 rounded-full bg-[#FFC93C] px-3 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#24316B] border-2 border-white shadow-[0_2px_0_#E09B12]">
-            v5.0.0 — Playable!
+            v5.1.0 — Crash-proof & Prettier!
           </span>
         </div>
       </nav>
@@ -437,7 +447,7 @@ export default function Home() {
             Dummy Surfers <span className="text-white">by</span>
             <GraffitiName name="Faisal Khan" className="ml-2 inline-block align-middle normal-case text-[1.55rem] sm:text-[1.85rem]" stroke="#1B2038" shadowFilter="drop-shadow(0 3px 0 rgba(9,12,30,.55))" />
           </p>
-          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v5.0.0 — Playable!</span></p>
+          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v5.1.0 — Crash-proof & Prettier!</span></p>
         </div>
       </footer>
     </main>
