@@ -74,6 +74,24 @@ class SaveManager {
     private fun notifyChanged() { listeners.forEach { it(this) } }
 
     private fun load() {
+        try {
+            loadUnsafe()
+        } catch (t: Throwable) {
+            // v5.1: a corrupt/hand-edited prefs document must never kill the
+            // app inside create() — that turns one bad write into a permanent
+            // "opens then instantly closes" loop. Worst case: fresh progress.
+            Gdx.app.error("DS-Save", "Save unreadable — starting fresh", t)
+            best = 0; totalCoins = 0; selectedCharacter = "dash"
+            trail = 0; musicOn = true; sfxOn = true; vibrationOn = true
+            tutorialDone = false; hoverboards = 1
+            ownedCharacters.clear(); ownedCharacters.add("dash")
+            upgrades.clear(); POWERUP_NAMES.forEach { upgrades[it] = 0 }
+            missions.clear()
+            resetMissions()
+        }
+    }
+
+    private fun loadUnsafe() {
         val json = prefs.getString("save", "")
         if (json.isBlank()) { resetMissions(); return }
         val root = MiniJson.parse(json) as? HashMap<*, *> ?: return
