@@ -1,4 +1,4 @@
-name: Build Dummy Surfers
+name: Build Dummy Surfers # re-register CI
 
 on:
   push:
