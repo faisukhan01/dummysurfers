@@ -156,9 +156,11 @@ class Scene3D(private val batch: SpriteBatch, private val proj: Projection) {
             sin(player.runPhase * 2f) * 0.035f else 0f
         // v4.1: camera rides up with jetpack/high flight so the runner stays
         // framed with the track visible far below (SS jetpack framing)
+        // v5.2: pulled back + up (z 4.9→5.65, y 2.62→2.78) — the runner filled
+        // ~40% of the frame; real SS keeps him ≈25% so you can READ the track
         val airLift = max(0f, player.jumpY - 1.6f)
-        cam.position.set(followX + shakeX * 0.012f, 2.62f + bob + airLift * 0.62f + shakeY * 0.01f, 4.9f)
-        cam.lookAt(player.x * 0.95f, 1.12f + player.jumpY * 0.34f + airLift * 0.42f, -7f)
+        cam.position.set(followX + shakeX * 0.012f, 2.78f + bob + airLift * 0.62f + shakeY * 0.01f, 5.65f)
+        cam.lookAt(player.x * 0.95f, 1.06f + player.jumpY * 0.34f + airLift * 0.42f, -7f)
         cam.update()
 
         // ── scrolling ground strips ────────────────────────────────────
