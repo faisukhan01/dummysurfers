@@ -989,7 +989,10 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         val menuDim = if (state == GameState.MENU || state == GameState.GAME_OVER) 0.55f else 0f
         scene3d.render(distance, Difficulty.speed(distance), time, world, spawner, player, chaser, character,
             shakeX, shakeY,
-            blinkHide = player.invulnTimer > 0f && sin(time * 42f) > 0.2f,
+            // v5.1: hide the 3D runner on the menu — the front portrait is the
+            // hero there; the back-view rig only showed its legs sticking out
+            // from under the RUN button like a bug
+            blinkHide = state == GameState.MENU || (player.invulnTimer > 0f && sin(time * 42f) > 0.2f),
             boardOn = boardTimer > 0f, stumbleOn = stumbleSlowTimer > 0f, shieldOn = activePowerups[2] > 0f, jetOn = activePowerups[5] > 0f,
             tunnelDark = tunnelDark, menuDim = menuDim)
 
