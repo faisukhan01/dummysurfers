@@ -42,8 +42,18 @@ class AudioManager {
     fun start() {
         if (running) return
         for (i in noiseBuf.indices) noiseBuf[i] = rng.nextFloat() * 2f - 1f
+        try {
+            device = Gdx.audio.newAudioDevice(sampleRate, true)
+        } catch (t: Throwable) {
+            // v5.1: some devices/drivers fail to open a raw AudioDevice (audio
+            // focus fights, driver quirks). The game must keep running SILENT
+            // rather than die inside create().
+            Gdx.app.error("DS-Audio", "AudioDevice unavailable — running silent", t)
+            device = null
+            running = false
+            return
+        }
         running = true
-        device = Gdx.audio.newAudioDevice(sampleRate, true)
         thread = Thread({ loop() }, "DummyAudio")
         thread?.isDaemon = true
         thread?.start()
@@ -295,7 +305,16 @@ class AudioManager {
         val stepDur = 60f / 132f / 4f // 16th notes @132bpm
         val stepSamples = (stepDur * sampleRate).toLong()
 
+        // v5.1 CRITICAL: an uncaught exception in ANY thread kills the whole
+        // Android process instantly. This thread touches the platform audio
+        // device every ~23ms for the app's whole life — a device that dies
+        // mid-session (background/foreground races, audio-focus changes,
+        // driver hiccups) used to take the whole game down: the "playing
+        // fine, then the app just closes" report. Failures now degrade to
+        // silence, never to a dead process.
+        var deviceErrors = 0
         while (running) {
+            try {
             val dev = device ?: break
             // realtime pacing: if a dummy/non-blocking audio device lets us run
             // ahead of the wall clock, throttle so the sequencer stays at 1x and
@@ -361,8 +380,22 @@ class AudioManager {
             }
 
             for (i in 0 until chunk) outBuf[i] = (mixBuf[i] * 32700f).toInt().toShort()
-            dev.writeSamples(outBuf, 0, chunk)
-            samplePos += chunk
+                dev.writeSamples(outBuf, 0, chunk)
+                samplePos += chunk
+                deviceErrors = 0
+            } catch (t: Throwable) {
+                // Device died / invalidated mid-write → drop the audio device
+                // and end this thread quietly. A few transient hiccups are
+                // retried first; a dead device ends in silence, never a crash.
+                Gdx.app.error("DS-Audio", "Mixer thread error — audio stopping gracefully", t)
+                deviceErrors++
+                if (deviceErrors >= 3) {
+                    try { device?.dispose() } catch (_: Throwable) {}
+                    device = null
+                    break
+                }
+                try { Thread.sleep(50) } catch (_: InterruptedException) {}
+            }
         }
     }
 }
