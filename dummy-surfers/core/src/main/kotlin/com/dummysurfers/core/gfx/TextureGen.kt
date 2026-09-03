@@ -131,66 +131,108 @@ object TextureGen {
     lateinit var wallTex: Texture             // graffiti brick wall
     lateinit var tunnelTex: Texture           // grimy tunnel tile
 
+    // ── v5.4 STARTUP IMMUNITY ────────────────────────────────────────────
+    // One bad Pixmap/glyph used to throw inside generate() → create() died →
+    // the app closed instantly, every launch, on that device (no dialog, no
+    // log the player could reach). Every texture now generates through a
+    // guard: a failing texture is replaced by a tiny white substitute and
+    // the failure is counted + logged. The game boots with visual glitches
+    // instead of not booting at all.
+    var genErrors = 0             // number of substituted textures
+    var generated = false         // true after a successful full/partial generate() (safe dispose)
+    var anyFatal = false          // true if even the guard's substitute Texture couldn't be created
+
+    private fun subTex(): Texture = Texture(4, 4, Pixmap.Format.RGBA8888)
+
+    private fun tex(name: String, c: () -> Texture): Texture =
+        try { c() } catch (t: Throwable) {
+            genErrors++
+            com.badlogic.gdx.Gdx.app.error("DS-Tex", "texture '$name' failed — white substitute", t)
+            try { subTex() } catch (_: Throwable) { anyFatal = true; throw t }
+        }
+
+    private fun texArray(name: String, count: Int, c: (Int) -> Texture): Array<Texture> =
+        Array(count) { i -> tex("$name#$i") { c(i) } }
+
+    private fun texNine(name: String, c: () -> NinePatch): NinePatch =
+        try { c() } catch (t: Throwable) {
+            genErrors++
+            com.badlogic.gdx.Gdx.app.error("DS-Tex", "ninepatch '$name' failed — white substitute", t)
+            try { NinePatch(subTex(), 1, 1, 1, 1) } catch (_: Throwable) { anyFatal = true; throw t }
+        }
+
     fun generate() {
-        white = solid(4, 4, Color.WHITE)
-        disc = radial(64, Color(1f, 1f, 1f, 1f), 0.86f) // solid core, 14% feather
-        hazeBand = horizonHaze(8, 256)
-        jetFlame = radial(128, Color(1f, 0.62f, 0.2f, 0.95f), 0.12f)
-        warmGlow = radial(128, Color(1f, 0.80f, 0.44f, 0.95f), 0.02f)
-        glow = radial(128, Color(1f, 1f, 1f, 1f), 0f)
-        softShadow = radial(128, Color(0f, 0f, 0f, 0.55f), 0.25f)
-        sky = verticalGradient(8, 512, Palette.SKY_TOP, Palette.SKY_MID, Palette.SKY_LOW)
-        fog = verticalGradientFade(8, 256, Palette.FOG)
-        cloudA = cloud(260, 90, 42L)
-        cloudB = cloud(200, 70, 77L)
+        genErrors = 0; anyFatal = false
+        white = tex("white") { solid(4, 4, Color.WHITE) }
+        disc = tex("disc") { radial(64, Color(1f, 1f, 1f, 1f), 0.86f) } // solid core, 14% feather
+        hazeBand = tex("hazeBand") { horizonHaze(8, 256) }
+        jetFlame = tex("jetFlame") { radial(128, Color(1f, 0.62f, 0.2f, 0.95f), 0.12f) }
+        warmGlow = tex("warmGlow") { radial(128, Color(1f, 0.80f, 0.44f, 0.95f), 0.02f) }
+        glow = tex("glow") { radial(128, Color(1f, 1f, 1f, 1f), 0f) }
+        softShadow = tex("softShadow") { radial(128, Color(0f, 0f, 0f, 0.55f), 0.25f) }
+        sky = tex("sky") { verticalGradient(8, 512, Palette.SKY_TOP, Palette.SKY_MID, Palette.SKY_LOW) }
+        fog = tex("fog") { verticalGradientFade(8, 256, Palette.FOG) }
+        cloudA = tex("cloudA") { cloud(260, 90, 42L) }
+        cloudB = tex("cloudB") { cloud(200, 70, 77L) }
         // SS-style distant city: soft blue-violet haze silhouettes
-        skylineFar = skyline(1024, 190, 5L, dark = 0xaebbe8, alpha = 0.8f, dense = false)
-        skylineNear = skyline(1024, 240, 11L, dark = 0x8b9cdd, alpha = 0.9f, dense = true)
-        vignette = radial(256, Color(0f, 0f, 0f, 0.5f), 0.72f)
-        edgeVignette = edgeVignette(256)
-        rainbowBurst = burst(512)
-        coinFrames = Array(10) { coin(72, it, 10) }
-        powerIcons = arrayOf(magnetIcon(), starIcon(), shieldIcon(), boltIcon(), springIcon(), rocketIcon())
-        navIcons = arrayOf(navPerson(), navBag(), navTasks(), navGear())
-        trophy = navTrophy()
-        previews = Array(CharacterDef.ALL.size) { characterPreview(CharacterDef.ALL[it]) }
-        panelNine = roundedNine(64, 18, Color(1f, 1f, 1f, 1f), border = false)
-        buttonNine = roundedNine(64, 18, Color(1f, 1f, 1f, 1f), border = true)
-        circleNine = circleNine()
-        play = playGlyph()
-        trainSides = Array(Palette.TRAIN_LIVERIES.size) { trainSide(it) }
-        trainFronts = Array(Palette.TRAIN_LIVERIES.size) { trainFront(it) }
-        trainRears = Array(Palette.TRAIN_LIVERIES.size) { trainRear(it) }
-        trainRoofTex = trainRoof()
-        hazardTex = hazardStripes()
-        barrierRedTex = barrierStripes()
-        signTealTex = signTeal()
-        containerTex = containerBox()
-        facades = arrayOf(
+        skylineFar = tex("skylineFar") { skyline(1024, 190, 5L, dark = 0xaebbe8, alpha = 0.8f, dense = false) }
+        skylineNear = tex("skylineNear") { skyline(1024, 240, 11L, dark = 0x8b9cdd, alpha = 0.9f, dense = true) }
+        vignette = tex("vignette") { radial(256, Color(0f, 0f, 0f, 0.5f), 0.72f) }
+        edgeVignette = tex("edgeVignette") { edgeVignette(256) }
+        rainbowBurst = tex("rainbowBurst") { burst(512) }
+        coinFrames = texArray("coin", 10) { coin(72, it, 10) }
+        powerIcons = texArray("powerIcon", 6) { arrayOf(magnetIcon(), starIcon(), shieldIcon(), boltIcon(), springIcon(), rocketIcon())[it] }
+        navIcons = texArray("navIcon", 4) { arrayOf(navPerson(), navBag(), navTasks(), navGear())[it] }
+        trophy = tex("trophy") { navTrophy() }
+        previews = texArray("preview", CharacterDef.ALL.size) { characterPreview(CharacterDef.ALL[it]) }
+        panelNine = texNine("panelNine") { roundedNine(64, 18, Color(1f, 1f, 1f, 1f), border = false) }
+        buttonNine = texNine("buttonNine") { roundedNine(64, 18, Color(1f, 1f, 1f, 1f), border = true) }
+        circleNine = texNine("circleNine") { circleNine() }
+        play = tex("play") { playGlyph() }
+        trainSides = texArray("trainSide", Palette.TRAIN_LIVERIES.size) { trainSide(it) }
+        trainFronts = texArray("trainFront", Palette.TRAIN_LIVERIES.size) { trainFront(it) }
+        trainRears = texArray("trainRear", Palette.TRAIN_LIVERIES.size) { trainRear(it) }
+        trainRoofTex = tex("trainRoof") { trainRoof() }
+        hazardTex = tex("hazard") { hazardStripes() }
+        barrierRedTex = tex("barrierRed") { barrierStripes() }
+        signTealTex = tex("signTeal") { signTeal() }
+        containerTex = tex("container") { containerBox() }
+        facades = texArray("facade", 4) { arrayOf(
             facade(0xe8b27d, 0xd9985f, 11L), facade(0xc96b4a, 0xb85a4a, 23L),
             facade(0x9fc5c0, 0x8fb6d9, 37L), facade(0xe8d5a8, 0xc78a6a, 53L)
-        )
-        glassTex = glassTower()
-        trackTex = trackTile()
-        dirtTex = dirtTile()
-        wallTex = wallTile()
-        tunnelTex = tunnelTile()
+        )[it] }
+        glassTex = tex("glass") { glassTower() }
+        trackTex = tex("track") { trackTile() }
+        dirtTex = tex("dirt") { dirtTile() }
+        wallTex = tex("wall") { wallTile() }
+        tunnelTex = tex("tunnel") { tunnelTile() }
+        if (genErrors > 0) com.badlogic.gdx.Gdx.app.log("DS-Tex", "generate finished with $genErrors substituted texture(s)")
+        generated = true
     }
 
+    /** v5.4: safe to call even if generate() never completed (retry path) —
+     *  uninitialized lateinits are skipped, disposed fields can't double-free
+     *  because callers reset [generated] afterwards. */
     fun dispose() {
-        listOf(glow, softShadow, sky, fog, cloudA, cloudB, skylineFar, skylineNear, vignette, edgeVignette, rainbowBurst, white, disc, hazeBand, jetFlame, warmGlow,
-            trainRoofTex, hazardTex, signTealTex, containerTex, glassTex).forEach { it.dispose() }
-        coinFrames.forEach { it.dispose() }
-        powerIcons.forEach { it.dispose() }
-        navIcons.forEach { it.dispose() }
-        trophy.dispose()
-        play.dispose()
-        previews.forEach { it.dispose() }
-        trainSides.forEach { it.dispose() }
-        trainFronts.forEach { it.dispose() }
-        trainRears.forEach { it.dispose() }
-        facades.forEach { it.dispose() }
-        trackTex.dispose(); dirtTex.dispose(); wallTex.dispose(); tunnelTex.dispose()
+        if (!generated) return
+        try {
+            listOf(glow, softShadow, sky, fog, cloudA, cloudB, skylineFar, skylineNear, vignette, edgeVignette, rainbowBurst, white, disc, hazeBand, jetFlame, warmGlow,
+                trainRoofTex, hazardTex, signTealTex, containerTex, glassTex).forEach { it.dispose() }
+            coinFrames.forEach { it.dispose() }
+            powerIcons.forEach { it.dispose() }
+            navIcons.forEach { it.dispose() }
+            trophy.dispose()
+            play.dispose()
+            previews.forEach { it.dispose() }
+            trainSides.forEach { it.dispose() }
+            trainFronts.forEach { it.dispose() }
+            trainRears.forEach { it.dispose() }
+            facades.forEach { it.dispose() }
+            trackTex.dispose(); dirtTex.dispose(); wallTex.dispose(); tunnelTex.dispose()
+        } catch (t: Throwable) {
+            com.badlogic.gdx.Gdx.app.error("DS-Tex", "dispose partial failure (ignored)", t)
+        }
+        generated = false
     }
 
     /** Ballast + wooden sleepers + steel rails — one tile = 10.6u wide × 3.5u
