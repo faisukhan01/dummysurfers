@@ -248,3 +248,26 @@ Stage Summary:
 - All three user complaints closed: commit graph attributed (verified via API), Pages banner gone (verified via API+HTML), character/UI fidelity pass shipped as v5.2.1.
 - CI building v5.2.1 → release DummySurfers.apk via stable latest/download URL.
 - Note for future rounds: keep using ./push-game.sh; never git-add upload/ or tool-results/; SDK lives at /home/z/android-sdk (reinstall if sandbox resets).
+
+---
+Task ID: 18
+Agent: Z.ai Code (orchestrator)
+Task: "still the UI has to be more better" — another fidelity pass at the game UI (v5.3.0).
+
+Work Log:
+- Read the whole UI stack (UiController 891L, UiTheme, TextureGen ninepatches, Palette) and rebuilt the widget layer to the real SS anatomy:
+  1. JELLY BUTTONS: roundedNine rebuilt — navy outline ring + glossy top band + chunky darker bottom lip. NEW circleNine (jelly circle w/ lip disc + gloss) + play-triangle texture. UiTheme gained circleButton/cardShadow/playIcon.
+  2. MENU: settings+missions round jelly floaters top-left (white ring + red claimable badge), the 4 heavy navy bottom slabs became floating round buttons w/ tiny labels, play glyph on gold RUN, drop shadows under every card.
+  3. HUD: pause is now a round frosted roundel w/ white ring; power-up meters got colored roundel icon slots.
+  4. PAUSE: re-laid out — portrait slot + gold score under hero, big green RESUME play-slab, REDO/HOME candy buttons.
+  5. GAME OVER: "BUSTED!" giant red display headline on guard catch; coin icon+count fixed into one centered row (was hovering over the digits); play glyph on RUN AGAIN.
+  6. DYING slow-mo keeps the HUD on screen (score visible during the catch).
+- QA HARNESS FIX (important discovery): the launcher-thread DS_AUTO script fires taps OUTSIDE the render loop — under Xvfb the loop starves, clicks were set but never consumed (menu taps silently dead in QA, state froze at MENU). Diagnosed via gated TAPLOG (clickId set in touchUp, flushFrame never saw it). Fix: new render-driven hooks in devHarness — DS_PAUSE_AT="3.0,5.0" (pause/resume beats) + DS_PANEL=SETTINGS|SHOP|... (open panel at 1.2s). All scripted QA now flows through the game loop; verified 10-shot internal series fires and self-exits.
+- Visual QA under Xvfb (3 runs): menu floaters/round nav ✓, HUD pause roundel + frosted coin pill ✓, pause card (portrait/score/RESUME slab/candy buttons/centered coin row) ✓, game-over card (NEW HIGH SCORE + shadow-floated slots + coin row) ✓, settings panel (round back + centered title + jelly toggles) ✓. Pixel-zoomed the coins chip to verify the icon-digit baseline.
+- versionCode 24 / v5.3.0; landing changelog v5.3.0 + nav/footer strings; :android:assembleDebug green (5.8MB, ANDROID_HOME=/home/z/android-sdk).
+- 6 granular commits, all authored Faisal Khan <193670919+faisukhan01@users.noreply.github.com>.
+
+Stage Summary:
+- v5.3.0 = the "feels like the real game" pass: jelly buttons + circles + play glyphs + shadows everywhere, BUSTED! headline, pause-card rebuild.
+- QA scripting now lives inside the render loop (DS_PAUSE_AT/DS_PANEL) — never use the launcher-thread DS_AUTO taps under Xvfb again.
+- Next round ideas: mission-card restyle, train liveries close-up, guard+dog catch framing, hoverboard chip roundel.
