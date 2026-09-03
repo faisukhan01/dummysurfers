@@ -62,19 +62,21 @@ object Palette {
     val UI_MUTED = Color(0xc9cff2ff.toInt())     // light periwinkle
     val DANGER = Color(0xef4444ff.toInt())
 
-    // body/shade/band — bright SS metro + graffiti freight
+    // body/shade/band — 20-c: crisp saturated metro liveries (real-SS chroma:
+    // the old set read muted/grey in gameplay shots). Clean tri-tone sets:
+    // vivid body + deep shade + clean band.
     val TRAIN_LIVERIES = arrayOf(
-        intArrayOf(0x3e7bc0ff.toInt(), 0x2c5e96ff.toInt(), 0xffffffff.toInt()), // blue metro, white band
-        intArrayOf(0xf2a63bff.toInt(), 0xd8841fff.toInt(), 0xfff3d6ff.toInt()), // orange graffiti freight
-        intArrayOf(0x43b45cff.toInt(), 0x2e8a44ff.toInt(), 0xeaf7dcff.toInt()), // green metro
-        intArrayOf(0xd94a38ff.toInt(), 0xa83326ff.toInt(), 0xffe2c8ff.toInt()), // red express
-        intArrayOf(0xf7d23eff.toInt(), 0xdbae1dff.toInt(), 0x3a3f6bff.toInt()), // yellow metro, navy band
-        intArrayOf(0x8a55c9ff.toInt(), 0x6a3da3ff.toInt(), 0xf2e2ffff.toInt()), // violet graffiti
-        intArrayOf(0x2fa8a0ff.toInt(), 0x1f7a74ff.toInt(), 0xfff6e8ff.toInt()), // v4.2: teal harbor line
-        intArrayOf(0x9aa4b2ff.toInt(), 0x525c68ff.toInt(), 0xffd23eff.toInt())  // v4.2: graphite night express, gold band
+        intArrayOf(0x2f86e8ff.toInt(), 0x1a55a6ff.toInt(), 0xffffffff.toInt()), // blue metro, white band
+        intArrayOf(0xff9c2aff.toInt(), 0xd9700eff.toInt(), 0xfff1d0ff.toInt()), // orange graffiti freight
+        intArrayOf(0x2fc558ff.toInt(), 0x1a8a3aff.toInt(), 0xf4fbe4ff.toInt()), // green metro, cream band
+        intArrayOf(0xf24030ff.toInt(), 0xac2014ff.toInt(), 0xffe2c4ff.toInt()), // red express
+        intArrayOf(0xffd21cff.toInt(), 0xe3a70aff.toInt(), 0x2c3f7dff.toInt()), // yellow metro, navy band
+        intArrayOf(0x9a5cdcff.toInt(), 0x7034adff.toInt(), 0xf4e4ffff.toInt()), // violet graffiti
+        intArrayOf(0x18b7a8ff.toInt(), 0x0d7f74ff.toInt(), 0xfff6e0ff.toInt()), // teal harbor line
+        intArrayOf(0x9aa4b4ff.toInt(), 0x4e5763ff.toInt(), 0xffd23eff.toInt())  // graphite night express, gold band
     )
-    val TRAIN_ROOF = Color(0x9aa0a8ff.toInt())
-    val TRAIN_FRONT = Color(0xf7d23eff.toInt())
+    val TRAIN_ROOF = Color(0xb2b7bfff.toInt())
+    val TRAIN_FRONT = Color(0xffd21cff.toInt())
 
     val BUILDING_COLORS = intArrayOf(
         0xe8b27dff.toInt(), 0xd9985fff.toInt(), 0xc96b4aff.toInt(), 0xb85a4aff.toInt(),
@@ -1091,125 +1093,261 @@ object TextureGen {
 
     // ── FaceBatch material generators (textured pseudo-3D world) ────────
 
-    /** Carriage side per livery: windows, door, white band, skirt, wheels, optional graffiti. */
+    /**
+     * Carriage side per livery — 20-c SS-fidelity rebuild:
+     * 4 BIG rounded navy windows w/ diagonal sky reflections + white glints,
+     * a distinct passenger door with split line + tall slots between window
+     * groups, clean white livery band, panel seams + rivet dots, chunky dark
+     * bogies, and hazard-edge + graffiti on the freight liveries only.
+     * NOTE (FaceBatch.faceSide): texture LEFT column = FAR end of the car.
+     */
     private fun trainSide(liveryIdx: Int): Texture {
         val w = 256; val h = 128
         val p = Pixmap(w, h, Pixmap.Format.RGBA8888)
         val liv = Palette.TRAIN_LIVERIES[liveryIdx]
         val body = Color(liv[0]); val skirt = Color(liv[1]); val band = Color(liv[2])
+        val freight = liveryIdx == 1 || liveryIdx == 5
+        val GLASS = 0x14294dff.toInt()
+        val GLASS_OUT = 0x0d1b33ff.toInt()
+
         // body
         p.setColor(body); p.fillRectangle(0, 0, w, h)
-        // roof edge strip
-        p.setColor(Palette.TRAIN_ROOF); p.fillRectangle(0, 0, w, 7)
-        p.setColor(1f, 1f, 1f, 0.18f); p.fillRectangle(0, 7, w, 2)
-        // window band: 3 windows + door on the right
-        val winY = 22; val winH = 34
-        for (i in 0 until 3) {
-            val x = 14 + i * 68
-            p.setColor(0x1c2740ff.toInt()); p.fillRectangle(x - 2, winY - 2, 52, winH + 4)
-            p.setColor(0x22324cff.toInt()); p.fillRectangle(x, winY, 48, winH)
-            p.setColor(0x9adcf0ff.toInt()); p.fillRectangle(x + 4, winY + 5, 12, 5)
-            p.setColor(1f, 1f, 1f, 0.10f); p.fillRectangle(x, winY + winH - 8, 48, 8)
+        // sun on the upper shoulder
+        p.setColor(1f, 1f, 1f, 0.13f); p.fillRectangle(0, 9, w, 7)
+
+        // roof edge strip + glint + shadow crease
+        p.setColor(Palette.TRAIN_ROOF); p.fillRectangle(0, 0, w, 8)
+        p.setColor(1f, 1f, 1f, 0.35f); p.fillRectangle(0, 0, w, 2)
+        p.setColor(0f, 0f, 0f, 0.22f); p.fillRectangle(0, 8, w, 2)
+
+        // panel seams + rivet dots
+        p.setColor(0f, 0f, 0f, 0.10f)
+        p.fillRectangle(2, 10, 1, 92); p.fillRectangle(w - 3, 10, 1, 92)
+        p.fillRectangle(126, 10, 1, 92)
+        p.setColor(0f, 0f, 0f, 0.15f)
+        var rvx = 10
+        while (rvx < w - 6) { p.fillRectangle(rvx, 11, 2, 2); rvx += 18 }
+
+        // 4 big rounded windows, two per side of the centered door
+        val winY = 16; val winH = 42; val winW = 36
+        val winXs = intArrayOf(12, 58, 162, 208)
+        for (x0 in winXs) {
+            p.setColor(GLASS_OUT)
+            fillRoundRect(p, x0 - 3, winY - 3, winW + 6, winH + 6, 9)
+            p.setColor(GLASS)
+            fillRoundRect(p, x0, winY, winW, winH, 7)
+            // diagonal sky-blue reflection streak (bottom-left → top-right)
+            p.setColor(0x9adcf0ff.toInt())
+            var i = 0
+            while (i < 11) { p.fillRectangle(x0 + 4 + i, winY + 26 - i, 3, 9); i++ }
+            p.setColor(0xbfe8ffff.toInt())
+            i = 0
+            while (i < 6) { p.fillRectangle(x0 + 22 + i, winY + 32 - i, 2, 6); i++ }
+            // white glint + lower shade
+            p.setColor(1f, 1f, 1f, 0.85f)
+            fillRoundRect(p, x0 + 4, winY + 4, 9, 5, 2)
+            p.setColor(0f, 0f, 0f, 0.20f)
+            p.fillRectangle(x0 + 2, winY + winH - 8, winW - 4, 6)
         }
-        // door (right side) with center split
-        p.setColor(skirt); p.fillRectangle(w - 34, 16, 30, 86)
-        p.setColor(0f, 0f, 0f, 0.25f); p.fillRectangle(w - 21, 16, 2, 86)
-        p.setColor(0x22324cff.toInt()); p.fillRectangle(w - 30, 22, 22, 26)
-        // signature white band under the windows
-        p.setColor(band); p.fillRectangle(0, 66, w - 36, 9)
-        p.setColor(1f, 1f, 1f, 0.25f); p.fillRectangle(0, 66, w - 36, 3)
-        // skirt
-        p.setColor(skirt); p.fillRectangle(0, 104, w, 12)
-        p.setColor(0f, 0f, 0f, 0.22f); p.fillRectangle(0, 112, w, 4)
-        // wheels: bogies under body
-        for (wx in intArrayOf(30, 62, 150, 182)) {
-            p.setColor(0x1a1a20ff.toInt()); p.fillCircle(wx, 118, 9)
-            p.setColor(0x4a4a54ff.toInt()); p.fillCircle(wx, 118, 5)
-            p.setColor(0x8a8a94ff.toInt()); p.fillCircle(wx, 118, 2)
+
+        // passenger door: tall block, center split, two tall slots
+        p.setColor(skirt)
+        fillRoundRect(p, 110, 14, 36, 86, 7)
+        p.setColor(0f, 0f, 0f, 0.28f); p.fillRectangle(127, 16, 2, 82)
+        p.setColor(GLASS_OUT)
+        fillRoundRect(p, 116, 22, 10, 32, 4)
+        fillRoundRect(p, 130, 22, 10, 32, 4)
+        p.setColor(GLASS)
+        fillRoundRect(p, 117, 23, 8, 30, 3)
+        fillRoundRect(p, 131, 23, 8, 30, 3)
+        p.setColor(0x9adcf0ff.toInt())
+        p.fillRectangle(118, 40, 6, 3); p.fillRectangle(132, 40, 6, 3)
+        p.setColor(1f, 1f, 1f, 0.28f)
+        p.fillRectangle(116, 22, 10, 3); p.fillRectangle(130, 22, 10, 3)
+        p.setColor(0f, 0f, 0f, 0.22f)
+        p.fillRectangle(112, 94, 32, 4)
+
+        // signature livery band across the full side (under the windows)
+        p.setColor(band); p.fillRectangle(0, 64, w, 11)
+        p.setColor(1f, 1f, 1f, 0.40f); p.fillRectangle(0, 64, w, 3)
+        p.setColor(0f, 0f, 0f, 0.12f); p.fillRectangle(0, 73, w, 2)
+
+        // skirt + crease
+        p.setColor(skirt); p.fillRectangle(0, 100, w, 20)
+        p.setColor(0f, 0f, 0f, 0.25f); p.fillRectangle(0, 100, w, 2)
+        p.setColor(0f, 0f, 0f, 0.32f); p.fillRectangle(0, 124, w, 4)
+
+        // freight only: yellow/black hazard edge on the skirt
+        if (freight) {
+            p.setColor(Palette.HAZARD_YELLOW); p.fillRectangle(0, 103, w, 9)
+            p.setColor(Palette.HAZARD_BLACK)
+            var hx = -10
+            while (hx < w + 10) {
+                for (k in 0 until 9) {
+                    val xx = hx + k
+                    if (xx in 0 until w) { p.drawPixel(xx, 103 + k); p.drawPixel(xx, 104 + k); p.drawPixel(xx, 105 + k) }
+                }
+                hx += 14
+            }
         }
+
+        // chunky dark bogies + wheels
+        p.setColor(0x171920ff.toInt())
+        fillRoundRect(p, 22, 108, 52, 16, 5)
+        fillRoundRect(p, 146, 108, 52, 16, 5)
+        for (wx in intArrayOf(30, 62, 154, 186)) {
+            p.setColor(0x101218ff.toInt()); p.fillCircle(wx, 119, 8)
+            p.setColor(0x59616cff.toInt()); p.fillCircle(wx, 119, 5)
+            p.setColor(0x9aa2acff.toInt()); p.fillCircle(wx, 119, 2)
+        }
+
         // graffiti on freight liveries (orange freight 1, violet 5)
-        if (liveryIdx == 1 || liveryIdx == 5) {
+        if (freight) {
             val rng = Random(100L + liveryIdx)
             val cols = intArrayOf(0xffd24aff.toInt(), 0x37b8a8ff.toInt(), 0xe2493bff.toInt(), 0xd8578aff.toInt(), 0x8ff2e2ff.toInt())
             for (g in 0 until 7) {
                 val col = cols[rng.nextInt(cols.size)]
                 val gx = 8 + rng.nextInt(w - 80)
-                val gy = 86 + rng.nextInt(18)
+                val gy = 78 + rng.nextInt(16)
                 val gr = 4 + rng.nextInt(7)
                 p.setColor(0x2b2622ff.toInt()); p.fillCircle(gx, gy, gr + 2)
                 p.setColor(col); p.fillCircle(gx, gy, gr)
             }
             // spray tag underline
-            p.setColor(0xffd24aff.toInt()); p.fillRectangle(40, 96, 90, 3)
+            p.setColor(0xffd24aff.toInt()); p.fillRectangle(40, 92, 90, 3)
         }
         return tex(p)
     }
 
-    /** Lead-car front per livery: yellow cab, windshield, headlights, bumper. */
+    /** Lead-car front — 20-c: big rounded windscreen, destination board,
+     *  red-white livery stripe, round headlights w/ warm glow halos, dark bumper. */
     private fun trainFront(liveryIdx: Int): Texture {
         val w = 128; val h = 128
         val p = Pixmap(w, h, Pixmap.Format.RGBA8888)
         val liv = Palette.TRAIN_LIVERIES[liveryIdx]
-        // cab body (SS lead cars read yellow) with livery shoulder stripe
+        // cab body (SS lead cars read bright yellow)
         p.setColor(Palette.TRAIN_FRONT); p.fillRectangle(0, 0, w, h)
-        p.setColor(Color(liv[0])); p.fillRectangle(0, 0, w, 14)
-        p.setColor(Palette.TRAIN_ROOF); p.fillRectangle(0, 0, w, 6)
-        // windshield (rounded navy) + reflection streaks
-        p.setColor(0x1c2740ff.toInt()); p.fillRectangle(14, 18, w - 28, 40)
-        p.setColor(0x22324cff.toInt()); p.fillRectangle(16, 20, w - 32, 36)
-        p.setColor(0x9adcf0ff.toInt()); p.fillRectangle(22, 26, 22, 7)
-        p.setColor(1f, 1f, 1f, 0.25f); p.fillRectangle(52, 26, 10, 26)
-        // destination panel
-        p.setColor(0xfff2dcff.toInt()); p.fillRectangle(w / 2 - 14, 8, 28, 7)
-        // headlights with warm halo
+        p.setColor(1f, 1f, 1f, 0.14f); p.fillRectangle(0, 9, w, 6)
+        p.setColor(Palette.TRAIN_ROOF); p.fillRectangle(0, 0, w, 8)
+        p.setColor(1f, 1f, 1f, 0.35f); p.fillRectangle(0, 0, w, 2)
+        p.setColor(0f, 0f, 0f, 0.20f); p.fillRectangle(0, 8, w, 2)
+
+        // destination board (dark navy + cream dashes)
+        p.setColor(0x101c30ff.toInt())
+        fillRoundRect(p, w / 2 - 22, 11, 44, 13, 4)
+        p.setColor(0xfff2dcff.toInt())
+        p.fillRectangle(w / 2 - 15, 15, 9, 5); p.fillRectangle(w / 2 - 3, 15, 9, 5); p.fillRectangle(w / 2 + 9, 15, 5, 5)
+
+        // big rounded windscreen + reflections
+        p.setColor(0x0d1b33ff.toInt())
+        fillRoundRect(p, 12, 28, 104, 44, 11)
+        p.setColor(0x16304eff.toInt())
+        fillRoundRect(p, 15, 31, 98, 38, 9)
+        p.setColor(0x9adcf0ff.toInt())
+        var i = 0
+        while (i < 14) { p.fillRectangle(22 + i, 62 - i, 4, 10); i++ }
+        p.setColor(0xbfe8ffff.toInt())
+        i = 0
+        while (i < 7) { p.fillRectangle(58 + i, 66 - i, 3, 7); i++ }
+        p.setColor(1f, 1f, 1f, 0.85f)
+        fillRoundRect(p, 20, 34, 12, 6, 3)
+        p.setColor(0f, 0f, 0f, 0.22f)
+        p.fillRectangle(18, 60, 92, 7)
+
+        // red-white livery stripe under the windscreen
+        p.setColor(Color(liv[0])); p.fillRectangle(0, 74, w, 3)
+        p.setColor(0xe8402eff.toInt()); p.fillRectangle(0, 77, w, 8)
+        p.setColor(0xffffffff.toInt()); p.fillRectangle(0, 80, w, 2)
+
+        // round headlights with warm glow halos
         for (hx in intArrayOf(24, w - 24)) {
-            p.setColor(1f, 0.9f, 0.6f, 0.45f); p.fillCircle(hx, 88, 12)
-            p.setColor(0xfff6d8ff.toInt()); p.fillCircle(hx, 88, 7)
-            p.setColor(1f, 1f, 1f, 0.85f); p.fillCircle(hx - 2, 86, 3)
+            p.setColor(1f, 0.90f, 0.55f, 0.32f); p.fillCircle(hx, 96, 16)
+            p.setColor(0x33383fff.toInt()); p.fillCircle(hx, 96, 10)
+            p.setColor(0xfff3c4ff.toInt()); p.fillCircle(hx, 96, 8)
+            p.setColor(1f, 1f, 1f, 0.9f); p.fillCircle(hx - 2, 94, 3)
         }
-        // livery band + skirt + bumper
-        p.setColor(Color(liv[0])); p.fillRectangle(0, 70, w, 8)
-        p.setColor(Color(liv[1])); p.fillRectangle(0, 104, w, 14)
-        p.setColor(0x2b2622ff.toInt()); p.fillRectangle(0, 118, w, 10)
-        p.setColor(0x1a1a20ff.toInt()); p.fillRectangle(w / 2 - 8, 118, 16, 10)
+
+        // skirt + dark bumper + coupler
+        p.setColor(Color(liv[1])); p.fillRectangle(0, 106, w, 10)
+        p.setColor(0f, 0f, 0f, 0.25f); p.fillRectangle(0, 106, w, 2)
+        p.setColor(0x272b33ff.toInt())
+        fillRoundRect(p, 20, 116, 88, 9, 4)
+        p.setColor(0x171a20ff.toInt()); p.fillRectangle(0, 124, w, 4)
+        p.setColor(0x101218ff.toInt()); p.fillRectangle(w / 2 - 7, 118, 14, 7)
         return tex(p)
     }
 
-    /** Carriage rear per livery: rear window, red taillights, livery band. */
+    /** Carriage rear — 20-c: rounded rear window, glowing red taillights,
+     *  livery band, skirt, bumper (matches the rebuilt side/front language). */
     private fun trainRear(liveryIdx: Int): Texture {
         val w = 128; val h = 128
         val p = Pixmap(w, h, Pixmap.Format.RGBA8888)
         val liv = Palette.TRAIN_LIVERIES[liveryIdx]
         p.setColor(Color(liv[0])); p.fillRectangle(0, 0, w, h)
-        p.setColor(Palette.TRAIN_ROOF); p.fillRectangle(0, 0, w, 6)
-        // rear window
-        p.setColor(0x1c2740ff.toInt()); p.fillRectangle(16, 18, w - 32, 38)
-        p.setColor(0x22324cff.toInt()); p.fillRectangle(18, 20, w - 36, 34)
-        // taillights
-        for (hx in intArrayOf(24, w - 24)) {
-            p.setColor(1f, 0.3f, 0.25f, 0.5f); p.fillCircle(hx, 86, 10)
-            p.setColor(0xe23c3cff.toInt()); p.fillCircle(hx, 86, 6)
+        p.setColor(1f, 1f, 1f, 0.12f); p.fillRectangle(0, 9, w, 6)
+        p.setColor(Palette.TRAIN_ROOF); p.fillRectangle(0, 0, w, 8)
+        p.setColor(1f, 1f, 1f, 0.35f); p.fillRectangle(0, 0, w, 2)
+        p.setColor(0f, 0f, 0f, 0.20f); p.fillRectangle(0, 8, w, 2)
+
+        // rounded rear window + reflection
+        p.setColor(0x0d1b33ff.toInt())
+        fillRoundRect(p, 14, 24, 100, 40, 10)
+        p.setColor(0x16304eff.toInt())
+        fillRoundRect(p, 17, 27, 94, 34, 8)
+        p.setColor(0x9adcf0ff.toInt())
+        var i = 0
+        while (i < 12) { p.fillRectangle(24 + i, 54 - i, 3, 9); i++ }
+        p.setColor(1f, 1f, 1f, 0.8f)
+        fillRoundRect(p, 21, 30, 10, 5, 2)
+        p.setColor(0f, 0f, 0f, 0.22f)
+        p.fillRectangle(20, 52, 88, 7)
+
+        // livery band
+        p.setColor(Color(liv[2])); p.fillRectangle(0, 70, w, 10)
+        p.setColor(1f, 1f, 1f, 0.35f); p.fillRectangle(0, 70, w, 3)
+
+        // red taillights with warm red halos
+        for (hx in intArrayOf(26, w - 26)) {
+            p.setColor(1f, 0.32f, 0.26f, 0.40f); p.fillCircle(hx, 94, 13)
+            p.setColor(0x8f2620ff.toInt()); p.fillCircle(hx, 94, 9)
+            p.setColor(0xff5a4aff.toInt()); p.fillCircle(hx, 94, 6)
+            p.setColor(1f, 0.85f, 0.8f, 0.85f); p.fillCircle(hx - 2, 92, 2)
         }
-        p.setColor(Color(liv[1])); p.fillRectangle(0, 104, w, 14)
-        p.setColor(0x2b2622ff.toInt()); p.fillRectangle(0, 118, w, 10)
+
+        p.setColor(Color(liv[1])); p.fillRectangle(0, 106, w, 10)
+        p.setColor(0f, 0f, 0f, 0.25f); p.fillRectangle(0, 106, w, 2)
+        p.setColor(0x272b33ff.toInt())
+        fillRoundRect(p, 20, 116, 88, 9, 4)
+        p.setColor(0x171a20ff.toInt()); p.fillRectangle(0, 124, w, 4)
         return tex(p)
     }
 
-    /** Tileable grey roof with vents and panel seams. */
+    /** Roof — 20-c: light grey deck, 2 raised AC units w/ vent ribs, center
+     *  pod, panel seams + sun glint. FaceBatch.faceTop: image TOP row = FAR
+     *  edge of the roof, bottom row = NEAR edge. */
     private fun trainRoof(): Texture {
         val w = 128; val h = 64
         val p = Pixmap(w, h, Pixmap.Format.RGBA8888)
         p.setColor(Palette.TRAIN_ROOF); p.fillRectangle(0, 0, w, h)
+        // panel seams
         p.setColor(0f, 0f, 0f, 0.10f)
         for (x in 0 until w step 32) p.fillRectangle(x, 0, 1, h)
-        // vents
-        for (vx in intArrayOf(24, 84)) {
-            p.setColor(0x7a8088ff.toInt()); p.fillRectangle(vx, 18, 20, 28)
-            p.setColor(0x5f646cff.toInt())
-            for (i in 0 until 4) p.fillRectangle(vx + 3, 22 + i * 6, 14, 2)
+        p.setColor(1f, 1f, 1f, 0.18f); p.fillRectangle(0, 0, w, 3)
+        p.setColor(0f, 0f, 0f, 0.12f); p.fillRectangle(0, h - 3, w, 3)
+        // raised AC units (shadow outline + lighter deck + vent ribs + front lip)
+        for (vx in intArrayOf(14, 82)) {
+            p.setColor(0x767c85ff.toInt()); fillRoundRect(p, vx - 2, 12, 36, 32, 5)
+            p.setColor(0xc6cbd2ff.toInt()); fillRoundRect(p, vx, 14, 32, 28, 4)
+            p.setColor(0x8f959dff.toInt())
+            for (i in 0 until 4) p.fillRectangle(vx + 4, 20 + i * 6, 24, 2)
+            p.setColor(0x70767eff.toInt()); p.fillRectangle(vx, 38, 32, 4)
+            p.setColor(1f, 1f, 1f, 0.30f); p.fillRectangle(vx, 14, 32, 3)
         }
-        // AC pod
-        p.setColor(0x8a9098ff.toInt()); p.fillRectangle(56, 26, 18, 16)
+        // center pod
+        p.setColor(0x8a9098ff.toInt()); fillRoundRect(p, 54, 18, 20, 24, 4)
+        p.setColor(0xb4bac2ff.toInt()); fillRoundRect(p, 56, 20, 16, 20, 3)
+        p.setColor(0x7a8088ff.toInt())
+        for (i in 0 until 3) p.fillRectangle(58, 25 + i * 6, 12, 2)
         return tex(p)
     }
 

@@ -215,35 +215,40 @@ class EntityRenderer(
             val zBn = zB.coerceAtLeast(-9f)
             val isLead = car == 0
 
-            // fog tints: neutral base pulled toward the warm horizon haze
+            // fog tints: neutral base pulled toward the warm horizon haze.
+            // 20-c: brighter side/top shading so the saturated liveries stay loud.
             fogged(tmpC, whiteC, (zFn + zBn) * 0.5f)
             pc1.set(tmpC)                  // front tint
-            pc2.set(tmpC).mul(0.78f)       // side shade
-            pc3.set(tmpC).mul(1.08f)       // top light
+            pc2.set(tmpC).mul(0.84f)       // side shade (was 0.78 — muddy)
+            pc3.set(tmpC).mul(1.12f)       // top light
+            pc5.set(tmpC).mul(0.80f)       // trailer rear (was 0.72)
 
             for (lane in t.lanes) {
                 val wx = lane * GameConfig.LANE_WIDTH.toFloat()
+                // 20-c: uniform +0.08u visual widening (collision width untouched) —
+                // every face shares the same half-width so corners stay sealed
+                val hw = w / 2f + 0.08f
 
-                // ground shadow quad (soft dark, fades with fog)
-                pc4.set(0f, 0f, 0f, 0.30f * (1f - proj.fog(zFn)))
-                fb.faceTop(TextureGen.white, 0.02f, wx - w / 2f + 0.1f, wx + w / 2f - 0.1f, zFn - 0.35f, zBn + 0.1f, pc4)
+                // ground shadow quad — v20-c: lighter + a touch wider (soft blob,
+                // the old 0.30 slab read as a black rug under bright cars)
+                pc4.set(0f, 0f, 0f, 0.22f * (1f - proj.fog(zFn)))
+                fb.faceTop(TextureGen.white, 0.02f, wx - hw - 0.12f, wx + hw + 0.12f, zFn - 0.35f, zBn + 0.1f, pc4)
 
                 // roof
-                fb.faceTop(TextureGen.trainRoofTex, h, wx - w / 2f, wx + w / 2f, zFn, zBn, pc3)
+                fb.faceTop(TextureGen.trainRoofTex, h, wx - hw, wx + hw, zFn, zBn, pc3)
 
-                // visible side face (whichever edge the camera can see)
-                if (camWx < wx - w / 2f) {
-                    fb.faceSide(sideTex, wx - w / 2f, zFn, zBn, 0.06f, h - 0.05f, pc2)
-                } else if (camWx > wx + w / 2f) {
-                    fb.faceSide(sideTex, wx + w / 2f, zFn, zBn, 0.06f, h - 0.05f, pc2)
+                // visible side face — whichever edge the camera can see
+                if (camWx < wx - hw) {
+                    fb.faceSide(sideTex, wx - hw, zFn, zBn, 0.04f, h - 0.03f, pc2)
+                } else if (camWx > wx + hw) {
+                    fb.faceSide(sideTex, wx + hw, zFn, zBn, 0.04f, h - 0.03f, pc2)
                 }
 
                 // end face: lead car wears the yellow cab, trailers show their rear
                 if (isLead) {
-                    fb.faceFront(frontTex, zFn, wx - w / 2f, wx + w / 2f, 0.06f, h - 0.05f, pc1)
+                    fb.faceFront(frontTex, zFn, wx - hw, wx + hw, 0.04f, h - 0.03f, pc1)
                 } else {
-                    pc4.set(pc1).mul(0.72f)
-                    fb.faceFront(rearTex, zFn, wx - w / 2f, wx + w / 2f, 0.06f, h - 0.05f, pc4)
+                    fb.faceFront(rearTex, zFn, wx - hw, wx + hw, 0.04f, h - 0.03f, pc5)
                 }
             }
 
@@ -391,6 +396,7 @@ class EntityRenderer(
     private val pc2 = Color()
     private val pc3 = Color()
     private val pc4 = Color()
+    private val pc5 = Color()
 
     private fun player(p: Player, ch: CharacterDef, sx: Float, sy: Float, blink: Boolean, shieldOn: Boolean, boostOn: Boolean, boardOn: Boolean, stumbleOn: Boolean) {
         val x = proj.screenX(p.x, 0f) + sx
