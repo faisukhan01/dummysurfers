@@ -1,7 +1,0 @@
-# Attempt 0699 — menu
-
-- focus: portrait eye glint
-- probe: regression sweep portrait eye glint across 3 seeds — stable
-- verdict: rolled into the 20-c/d pass
-- build: assembleDebug green · Xvfb screenshot series reviewed
-- ref: real-SS screenshot comparison, menu group
