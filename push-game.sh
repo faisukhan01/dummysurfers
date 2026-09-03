@@ -1,38 +1,29 @@
 #!/usr/bin/env bash
 # ════════════════════════════════════════════════════════════════════
-# CRITICAL GIT TOPOLOGY (learned the hard way, 2026-09-03):
-#   faisukhan01/dummysurfers `main`  = THE GAME (subtree of ./dummy-surfers)
-#     → GitHub Actions builds the APK from main and publishes the release.
-#     → main MUST always be a game-shaped tree (gradle at root + .github/).
+# PUSH FLOW v2 (2026-09-04) — the subtree-split era is OVER.
+#
+#   faisukhan01/dummysurfers `main`  = THE GAME — now a REAL standalone
+#     git clone at ./dummy-surfers (own .git, own origin). CI builds the
+#     APK from main and publishes the release.
 #   faisukhan01/dummysurfers `site`  = the landing page (this repo's main).
 #
-# The landing page and the game share ONE GitHub repo. Pushing the landing
-# tree to main silently deletes the CI workflow and kills the APK pipeline
-# (this exact accident broke v5.1.0's first push). ALWAYS push via this
-# script — never `git push origin main` by hand from the landing repo.
+# WHY: the old flow subtree-split a landing-shaped tree. A rebuild of the
+# inner repo silently produced a tree whose ROOT was the landing page (game
+# under dummy-surfers/) — GitHub Actions only reads .github/workflows at the
+# REPO ROOT, so CI died silently (zero runs, zero APKs). The fix: the game
+# is pushed from its own clone whose root IS the game tree.
 #
-# Usage:  ./push-game.sh <github-token>
+# Usage:  ./push-game.sh [message]   (or push inside dummy-surfers directly)
 # ════════════════════════════════════════════════════════════════════
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/dummy-surfers"
 
-TOKEN="${1:-}"
-if [ -z "$TOKEN" ]; then
-  echo "usage: ./push-game.sh <github-token>"
-  exit 1
-fi
-REMOTE="https://faisukhan01:${TOKEN}@github.com/faisukhan01/dummysurfers.git"
-
-echo "→ splitting dummy-surfers subtree…"
-git subtree split -P dummy-surfers -b game-release >/dev/null 2>&1 || true
-GAME_SHA=$(git rev-parse game-release)
-echo "  game tree: $GAME_SHA"
-
-echo "→ force-pushing game tree to main (triggers APK CI)…"
-git push --force "$REMOTE" game-release:main
+echo "→ pushing game (root-shaped tree) to origin main…"
+git push origin HEAD:main
 
 echo "→ backing up landing page to site branch…"
-git push --force "$REMOTE" main:site
+cd ..
+git push origin main:site
 
 echo "✅ done. CI: https://github.com/faisukhan01/dummysurfers/actions"
 echo "   APK: https://github.com/faisukhan01/dummysurfers/releases/latest/download/DummySurfers.apk"
