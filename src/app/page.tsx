@@ -63,7 +63,19 @@ const consoleLines = [
 
 const changelog = [
   {
-    v: 'v5.2.1', date: 'Cap-dome rebuild + portrait cuteness pass — today', latest: true, items: [
+    v: 'v5.3.0', date: 'Jelly-UI fidelity pass — every button feels like the real game — today', latest: true, items: [
+      '🍬 SS JELLY BUTTONS: every button rebuilt — dark navy outline all around, glossy top band, chunky darker bottom lip that sells the 3D press. Buttons finally feel like candy, not sticky notes',
+      '⭕ Round jelly buttons everywhere: pause roundel + settings & missions floaters got the white-ring circle treatment; the menu bottom bar went from heavy navy slabs to four floating round buttons with tiny labels',
+      '▶️ PLAY triangles on RUN / RESUME / RUN AGAIN — the iconic SS action-button DNA',
+      '⏸️ Pause card re-layout: big green RESUME play-slab + REDO / HOME candy buttons, portrait in a deep slot, gold score under the hero, everything floating on soft drop shadows',
+      '💥 BUSTED! — the guard-catch game-over now shows SS\'s iconic giant red BUSTED! headline (display font, navy drop)',
+      '🪙 Coin chips fixed: icon + count sit as one centered row on the pause & game-over cards (the icon used to hover over the digits)',
+      '👻 HUD stays on screen during the catch slow-mo — score no longer vanishes while the guard grabs you',
+      '🏷️ versionCode 24 — clearly distinct from every older download',
+    ]
+  },
+  {
+    v: 'v5.2.1', date: 'Cap-dome rebuild + portrait cuteness pass', items: [
       '🧢 THE red brick is dead: the in-game cap was a flat slab floating above the head — now a real rounded dome (squashed low-poly sphere) that hugs the skull like a baseball cap, with back stitch + top button',
       '😍 Menu portrait cuteness pass: symmetric arch brows, bigger centered irises w/ one big sparkle glint (no more googly eyes), narrowed teeth band, weird side "brim-tip" blobs removed, clean white rounded-square cap badge like the app icon',
       '🎒 Backpack focal detail: light front pocket + gold zipper replace the two dark harness straps; goggles & headphones re-fitted around the new spherical dome',
@@ -215,7 +227,7 @@ export default function Home() {
             </a>
           ))}
           <span className="ml-auto shrink-0 rounded-full bg-[#FFC93C] px-3 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#24316B] border-2 border-white shadow-[0_2px_0_#E09B12]">
-            v5.2.1 — Cap-Dome Rebuild + Portrait Cuteness!
+            v5.3.0 — Jelly-UI Fidelity Pass!
           </span>
         </div>
       </nav>
@@ -468,7 +480,7 @@ export default function Home() {
             Dummy Surfers <span className="text-white">by</span>
             <GraffitiName name="Faisal Khan" className="ml-2 inline-block align-middle normal-case text-[1.55rem] sm:text-[1.85rem]" stroke="#1B2038" shadowFilter="drop-shadow(0 3px 0 rgba(9,12,30,.55))" />
           </p>
-          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v5.2.1 — Cap-Dome Rebuild + Portrait Cuteness!</span></p>
+          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v5.3.0 — Jelly-UI Fidelity Pass!</span></p>
         </div>
       </footer>
     </main>
