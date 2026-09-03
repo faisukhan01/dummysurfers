@@ -77,10 +77,15 @@ class SaveManager {
         try {
             loadUnsafe()
         } catch (t: Throwable) {
-            // v5.1: a corrupt/hand-edited prefs document must never kill the
-            // app inside create() — that turns one bad write into a permanent
-            // "opens then instantly closes" loop. Worst case: fresh progress.
-            Gdx.app.error("DS-Save", "Save unreadable — starting fresh", t)
+            // v6.0.0 NUKE-FROM-ORBIT: a corrupt/hand-poisoned prefs document
+            // must never survive — v5.1 only rebuilt in-memory defaults, so the
+            // poison stayed on disk until the first persist(). Worse, Android
+            // auto-backup (now disabled) could re-plant it onto fresh installs,
+            // turning one bad write into a permanent "opens then instantly
+            // closes" loop across app updates. The document is now PURGED the
+            // moment it fails to parse; the rebuild below re-persists cleanly.
+            Gdx.app.error("DS-Save", "Save unreadable — purging and starting fresh", t)
+            try { prefs.remove("save"); prefs.flush() } catch (_: Throwable) {}
             best = 0; totalCoins = 0; selectedCharacter = "dash"
             trail = 0; musicOn = true; sfxOn = true; vibrationOn = true
             tutorialDone = false; hoverboards = 1
@@ -88,6 +93,7 @@ class SaveManager {
             upgrades.clear(); POWERUP_NAMES.forEach { upgrades[it] = 0 }
             missions.clear()
             resetMissions()
+            try { persist() } catch (_: Throwable) {}
         }
     }
 
