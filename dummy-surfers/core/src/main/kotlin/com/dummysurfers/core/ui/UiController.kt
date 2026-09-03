@@ -226,10 +226,10 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         theme.text(batch, theme.fontHuge, "DUMMY", 0f, 1150f + bounce, Palette.GOLD, Align.center, vw)
         theme.text(batch, theme.fontHuge, "SURFERS", 4f, 1079f + bounce, Palette.UI_OUTLINE, Align.center, vw)
         theme.text(batch, theme.fontHuge, "SURFERS", 0f, 1082f + bounce, Color.WHITE, Align.center, vw)
-        // orange "BY FSK" tag chip (in the gap between logo and hero cap)
-        val tagW = 150f
+        // orange "BY FAISAL KHAN" tag chip (in the gap between logo and hero cap)
+        val tagW = 360f
         theme.button(batch, vw / 2f - tagW / 2f, 996f + bounce, tagW, 44f, Palette.UI_ORANGE, false)
-        theme.text(batch, theme.fontSmall, "BY FSK", 0f, 1025f + bounce, Color.WHITE, Align.center, vw)
+        theme.text(batch, theme.fontSmall, "BY FAISAL KHAN", 0f, 1025f + bounce, Color.WHITE, Align.center, vw)
 
         // selected character preview front & center on the tracks (big SS-style hero)
         // v4.3: portrait rebuilt at 360px w/ head in the lower 2/3 + its own
@@ -252,8 +252,9 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         batch.draw(TextureGen.powerIcons[1], hcX + 22f, 580f, 48f, 48f)
         theme.text(batch, theme.fontTiny, "HIGH SCORE", hcX + 80f, 638f, Palette.UI_MUTED)
         theme.text(batch, theme.fontMed, "${b.save.best}", hcX + 80f, 616f, Palette.GOLD)
-        // hoverboard rack count
-        theme.text(batch, theme.fontTiny, "HOVERBOARDS x${b.save.hoverboards}", 0f, 532f, Palette.UI_MUTED, Align.center, vw)
+        // hoverboard rack count — v5.1: navy chip so it stops floating naked
+        theme.button(batch, vw / 2f - 110f, 518f, 220f, 42f, Palette.UI_NAVY, false)
+        theme.text(batch, theme.fontTiny, "HOVERBOARDS x${b.save.hoverboards}", 0f, 544f, Color.WHITE, Align.center, vw)
 
         // giant gold RUN button
         if (btn("play", vw / 2 - 210f, 384f, 420f, 136f, Palette.UI_GOLD_BTN, "RUN", theme.fontLarge)) {
@@ -835,7 +836,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
         toggle("vib", "VIBRATION", b.save.vibrationOn) { b.setVibration(it) }
         y -= 170f
         if (btn("reset", vw / 2 - 190f, y, 380f, 100f, Palette.DANGER, "RESET DATA", theme.fontSmall)) b.openPanel(MenuPanel.RESET_CONFIRM)
-        theme.text(batch, theme.fontTiny, "DUMMY SURFERS BY FSK", 0f, 80f, Palette.UI_MUTED, Align.center, vw)
+        theme.text(batch, theme.fontTiny, "DUMMY SURFERS BY FAISAL KHAN", 0f, 80f, Palette.UI_MUTED, Align.center, vw)
         theme.text(batch, theme.fontTiny, "RUNS ${b.save.stats.runs}   BEST DIST ${b.save.stats.bestDistance}m", 0f, 110f, Palette.UI_MUTED, Align.center, vw)
     }
 
