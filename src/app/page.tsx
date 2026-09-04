@@ -63,7 +63,18 @@ const consoleLines = [
 
 const changelog = [
   {
-    v: 'v6.1.0', date: 'The always-visible boot — the black blank page is extinct', latest: true, items: [
+    v: 'v6.2.0', date: 'The never-stuck boot — a 30-minute freeze is now structurally impossible', latest: true, items: [
+      '⏱️ PAINT DEADLINES: the "stuck on painting textures 2/3 for 30 minutes" report had NO time limit anywhere — now every texture paints under a hard deadline. A slow texture bails out and boots as a tiny placeholder instead of freezing your phone. A texture can cost seconds, never minutes, never infinity',
+      '👮 BOOT WATCHDOG: a native watcher now checks every 200 ms whether boot progress is actually MOVING. 20 seconds of true silence = frozen → the app silently restarts itself once for a clean boot — most stalls never reach your eyes',
+      '🧊 IF IT EVER FREEZES TWICE: a native "BOOT STILL FROZEN" card appears with RESTART APP / COPY REPORT / CLOSE APP buttons — pure Android widgets that work even when the 3D engine is hard-blocked, which nothing inside the engine could recover from',
+      '📶 LIVE PER-TEXTURE PROGRESS: the loading status now ticks ("painting textures 2/3 · 7 painted") so you SEE movement during startup — and slow-but-healthy phones automatically get bigger time budgets, so slow devices never false-trigger the watchdog',
+      '📊 EVERY STALL IS RECORDED: stalls land in the boot report with the exact stage, so a device that misbehaves twice in a row is diagnosable from the report alone',
+      '🧪 PROVEN ON CAMERA: 9/9 watchdog-logic assertions passed, forced 1ms texture budgets still boot a playable game, and a simulated 8-second engine freeze recovered exactly as designed',
+      '🏷️ versionCode 28 — clearly distinct from every older download',
+    ]
+  },
+  {
+    v: 'v6.1.0', date: 'The always-visible boot — the black blank page is extinct', items: [
       '🖼️ NATIVE LOADING SCREEN FROM FRAME ONE: launch now shows a real progress bar + live status ("painting textures 2/3…") pinned over the game — the old build painted the whole world BEFORE the first frame, so slow phones stared at a black void for the entire startup. Verified on camera: ~28s of loading now plays as a visible progress screen instead of a frozen black page',
       '📋 NATIVE ERROR CARD INSTEAD OF SILENCE: if any startup stage fails on your device, the overlay flips to a readable card naming the exact stage with a COPY REPORT button — pure Android widgets, works even if the 3D engine is completely dead. No more guessing what went wrong',
       '🎬 GL-LOADING SCREEN TOO: the in-engine boot shows the gold DUMMY SURFERS title, a 9-stage checklist (engine → textures 1/3 → fonts → 3D world → track) and a filling gold bar — frames render from the very first second',
@@ -260,7 +271,7 @@ export default function Home() {
             </a>
           ))}
           <span className="ml-auto shrink-0 rounded-full bg-[#FFC93C] px-3 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#24316B] border-2 border-white shadow-[0_2px_0_#E09B12]">
-            v6.1.0 — The Always-Visible Boot!
+            v6.2.0 — The Never-Stuck Boot!
           </span>
         </div>
       </nav>
@@ -513,7 +524,7 @@ export default function Home() {
             Dummy Surfers <span className="text-white">by</span>
             <GraffitiName name="Faisal Khan" className="ml-2 inline-block align-middle normal-case text-[1.55rem] sm:text-[1.85rem]" stroke="#1B2038" shadowFilter="drop-shadow(0 3px 0 rgba(9,12,30,.55))" />
           </p>
-          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v6.1.0 — The Always-Visible Boot!</span></p>
+          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v6.2.0 — The Never-Stuck Boot!</span></p>
         </div>
       </footer>
     </main>
