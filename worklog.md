@@ -366,3 +366,28 @@ Stage Summary:
 - The stable download URL serves v6.1.0: https://github.com/faisukhan01/dummysurfers/releases/latest/download/DummySurfers.apk
 - If the user EVER reports another startup issue: ask for the on-screen error text (native card names the exact stage + COPY button) — diagnosis is now a copy-paste.
 - Next round ideas: mission-card restyle, guard+dog catch framing, train livery close-up pass, PNG startup cache (filesDir) to make 2nd+ launches ~10x faster (deferred this round — first-launch visibility was the priority).
+
+---
+Task ID: 22
+Agent: Z.ai Code (orchestrator)
+Task: "boot report — status: painting textures 2/3 — i am getting this from about 30min — why this happening please fix it" — kill the 30-minute boot freeze structurally, ship v6.2.0.
+
+Work Log:
+- SANDBOX WIPED AGAIN → fresh clone (main = 1e335f3, v6.1.0, CI-green release live).
+- FORENSICS: the screenshot PROVED the v6.1.0 native overlay works (title/progress/COPY REPORT all visible) — but status sat at "painting textures 2/3" for 30+ min. Code audit: (a) TextureGen had NO time limit anywhere — all while() loops bounded, so the freeze is device-side (GC death-spiral / native GL or Pixmap call blocked) inside chunkB on the GL thread; (b) AndroidLauncher pollBoot re-rendered the same text forever — nothing watched whether progress was MOVING and nothing could recover. Two structural holes, both closed:
+  1. TEXTURE PAINT DEADLINES (cb3caa1): every texture paints under a hard deadline — heavy per-pixel loops (burst/radials/vignettes/softDisc/skyline/character domes) poll checkDeadline() every ≤16 rows; breach → TexTimeout → existing tex() guard substitutes a tiny white texture → boot CONTINUES. Budget adaptive (6× last paint, 2.5s floor, DS_TEX_BUDGET_MS QA override) so slow-but-healthy phones never breach. Per-texture progress ticks ("painting textures 2/3 · 7 painted") now feed bootStatus. Deadline-wrapped painters dispose their Pixmap on the error path (no native leak).
+  2. BOOT WATCHDOG + RECOVERY LADDER (ed26f08 + d652040): core/BootWatchdog.kt — pure state machine (ships in APK, runs in desktop harness): frozen status+progress for 20s while booting = stall. AndroidLauncher pollBoot feeds it every 200ms tick; ladder: stall #1 → SILENT PROCESS RESTART (transient wedges never reach the player); stall #2+ → native "BOOT STILL FROZEN" card (RESTART APP / COPY REPORT / CLOSE APP) — pure widgets, works even with GL hard-blocked, the one class no GL-side code can recover. restartApp() = launch-intent + finish + exit(0). Stalls persist to boot-stalls.txt (cleared on successful boot) + crash-last.txt + COPY REPORT text → repeat offenders are diagnosable from the couch.
+- QA (desktop harness, Xvfb, one-call-per-scene):
+  - STALLTEST: 9/9 assertions on the shipped BootWatchdog (ticking never triggers; frozen triggers at 20s; ready/error disarm; null-safe) — exit 0.
+  - Normal boot: clean, 0 breaches, 0 substitutes; menu + gameplay photographed — zero visual regression.
+  - DS_TEX_BUDGET_MS=1: 15 heavy textures deadline-breached → white subs → BOOT STILL COMPLETED → full gameplay ON CAMERA (trains/track/HUD intact).
+  - DS_TEST_STALL_MS=8000: GL thread froze 8s inside TEX_B (the device symptom reproduced) → boot resumed → completed.
+- v6.2.0 (versionCode 28), 4 commits (Faisal Khan identity), pushed 1e335f3→576e9d6.
+- CI run 33886769843: SUCCESS in 150s → release "Dummy Surfers v6.2.0" published 2026-09-04T15:00:57Z, DummySurfers.apk 3,841,190 bytes. Downloaded the release asset and VERIFIED: manifest contains UTF-16LE "6.2.0", NOT "6.1.0" (the UTF-8 grep check false-negatives on AXML — always check UTF-16LE).
+- Landing page: v6.2.0 changelog card (7 items) + nav chip + footer → site branch (954ac7b).
+
+Stage Summary:
+- v6.2.0 = the never-stuck boot: a texture can cost seconds, never minutes; 20s of true silence triggers a self-restart; a second freeze shows a native card that always works. The 30-minute hang requires the watchdog AND the deadline AND the restart AND the card to all fail — no known code path can do that.
+- If the user reports another stall: the boot-stalls counter + COPY REPORT now name the exact stage and stall history — diagnosis is copy-paste.
+- ⚠️ AXML version check: manifest strings are UTF-16LE; b'6.2.0' UTF-8 grep will lie to you.
+- Next round ideas: PNG startup cache (filesDir) for ~10x faster 2nd+ launches, SS-fidelity push (mission cards, train liveries close-up, guard+dog catch framing), hoverboard chip roundel.
