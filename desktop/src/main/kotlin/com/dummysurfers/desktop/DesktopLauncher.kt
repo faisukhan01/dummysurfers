@@ -23,6 +23,14 @@ import java.io.File
  * finger uses on the phone, so menu-button clickability is genuinely tested.
  */
 fun main() {
+    // v6.2 QA: execute the SHIPPED BootWatchdog state machine (pure core
+    // logic — the exact class the APK's Android overlay calls every 200 ms)
+    // and exit before any GL comes up. Exit code 0 = all assertions held.
+    if (System.getenv("DS_WATCHDOG_SELFTEST") == "1") {
+        runWatchdogSelftest()
+        return
+    }
+
     val shotDir = System.getenv("DS_SHOT_DIR")
     val shotSec = System.getenv("DS_SHOT_SEC")?.toFloatOrNull() ?: 2f
     val script = System.getenv("DS_AUTO")
@@ -125,4 +133,65 @@ fun main() {
     }
 
     Lwjgl3Application(game, config)
+}
+
+/** Assertions over com.dummysurfers.core.BootWatchdog — the "30 minutes on
+ *  painting textures 2/3" fix. Any failure prints STALLTEST-FAIL and exits 1. */
+private fun runWatchdogSelftest() {
+    var failed = 0
+    fun check(name: String, cond: Boolean) {
+        println("STALLTEST ${if (cond) "PASS" else "FAIL"} — $name")
+        if (!cond) failed++
+    }
+    val stall = com.dummysurfers.core.BootWatchdog.STALL_MS
+    check("stall window is 20s by default", stall == 20_000L)
+
+    // 1. a HEALTHY boot (status ticks every 500 ms) never stalls
+    com.dummysurfers.core.BootWatchdog.reset()
+    var t = 0L
+    var ever = false
+    while (t <= 90_000L) {
+        if (com.dummysurfers.core.BootWatchdog.stalled("painting textures 2/3 · ${t / 500} painted", 0.3f, false, null, t)) ever = true
+        t += 200
+    }
+    check("ticking status never triggers the watchdog", !ever)
+
+    // 2. a FROZEN boot (identical status) stalls exactly when the window elapses
+    com.dummysurfers.core.BootWatchdog.reset()
+    t = 0
+    var firstTrue = -1L
+    while (t <= stall + 5_000L) {
+        if (firstTrue < 0 && com.dummysurfers.core.BootWatchdog.stalled("painting textures 2/3", 0.3f, false, null, t)) firstTrue = t
+        t += 200
+    }
+    check("frozen status stays silent before the window", firstTrue == -1L || firstTrue >= stall)
+    check("frozen status triggers at/after ${stall}ms", firstTrue >= stall)
+
+    // 3. progress-only movement still counts as progress (float key)
+    com.dummysurfers.core.BootWatchdog.reset()
+    t = 0
+    ever = false
+    while (t <= 90_000L) {
+        if (com.dummysurfers.core.BootWatchdog.stalled("fonts", 0.3f + t / 300_000f, false, null, t)) ever = true
+        t += 200
+    }
+    check("moving progress never triggers", !ever)
+
+    // 4. ready disarms and clears state (next boot starts a fresh window)
+    com.dummysurfers.core.BootWatchdog.reset()
+    com.dummysurfers.core.BootWatchdog.stalled("x", 0.5f, false, null, 0)
+    check("ready returns false", !com.dummysurfers.core.BootWatchdog.stalled("x", 0.5f, true, null, 999_999L))
+    check("state cleared after ready (fresh window)", !com.dummysurfers.core.BootWatchdog.stalled("y", 0.1f, false, null, 999_999L))
+
+    // 5. an error state disarms (SafeMode owns recovery then)
+    check("error state returns false", !com.dummysurfers.core.BootWatchdog.stalled("startup problem", 0.5f, false, "boom", 999_999L))
+
+    // 6. null status is safe
+    check("null status safe", !com.dummysurfers.core.BootWatchdog.stalled(null, 0f, false, null, 0L))
+
+    if (failed > 0) {
+        println("STALLTEST-FAIL — $failed assertion(s) failed")
+        kotlin.system.exitProcess(1)
+    }
+    println("STALLTEST-OK — all BootWatchdog assertions held")
 }

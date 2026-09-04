@@ -227,6 +227,18 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         throw RuntimeException("DS_FAIL_STAGE=$stage (QA-simulated)")
     }
 
+    /** QA-only (desktop): DS_TEST_STALL_MS=<ms> FREEZES the GL thread inside
+     *  TEX_B for that long — an on-camera reproduction of the v6.1.0 field
+     *  report ("30 minutes on painting textures 2/3"). Used to verify the
+     *  status string the Android watchdog keys on truly goes silent. Zero
+     *  effect on devices. */
+    private fun qaStallIfRequested(stage: String) {
+        val ms = System.getenv("DS_TEST_STALL_MS")?.toLongOrNull() ?: return
+        Gdx.app.log("DS-BOOT", "QA: freezing GL thread ${ms}ms inside $stage (stall simulation)")
+        try { Thread.sleep(ms) } catch (_: Throwable) {}
+        Gdx.app.log("DS-BOOT", "QA: stall simulation over, boot continues")
+    }
+
     override fun create() {
         safeMode = false
         bootStatus = "engine"
@@ -264,7 +276,9 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
                     } catch (_: Throwable) { null }
                 }
                 BootStage.TEX_A -> { qaFailIfRequested("TEX_A"); TextureGen.chunkA(bootReporter) }
-                BootStage.TEX_B -> { qaFailIfRequested("TEX_B"); TextureGen.chunkB(bootReporter) }
+                BootStage.TEX_B -> {
+                    qaFailIfRequested("TEX_B"); qaStallIfRequested("TEX_B"); TextureGen.chunkB(bootReporter)
+                }
                 BootStage.TEX_C -> { qaFailIfRequested("TEX_C"); TextureGen.chunkC(bootReporter) }
                 BootStage.FONTS -> try {
                     qaFailIfRequested("FONTS")
@@ -322,6 +336,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         bootStatus = "ready"
         bootProgress = 1f
         bootLogText = bootLog.joinToString("\n").ifEmpty { "clean boot" }
+        com.dummysurfers.core.BootWatchdog.reset() // boot made it — disarm the stall judge
         if (TextureGen.genErrors > 0) Gdx.app.log("DS-BOOT", "booted with ${TextureGen.genErrors} substituted texture(s)")
         Gdx.app.log("DS-BOOT", "staged boot complete — ${bootLog.size} fallback note(s)")
     }
@@ -352,6 +367,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         try { if (::sr.isInitialized) sr.dispose() } catch (_: Throwable) {}
         bootLog.clear()
         qaFailConsumed = true // a retry must succeed even under DS_FAIL_STAGE
+        com.dummysurfers.core.BootWatchdog.reset()
         safeMode = false
         safeBatchBroken = false
         bootStage = BootStage.BATCH
