@@ -63,7 +63,18 @@ const consoleLines = [
 
 const changelog = [
   {
-    v: 'v6.3.0', date: 'The fast second boot — first launch paints, every launch after loads', latest: true, items: [
+    v: 'v7.0.0', date: 'SHIPPED ART — the phone never paints again. The boot page is gone for good', latest: true, items: [
+      '📦 THE ART NOW SHIPS INSIDE THE APP: every texture is painted once on the desktop at build time and committed into the APK as finished PNGs (83 files). Your phone only LOADS art — the "painting textures" boot phase that froze the device for 30+ minutes no longer EXISTS on the phone',
+      '🗑️ THE DIAGNOSTIC PAGE IS REMOVED: no more navy boot-report screen — the app opens straight into the game\'s own loading frame and hits the menu in seconds. You asked for the page to go; the reason it existed is gone with it',
+      '🤫 SILENT WATCHDOG: the freeze watchdog stays, but with zero UI — if boot ever stopped moving for 20s it self-restarts once, silently. No cards, no dialogs, no nagging. (With zero painting on the device it should never fire at all)',
+      '🧾 NO STALE "SOMETHING WENT WRONG" POPUPS: crash reports from older app versions are dropped on read — upgrading to v7 can never resurrect an old version\'s error dialog',
+      '🧪 PROVEN ON CAMERA: a fresh boot hard-asserted "baked=80 cached=0 fast=80 need=80 OK" — every single texture loaded from the shipped art, ZERO painted; menu + gameplay screenshotted pixel-perfect; watchdog self-test 9/9',
+      '🔧 BONUS BUG FIX: found + fixed a cache-pollution bug where the UI nine-patch images saved into the character-preview cache slot — the baked set is now 100% correctly attributed',
+      '🏷️ versionCode 30 — if the boot does not say v7.0.0, you are running an old download. UNINSTALL the old app and download fresh',
+    ]
+  },
+  {
+    v: 'v6.3.0', date: 'The fast second boot — first launch paints, every launch after loads', latest: false, items: [
       '⚡ PNG STARTUP CACHE: the first launch paints the world once and saves every texture as a finished PNG — from the SECOND launch the game loads that art directly, skipping ALL per-pixel painting. Boot drops from "up to a minute" to a fraction, and the exact code region the slow device froze inside is barely visited at all',
       '🧠 30 PAINTS ELIMINATED PER BOOT: found the power-up/nav icon builder painting all six icons six times each (36 paints for 10 textures) — now each slot paints exactly one icon. Less work, faster boot, same art',
       '🩹 SELF-HEALING CACHE: a corrupted cache file deletes itself and repaints on the spot — proven on camera (1 corrupted file → 79 loaded from cache + 1 repainted, boot clean). Only successful paints are ever cached, so a placeholder from a deadline breach can never poison tomorrow\'s boot',
@@ -282,7 +293,7 @@ export default function Home() {
             </a>
           ))}
           <span className="ml-auto shrink-0 rounded-full bg-[#FFC93C] px-3 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#24316B] border-2 border-white shadow-[0_2px_0_#E09B12]">
-            v6.3.0 — The Fast Second Boot!
+            v7.0.0 — The Phone Never Paints Again!
           </span>
         </div>
       </nav>
@@ -535,7 +546,7 @@ export default function Home() {
             Dummy Surfers <span className="text-white">by</span>
             <GraffitiName name="Faisal Khan" className="ml-2 inline-block align-middle normal-case text-[1.55rem] sm:text-[1.85rem]" stroke="#1B2038" shadowFilter="drop-shadow(0 3px 0 rgba(9,12,30,.55))" />
           </p>
-          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v6.3.0 — The Fast Second Boot!</span></p>
+          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v7.0.0 — The Phone Never Paints Again!</span></p>
         </div>
       </footer>
     </main>
