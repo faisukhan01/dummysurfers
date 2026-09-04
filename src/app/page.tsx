@@ -63,7 +63,19 @@ const consoleLines = [
 
 const changelog = [
   {
-    v: 'v6.0.0', date: 'The cant-crash release + the big SS metro world pass — today', latest: true, items: [
+    v: 'v6.1.0', date: 'The always-visible boot — the black blank page is extinct', latest: true, items: [
+      '🖼️ NATIVE LOADING SCREEN FROM FRAME ONE: launch now shows a real progress bar + live status ("painting textures 2/3…") pinned over the game — the old build painted the whole world BEFORE the first frame, so slow phones stared at a black void for the entire startup. Verified on camera: ~28s of loading now plays as a visible progress screen instead of a frozen black page',
+      '📋 NATIVE ERROR CARD INSTEAD OF SILENCE: if any startup stage fails on your device, the overlay flips to a readable card naming the exact stage with a COPY REPORT button — pure Android widgets, works even if the 3D engine is completely dead. No more guessing what went wrong',
+      '🎬 GL-LOADING SCREEN TOO: the in-engine boot shows the gold DUMMY SURFERS title, a 9-stage checklist (engine → textures 1/3 → fonts → 3D world → track) and a filling gold bar — frames render from the very first second',
+      '🛡️ SAFEMODE CAN NO LONGER GO BLIND: the old SafeMode needed the very component it blamed — if the render batch itself failed it silently swallowed an exception every frame and painted a blank navy screen forever (that was the black page). It now degrades cleanly and the native card carries the message',
+      '🎮 GAMEPLAY KEEPS RENDERING THROUGH ERRORS: update and render are guarded independently now — the worst a broken gameplay tick can do is pause the action; the sky, the world and the HUD stay on screen',
+      '🎨 EGL HARDENING: the GL surface now requests true 8888 color + 16-bit depth + immersive mode — the old driver-lottery defaults let some OEM devices composite the surface as black. That entire failure class is gone',
+      '♻️ THE CRASH DIALOG LOST ITS POWER: the "Oops — hit a snag" report now appears only after the game is visibly up, and every report is read-once (it can never loop over your launch again)',
+      '🏷️ versionCode 27 — clearly distinct from every older download',
+    ]
+  },
+  {
+    v: 'v6.0.0', date: 'The cant-crash release + the big SS metro world pass', items: [
       '🛡️ FREETYPE IS GONE FROM YOUR PHONE: fonts ship pre-baked as atlas images — the uncatchable native crash class (the "opens and instantly closes" on some devices) is extinct. ~1MB lighter APK too',
       '🧹 FRESH INSTALLS STAY FRESH: Android auto-backup could silently restore a poisoned save onto a brand-new install and re-create the instant-close loop no update could fix. Backup is now off — every install starts clean, always',
       '❤️ EVERY lifecycle callback guarded: the AndroidInput.onResume() crash reported on Android 16 devices can no longer kill the process — worst case it is logged and the game keeps running',
@@ -248,7 +260,7 @@ export default function Home() {
             </a>
           ))}
           <span className="ml-auto shrink-0 rounded-full bg-[#FFC93C] px-3 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#24316B] border-2 border-white shadow-[0_2px_0_#E09B12]">
-            v6.0.0 — Cant-Crash + SS Metro World!
+            v6.1.0 — The Always-Visible Boot!
           </span>
         </div>
       </nav>
@@ -501,7 +513,7 @@ export default function Home() {
             Dummy Surfers <span className="text-white">by</span>
             <GraffitiName name="Faisal Khan" className="ml-2 inline-block align-middle normal-case text-[1.55rem] sm:text-[1.85rem]" stroke="#1B2038" shadowFilter="drop-shadow(0 3px 0 rgba(9,12,30,.55))" />
           </p>
-          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v6.0.0 — Cant-Crash + SS Metro World!</span></p>
+          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v6.1.0 — The Always-Visible Boot!</span></p>
         </div>
       </footer>
     </main>
