@@ -164,8 +164,18 @@ object TextureGen {
             try { NinePatch(subTex(), 1, 1, 1, 1) } catch (_: Throwable) { anyFatal = true; throw t }
         }
 
-    fun generate() {
+    fun generate(reporter: ((String) -> Unit)? = null) {
+        chunkA(reporter); chunkB(reporter); chunkC(reporter)
+    }
+
+    // ── v6.1 chunked generation ─────────────────────────────────────────
+    // The old single generate() blocked the GL thread for the whole paint —
+    // seconds on a phone, with ZERO frames drawn (black window). It is now
+    // split into three chunks the game runs on three separate frames, with a
+    // reporter callback feeding the visible loading screen / native overlay.
+    fun chunkA(reporter: ((String) -> Unit)? = null) {
         genErrors = 0; anyFatal = false
+        reporter?.invoke("painting textures 1/3")
         white = tex("white") { solid(4, 4, Color.WHITE) }
         disc = tex("disc") { radial(64, Color(1f, 1f, 1f, 1f), 0.86f) } // solid core, 14% feather
         hazeBand = tex("hazeBand") { horizonHaze(8, 256) }
@@ -182,6 +192,10 @@ object TextureGen {
         skylineNear = tex("skylineNear") { skyline(1024, 240, 11L, dark = 0x8b9cdd, alpha = 0.9f, dense = true) }
         vignette = tex("vignette") { radial(256, Color(0f, 0f, 0f, 0.5f), 0.72f) }
         edgeVignette = tex("edgeVignette") { edgeVignette(256) }
+    }
+
+    fun chunkB(reporter: ((String) -> Unit)? = null) {
+        reporter?.invoke("painting textures 2/3")
         rainbowBurst = tex("rainbowBurst") { burst(512) }
         coinFrames = texArray("coin", 10) { coin(72, it, 10) }
         powerIcons = texArray("powerIcon", 6) { arrayOf(magnetIcon(), starIcon(), shieldIcon(), boltIcon(), springIcon(), rocketIcon())[it] }
@@ -192,6 +206,10 @@ object TextureGen {
         buttonNine = texNine("buttonNine") { roundedNine(64, 18, Color(1f, 1f, 1f, 1f), border = true) }
         circleNine = texNine("circleNine") { circleNine() }
         play = tex("play") { playGlyph() }
+    }
+
+    fun chunkC(reporter: ((String) -> Unit)? = null) {
+        reporter?.invoke("painting textures 3/3")
         trainSides = texArray("trainSide", Palette.TRAIN_LIVERIES.size) { trainSide(it) }
         trainFronts = texArray("trainFront", Palette.TRAIN_LIVERIES.size) { trainFront(it) }
         trainRears = texArray("trainRear", Palette.TRAIN_LIVERIES.size) { trainRear(it) }

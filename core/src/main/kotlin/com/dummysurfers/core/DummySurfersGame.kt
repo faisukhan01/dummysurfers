@@ -138,35 +138,78 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
 
     private lateinit var character: CharacterDef
 
-    // ── v5.4 STARTUP IMMUNITY ────────────────────────────────────────────
-    // The 2024-25 crash reports all share one shape: "opens then instantly
-    // closes" on a device we can't reproduce. Every previous build ran ALL
-    // of create() unguarded — one throw anywhere (freetype glyphs, a texture,
-    // GL quirks, prefs) killed the process BEFORE the first frame, every
-    // launch. Startup is now staged: fonts fall back to the engine font,
-    // bad textures fall back to white substitutes, and only a core-system
-    // failure enters SafeMode — a screen that still OPENS, prints the exact
-    // error, and reboots the full engine on tap. The app can no longer be
-    // killed by its own startup, and the player always sees WHY.
+    // ── v6.1 BOOT BRIDGE — the screen can never be blank again ───────────
+    // Static volatile handoff from the GL thread to the Android UI thread.
+    // AndroidLauncher renders a NATIVE loading overlay from these fields, so
+    // boot progress is visible even before GL draws its first frame — and if
+    // a stage dies, a native error card with a COPY REPORT button shows the
+    // exact failure (no GL involved, cannot fail). GL-side SafeMode stays as
+    // the second layer.
+    companion object {
+        @Volatile var bootStatus: String = "starting up"
+        @Volatile var bootProgress: Float = 0f          // 0..1
+        @Volatile var bootReady: Boolean = false
+        @Volatile var bootError: String? = null
+        @Volatile var bootVersion: String = "6.1.0"     // launcher injects the full label
+        @Volatile var bootLogText: String = ""
+    }
+
+    // ── v6.1 STAGED BOOT — one boot step per frame ───────────────────────
+    // WHY THIS EXISTS: the 2024-25 device reports ("opens then instantly
+    // closes", "black blank page", "takes too time") all share one root: the
+    // old boot ran EVERYTHING in create() on the GL thread — up to several
+    // seconds of ~45 procedural textures + fonts + 3D scene — during which
+    // NOT A SINGLE FRAME was drawn. On a slow phone that is a long frozen
+    // black window; and if one unguarded step threw (SpriteBatch shader
+    // compile on a quirky GPU driver is the classic), SafeMode took over but
+    // ITS OWN renderer needed the same broken batch — silently swallowing an
+    // exception every frame and painting… a blank navy screen. Both failure
+    // classes are now structurally impossible:
+    //   1. Boot is a state machine: render() runs ONE step per frame and
+    //      paints a live loading screen between steps — frames flow from
+    //      the very first one.
+    //   2. SafeMode no longer depends on the batch: if the batch is missing
+    //      or broken it stops trying (and the NATIVE overlay carries the
+    //      error text regardless of what GL can do).
+    //   3. update() and draw() are guarded independently in the main loop —
+    //      a throwing update() can no longer prevent the sky-clear + world
+    //      render (that combination painted a permanent black screen).
+    private enum class BootStage(val label: String) {
+        BATCH("engine"),
+        TEX_A("painting textures 1/3"),
+        TEX_B("painting textures 2/3"),
+        TEX_C("painting textures 3/3"),
+        FONTS("fonts"),
+        SCENE("3D world"),
+        UI("interface"),
+        AUDIO("sound"),
+        WORLD("track"),
+        DONE("ready")
+    }
+    private var bootStage = BootStage.BATCH
     private var booted = false
     private var safeMode = false
     private val bootLog = ArrayList<String>()
     private var safeFont: com.badlogic.gdx.graphics.g2d.BitmapFont? = null
+    private var bootFont: com.badlogic.gdx.graphics.g2d.BitmapFont? = null
+    private var safeBatchBroken = false
     private val safeTap = object : com.badlogic.gdx.InputAdapter() {
         override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
             retryStartup(); return true
         }
     }
 
-    private fun noteBoot(stage: String, t: Throwable) {
+    private fun noteBoot(stage: String, t: Throwable, fatal: Boolean = true) {
         val line = "$stage: ${t.javaClass.simpleName}: ${t.message?.take(140) ?: "(no message)"}"
         bootLog.add(line)
+        if (fatal) bootError = line
         Gdx.app.error("DS-BOOT", "stage '$stage' failed", t)
         // persist for the launcher's Copy/Share dialog on next start
         try {
             Gdx.files.local("crash-last.txt").writeString(
                 "Dummy Surfers startup failure (safe mode)\n$line\n\n" + t.stackTraceToString(), false)
         } catch (_: Throwable) {}
+        bootLogText = bootLog.joinToString("\n")
     }
 
     /** QA-only: DS_FAIL_STAGE=<NAME> makes that boot stage throw on purpose so
@@ -176,84 +219,120 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     private var qaFailConsumed = false
     private fun qaFailIfRequested(stage: String) {
         if (qaFailConsumed) return
-        val want = System.getenv("DS_FAIL_STAGE") ?: return
-        if (!want.equals(stage, ignoreCase = true)) return
+        val want = System.getenv("DS_FAIL_STAGE")?.trim()?.uppercase() ?: return
+        val hit = want == stage ||
+            (want == "TEXTURES" && (stage == "TEX_A" || stage == "TEX_B" || stage == "TEX_C"))
+        if (!hit) return
         if (System.getenv("DS_FAIL_ONCE") == "1") qaFailConsumed = true
         throw RuntimeException("DS_FAIL_STAGE=$stage (QA-simulated)")
     }
 
     override fun create() {
         safeMode = false
-        try {
-            bootFull()
-        } catch (t: Throwable) {
-            noteBoot("boot", t)
-            enterSafeMode()
-        }
+        bootStatus = "engine"
+        // create() is now TRIVIAL — the real boot runs step-by-step inside
+        // render() so a frame goes to the screen between every step. resize()
+        // is also called by the backend right after create(); it guards its
+        // own primitives now.
         try { resize(Gdx.graphics.width, Gdx.graphics.height) } catch (t: Throwable) { noteBoot("resize", t) }
     }
 
-    private fun bootFull() {
-        // STAGE 1 — bare drawing primitives (required for every other stage)
-        qaFailIfRequested("BATCH")
-        batch = SpriteBatch()
-        sr = ShapeRenderer()
-        camera.setToOrtho(false, GameConfig.VIRTUAL_WIDTH, GameConfig.VIRTUAL_HEIGHT)
-        proj.setViewport(GameConfig.VIRTUAL_WIDTH, GameConfig.VIRTUAL_HEIGHT)
-
-        // STAGE 2 — procedural textures (per-texture guards inside: white
-        // substitutes on failure, genErrors counts them)
-        qaFailIfRequested("TEXTURES")
-        TextureGen.generate()
-
-        // STAGE 3 — fonts (per-font freetype guards inside; any escape here
-        // falls back to the engine font so the game still boots playable)
+    /** v6.1: exactly ONE boot step per render frame. Any step with a working
+     *  fallback (textures → white subs, fonts → engine font, audio → silent)
+     *  logs + continues; only steps with no fallback (BATCH/SCENE/UI) park in
+     *  SafeMode — which the native overlay turns into a readable error card. */
+    private fun stepBoot() {
+        val stage = bootStage
+        // QA-only (desktop): DS_BOOT_SLOW=1 stretches each step so the loading
+        // screen can be photographed. Zero effect on devices.
+        if (System.getenv("DS_BOOT_SLOW") == "1") {
+            try { Thread.sleep(300) } catch (_: Throwable) {}
+        }
         try {
-            qaFailIfRequested("FONTS")
-            theme.create()
+            when (stage) {
+                BootStage.BATCH -> {
+                    batch = SpriteBatch()
+                    sr = ShapeRenderer()
+                    camera.setToOrtho(false, GameConfig.VIRTUAL_WIDTH, GameConfig.VIRTUAL_HEIGHT)
+                    proj.setViewport(GameConfig.VIRTUAL_WIDTH, GameConfig.VIRTUAL_HEIGHT)
+                    batch.projectionMatrix = camera.combined
+                    sr.projectionMatrix = camera.combined
+                    // engine font for the boot screen — no theme needed yet,
+                    // cannot fail on the freetype class (no freetype anymore)
+                    bootFont = try {
+                        com.badlogic.gdx.graphics.g2d.BitmapFont().apply { data.setScale(1.6f) }
+                    } catch (_: Throwable) { null }
+                }
+                BootStage.TEX_A -> { qaFailIfRequested("TEX_A"); TextureGen.chunkA(bootReporter) }
+                BootStage.TEX_B -> { qaFailIfRequested("TEX_B"); TextureGen.chunkB(bootReporter) }
+                BootStage.TEX_C -> { qaFailIfRequested("TEX_C"); TextureGen.chunkC(bootReporter) }
+                BootStage.FONTS -> try {
+                    qaFailIfRequested("FONTS")
+                    theme.create()
+                } catch (t: Throwable) {
+                    noteBoot("fonts", t, fatal = false) // engine-font fallback keeps us playable
+                    theme.fallbackFonts()
+                }
+                BootStage.SCENE -> { qaFailIfRequested("SCENE"); scene3d = Scene3D(batch, proj) }
+                BootStage.UI -> { qaFailIfRequested("UI"); ui = UiController(theme); ui.bridge = bridge }
+                BootStage.AUDIO -> {
+                    qaFailIfRequested("AUDIO")
+                    audio.start()
+                    try {
+                        audio.setMusic(save.musicOn)
+                        audio.setSfx(save.sfxOn)
+                    } catch (t: Throwable) {
+                        noteBoot("save-prefs", t, fatal = false) // keep default toggles
+                    }
+                }
+                BootStage.WORLD -> {
+                    qaFailIfRequested("WORLD")
+                    character = try {
+                        CharacterDef.byId(save.selectedCharacter)
+                    } catch (t: Throwable) {
+                        noteBoot("save-character", t, fatal = false)
+                        CharacterDef.byId(CharacterDef.ALL[0].id) // byId never nulls
+                    }
+                    world.reset()
+                    spawner.reset()
+                    Gdx.input.inputProcessor = InputMultiplexer(ui, swipe)
+                }
+                BootStage.DONE -> return
+            }
         } catch (t: Throwable) {
-            noteBoot("fonts", t)
-            theme.fallbackFonts()
+            noteBoot(stage.name, t)
+            enterSafeMode()
+            return
         }
+        if (safeMode) return
+        val next = BootStage.entries[stage.ordinal + 1]
+        bootStage = next
+        bootStatus = next.label
+        bootProgress = (stage.ordinal + 1) / (BootStage.entries.size - 1f)
+        if (next == BootStage.DONE) finishBoot()
+    }
 
-        // STAGE 4 — 3D scene (no fallback possible → SafeMode on failure)
-        qaFailIfRequested("SCENE")
-        scene3d = Scene3D(batch, proj)
+    private val bootReporter: (String) -> Unit = { s -> bootStatus = s }
 
-        // STAGE 5 — UI controller
-        qaFailIfRequested("UI")
-        ui = UiController(theme)
-        ui.bridge = bridge
-
-        // STAGE 6 — audio (internally silent-fails already)
-        qaFailIfRequested("AUDIO")
-        audio.start()
-        try {
-            audio.setMusic(save.musicOn)
-            audio.setSfx(save.sfxOn)
-        } catch (t: Throwable) {
-            noteBoot("save-prefs", t) // keep default toggles, game still boots
-        }
-
-        // STAGE 7 — character selection + world reset
-        qaFailIfRequested("WORLD")
-        character = try {
-            CharacterDef.byId(save.selectedCharacter)
-        } catch (t: Throwable) {
-            noteBoot("save-character", t)
-            CharacterDef.byId(CharacterDef.ALL[0].id) // byId never nulls, but a fresh def can't throw
-        }
-        world.reset()
-        spawner.reset()
-
-        Gdx.input.inputProcessor = InputMultiplexer(ui, swipe)
+    private fun finishBoot() {
         booted = true
+        safeMode = false
+        bootError = null
+        bootReady = true
+        bootStatus = "ready"
+        bootProgress = 1f
+        bootLogText = bootLog.joinToString("\n").ifEmpty { "clean boot" }
         if (TextureGen.genErrors > 0) Gdx.app.log("DS-BOOT", "booted with ${TextureGen.genErrors} substituted texture(s)")
+        Gdx.app.log("DS-BOOT", "staged boot complete — ${bootLog.size} fallback note(s)")
     }
 
     private fun enterSafeMode() {
         safeMode = true
         booted = false
+        bootStage = BootStage.DONE // stop stepping — render() draws SafeMode now
+        bootStatus = "startup problem"
+        if (bootError == null) bootError = bootLog.lastOrNull() ?: "unknown startup failure"
+        bootLogText = bootLog.joinToString("\n")
         if (safeFont == null) {
             safeFont = try { com.badlogic.gdx.graphics.g2d.BitmapFont().apply { data.setScale(1.6f) } } catch (_: Throwable) { null }
         }
@@ -262,6 +341,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     }
 
     private fun retryStartup() {
+        if (!safeMode) return
         Gdx.app.log("DS-BOOT", "retrying full startup…")
         // best-effort teardown of whatever got built, then a clean re-boot
         try { audio.dispose() } catch (_: Throwable) {}
@@ -272,23 +352,104 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         try { if (::sr.isInitialized) sr.dispose() } catch (_: Throwable) {}
         bootLog.clear()
         qaFailConsumed = true // a retry must succeed even under DS_FAIL_STAGE
-        safeMode = false // v5.4 QA-found: a successful retry must LEAVE safe mode
-        try {
-            bootFull()
-            Gdx.app.log("DS-BOOT", "retry OK — full startup complete")
-        } catch (t: Throwable) {
-            noteBoot("retry", t)
-            enterSafeMode()
-        }
+        safeMode = false
+        safeBatchBroken = false
+        bootStage = BootStage.BATCH
+        bootError = null
+        bootReady = false
+        bootStatus = "retrying..."
+        bootProgress = 0f
     }
 
-    /** SafeMode frame: navy screen + whatever we could build (maybe no font at
-     *  all). Rendered with plain GL — guaranteed not to throw. */
+    /** Boot frame: navy screen + live progress. Before the batch exists this
+     *  is just a clear (one frame); the Android native overlay carries the
+     *  real progress UI until GL takes over. Guaranteed not to throw. */
+    private fun drawBootFrame() {
+        val gl = Gdx.gl
+        gl.glClearColor(0.08f, 0.09f, 0.19f, 1f)
+        gl.glViewport(0, 0, screenW.coerceAtLeast(1), screenH.coerceAtLeast(1))
+        gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
+        val f = bootFont ?: return
+        if (!::batch.isInitialized) return
+        gl.glEnable(GL20.GL_BLEND)
+        gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA)
+        batch.projectionMatrix = camera.combined
+        val vw = GameConfig.VIRTUAL_WIDTH
+        val vh = GameConfig.VIRTUAL_HEIGHT
+        val cx = vw / 2f
+        batch.begin()
+        f.setColor(1f, 0.79f, 0.24f, 1f)
+        f.data.setScale(3.1f)
+        fontLayout.setText(f, "DUMMY SURFERS")
+        f.draw(batch, "DUMMY SURFERS", cx - fontLayout.width / 2f, vh * 0.80f)
+        f.setColor(0.79f, 0.82f, 0.95f, 1f)
+        f.data.setScale(1.0f)
+        val ver = "v${bootVersion} - loading"
+        fontLayout.setText(f, ver)
+        f.draw(batch, ver, cx - fontLayout.width / 2f, vh * 0.74f)
+        // stage checklist
+        f.data.setScale(0.85f)
+        var y = vh * 0.58f
+        for (st in BootStage.entries) {
+            if (st == BootStage.DONE) break
+            val mark = if (st.ordinal < bootStage.ordinal) "[x] " else if (st.ordinal == bootStage.ordinal) " >  " else "[ ] "
+            val line = mark + st.label
+            f.setColor(
+                when {
+                    st.ordinal < bootStage.ordinal -> 0.45f; st.ordinal == bootStage.ordinal -> 1f; else -> 0.30f
+                },
+                when {
+                    st.ordinal < bootStage.ordinal -> 0.48f; st.ordinal == bootStage.ordinal -> 0.79f; else -> 0.32f
+                },
+                0.62f, 1f
+            )
+            f.draw(batch, line, cx - 170f, y)
+            y -= 44f
+        }
+        f.setColor(1f, 1f, 1f, 1f)
+        f.data.setScale(0.95f)
+        val tip = "first launch paints the whole world - this can take a minute"
+        fontLayout.setText(f, tip)
+        f.draw(batch, tip, cx - fontLayout.width / 2f, vh * 0.22f)
+        batch.end()
+        f.setColor(1f, 1f, 1f, 1f)
+        f.data.setScale(1f)
+        // progress bar via ShapeRenderer (independent of the batch)
+        if (::sr.isInitialized) {
+            sr.projectionMatrix = camera.combined
+            sr.begin(ShapeRenderer.ShapeType.Filled)
+            sr.setColor(0.13f, 0.14f, 0.30f, 1f)
+            sr.rect(cx - 250f, vh * 0.635f, 500f, 30f)
+            sr.setColor(1f, 0.79f, 0.24f, 1f)
+            sr.rect(cx - 244f, vh * 0.635f + 6f, 488f * bootProgress.coerceIn(0.02f, 1f), 18f)
+            sr.end()
+        }
+        gl.glDisable(GL20.GL_BLEND)
+    }
+
+    /** SafeMode frame: navy screen + best-effort text. v6.1: if the batch is
+     *  missing or failed, STOP trying (the old code silently swallowed a
+     *  batch exception EVERY frame → a blank navy screen the player could
+     *  not even read). The native overlay shows the error text instead. */
     private fun drawSafeMode() {
         val gl = Gdx.gl
         gl.glClearColor(0.08f, 0.09f, 0.19f, 1f)
-        gl.glViewport(0, 0, screenW, screenH)
+        gl.glViewport(0, 0, screenW.coerceAtLeast(1), screenH.coerceAtLeast(1))
         gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
+        if (safeFont == null && (time % 1f) < 0.5f) {
+            safeFont = try { com.badlogic.gdx.graphics.g2d.BitmapFont().apply { data.setScale(1.6f) } } catch (_: Throwable) { null }
+        }
+        if (safeBatchBroken || !::batch.isInitialized || safeFont == null) return
+        try {
+            drawSafeModeText()
+        } catch (t: Throwable) {
+            safeBatchBroken = true
+            Gdx.app.error("DS-BOOT", "SafeMode batch render failed — error text via native overlay", t)
+        }
+    }
+
+    private fun drawSafeModeText() {
+        val gl = Gdx.gl
         val f = safeFont ?: return
         gl.glEnable(GL20.GL_BLEND)
         gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA)
@@ -296,13 +457,15 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         batch.begin()
         f.setColor(1f, 1f, 1f, 1f)
         val cx = GameConfig.VIRTUAL_WIDTH / 2f
+        val vh = GameConfig.VIRTUAL_HEIGHT
         f.data.setScale(2.6f)
         fontLayout.setText(f, "DUMMY SURFERS")
-        f.draw(batch, "DUMMY SURFERS", cx - fontLayout.width / 2f, GameConfig.VIRTUAL_HEIGHT * 0.86f)
+        f.draw(batch, "DUMMY SURFERS", cx - fontLayout.width / 2f, vh * 0.86f)
         f.data.setScale(1.0f)
-        fontLayout.setText(f, "v5.4.0 - startup problem")
-        f.draw(batch, "v5.4.0 - startup problem", cx - fontLayout.width / 2f, GameConfig.VIRTUAL_HEIGHT * 0.80f)
-        var y = GameConfig.VIRTUAL_HEIGHT * 0.70f
+        val ver = "v${bootVersion} - startup problem"
+        fontLayout.setText(f, ver)
+        f.draw(batch, ver, cx - fontLayout.width / 2f, vh * 0.80f)
+        var y = vh * 0.70f
         for (line in bootLog.takeLast(6)) {
             f.data.setScale(0.8f)
             fontLayout.setText(f, line)
@@ -313,7 +476,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         val hint = if ((time % 1.2f) < 0.8f) "TAP ANYWHERE TO RETRY" else ""
         fontLayout.setText(f, hint)
         f.setColor(1f, 0.79f, 0.24f, 1f)
-        f.draw(batch, hint, cx - fontLayout.width / 2f, GameConfig.VIRTUAL_HEIGHT * 0.16f)
+        f.draw(batch, hint, cx - fontLayout.width / 2f, vh * 0.16f)
         batch.end()
         f.setColor(1f, 1f, 1f, 1f)
         f.data.setScale(1f)
@@ -328,24 +491,26 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         vpX = (width - vpW) / 2
         vpY = (height - vpH) / 2
         camera.setToOrtho(false, GameConfig.VIRTUAL_WIDTH, GameConfig.VIRTUAL_HEIGHT)
-        batch.projectionMatrix = camera.combined
-        sr.projectionMatrix = camera.combined
+        // v6.1: may arrive before the BATCH step exists (backend calls resize
+        // right after create) — guard the lateinits instead of throwing
+        if (::batch.isInitialized) batch.projectionMatrix = camera.combined
+        if (::sr.isInitialized) sr.projectionMatrix = camera.combined
     }
 
     // ── Main loop ──────────────────────────────────────────────────────
-    // v5.1: last-resort safety net. An exception escaping render() kills the
-    // whole app ("opens fine, then it just closes mid-run"). Any gameplay
-    // tick that throws now logs the error and recovers to the MENU instead
-    // of ending the process; the crash reporter still captures genuinely
-    // fatal startup failures.
+    // v6.1: update() and draw() are guarded INDEPENDENTLY. The old single
+    // try around both meant one throwing update() skipped draw() too — and
+    // since the sky-clear lives inside draw(), a persistent update failure
+    // painted a permanent BLACK screen (exactly the field report). Now the
+    // worst a broken tick can do is freeze gameplay — the sky, the world and
+    // the UI keep rendering.
     private var tickErrors = 0
     override fun render() {
         val rawDt = Gdx.graphics.deltaTime.coerceIn(0.001f, 0.05f)
         val dt = rawDt * if (state == GameState.DYING) 0.4f else 1f
         time += rawDt
 
-        // v5.4: SafeMode never touches game state, textures or the UI stack —
-        // a plain GL + optional-font frame with a tap-to-retry hook.
+        // SafeMode never touches game state, textures or the UI stack.
         if (safeMode) {
             try { drawSafeMode() } catch (_: Throwable) {}
             // QA-only scripted retry (tap can't be posted under Xvfb)
@@ -355,23 +520,40 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             return
         }
 
+        // v6.1 staged boot: one step + one visible loading frame per tick.
+        if (bootStage != BootStage.DONE) {
+            try {
+                stepBoot()
+            } catch (t: Throwable) {
+                Gdx.app.error("DS-BOOT", "stepBoot escaped — parking in SafeMode", t)
+                noteBoot("step", t)
+                enterSafeMode()
+            }
+            if (!safeMode && bootStage != BootStage.DONE) drawBootFrame()
+            else if (bootStage == BootStage.DONE && !safeMode) { /* menu draws next frame */ }
+            return
+        }
+
         try {
-            update(dt)
-            draw(rawDt)
+            try { update(dt) } catch (t: Throwable) {
+                tickErrors++
+                Gdx.app.error("DS", "update #$tickErrors failed — continuing", t)
+            }
+            try { draw(rawDt) } catch (t: Throwable) {
+                tickErrors++
+                Gdx.app.error("DS", "draw #$tickErrors failed — continuing", t)
+            }
             devHarness(rawDt)
             if (tickErrors > 0) tickErrors--
-        } catch (t: Throwable) {
-            tickErrors++
-            Gdx.app.error("DS", "tick #${tickErrors} failed — recovering", t)
-            if (tickErrors >= 8) {
+            if (tickErrors >= 24) {
                 // Something is persistently broken; park in the safest known
                 // state (menu, world reset) and stop hammering the failing path.
-                try {
-                    recoverToMenu()
-                } catch (_: Throwable) {}
+                try { recoverToMenu() } catch (_: Throwable) {}
                 tickErrors = 0
                 Thread.sleep(120) // brief cool-off; GL thread may sleep here safely
             }
+        } catch (t: Throwable) {
+            Gdx.app.error("DS", "frame scaffolding failed — continuing", t)
         }
     }
 
@@ -1152,12 +1334,15 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     fun debugState(): String = state.name
 
     override fun dispose() {
-        audio.dispose()
-        theme.dispose()
-        TextureGen.dispose()
-        scene3d.dispose()
-        batch.dispose()
-        sr.dispose()
+        // v6.1: may now run MID-BOOT (user closes the app during the staged
+        // startup) — every subsystem is torn down best-effort, lateinit
+        // fields that were never reached are skipped.
+        try { audio.dispose() } catch (_: Throwable) {}
+        try { theme.dispose() } catch (_: Throwable) {}
+        try { TextureGen.dispose() } catch (_: Throwable) {}
+        try { if (::scene3d.isInitialized) scene3d.dispose() } catch (_: Throwable) {}
+        try { if (::batch.isInitialized) batch.dispose() } catch (_: Throwable) {}
+        try { if (::sr.isInitialized) sr.dispose() } catch (_: Throwable) {}
     }
 
     // ── Drawing ────────────────────────────────────────────────────────
