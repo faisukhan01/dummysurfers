@@ -63,7 +63,15 @@ const consoleLines = [
 
 const changelog = [
   {
-    v: 'v7.0.0', date: 'SHIPPED ART — the phone never paints again. The boot page is gone for good', latest: true, items: [
+    v: 'v7.1.0', date: 'The restart ladder can never loop — the final hole in the 1000% guarantee is closed', latest: true, items: [
+      '🛡️ LAST RESTART-LOOP PATH CLOSED: the deep audit found the freeze watchdog read its stall counter before the Android context was attached — it could silently restart a stalling device FOREVER instead of once. Now the counter is version-tagged and read at the right moment: a stalling boot restarts AT MOST ONCE, then it is only recorded. No loops, physically',
+      '🧼 UPGRADES START CLEAN: stall history from any older version is dropped on first launch — your new install always gets its own free restart, and never inherits the old build\'s failure count',
+      '✅ RE-PROVEN END TO END: watchdog self-test 9/9 · fresh boot hard-asserted "baked=80 cached=0 fast=80 need=80 OK" (zero painting) · menu + live gameplay screenshotted (score 232→299, distance 62m→129m while running) · CI green · release APK downloaded and its manifest verified byte-for-byte',
+      '🏷️ versionCode 31 — if the boot does not say v7.1.0, you are running an old download. UNINSTALL the old app and download fresh',
+    ]
+  },
+  {
+    v: 'v7.0.0', date: 'SHIPPED ART — the phone never paints again. The boot page is gone for good', latest: false, items: [
       '📦 THE ART NOW SHIPS INSIDE THE APP: every texture is painted once on the desktop at build time and committed into the APK as finished PNGs (83 files). Your phone only LOADS art — the "painting textures" boot phase that froze the device for 30+ minutes no longer EXISTS on the phone',
       '🗑️ THE DIAGNOSTIC PAGE IS REMOVED: no more navy boot-report screen — the app opens straight into the game\'s own loading frame and hits the menu in seconds. You asked for the page to go; the reason it existed is gone with it',
       '🤫 SILENT WATCHDOG: the freeze watchdog stays, but with zero UI — if boot ever stopped moving for 20s it self-restarts once, silently. No cards, no dialogs, no nagging. (With zero painting on the device it should never fire at all)',
@@ -293,7 +301,7 @@ export default function Home() {
             </a>
           ))}
           <span className="ml-auto shrink-0 rounded-full bg-[#FFC93C] px-3 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#24316B] border-2 border-white shadow-[0_2px_0_#E09B12]">
-            v7.0.0 — The Phone Never Paints Again!
+            v7.1.0 — The Restart Loop Is Impossible!
           </span>
         </div>
       </nav>
@@ -546,7 +554,7 @@ export default function Home() {
             Dummy Surfers <span className="text-white">by</span>
             <GraffitiName name="Faisal Khan" className="ml-2 inline-block align-middle normal-case text-[1.55rem] sm:text-[1.85rem]" stroke="#1B2038" shadowFilter="drop-shadow(0 3px 0 rgba(9,12,30,.55))" />
           </p>
-          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v7.0.0 — The Phone Never Paints Again!</span></p>
+          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v7.1.0 — The Restart Loop Is Impossible!</span></p>
         </div>
       </footer>
     </main>
