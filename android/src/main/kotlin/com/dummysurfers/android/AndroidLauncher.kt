@@ -73,17 +73,41 @@ class AndroidLauncher : AndroidApplication() {
     // recorded only (crash-last.txt + boot-stalls.txt). Never loops, never
     // nags — and with zero painting on the device it should never fire.
     private val stallFile: File get() = File(filesDir, "boot-stalls.txt")
-    private var stallCount = try {
-        File(filesDir, "boot-stalls.txt").readText().trim().toIntOrNull() ?: 0
-    } catch (_: Throwable) { 0 }
+    // v7.1 FIX: history is loaded in onCreate — filesDir is NOT attached
+    // during property initialization, so the old initializer always read 0
+    // and the "one restart, then stop" ladder could have LOOPED forever on a
+    // device that kept stalling. Now: history is version-tagged, upgrades
+    // start clean, and a persistent wedge restarts at most ONCE, ever.
+    private var stallCount = 0
     private var stallHandled = false
     private var lastStatusSeen: String? = null
     private var watcherDone = false
     private var pendingReport: String? = null
 
+    private fun loadStallHistory() {
+        try {
+            val lines = stallFile.readText().trim().lines()
+            val count = lines.firstOrNull()?.trim()?.toIntOrNull() ?: 0
+            val ver = lines.getOrNull(1)?.trim()?.removePrefix("v=") ?: ""
+            if (ver != versionLabel()) {
+                // history from another version (or untagged pre-7.1 format) —
+                // the new build always starts with its own free restart
+                try { stallFile.delete() } catch (_: Throwable) {}
+                stallCount = 0
+            } else {
+                stallCount = count.coerceIn(0, 99)
+            }
+        } catch (_: Throwable) { stallCount = 0 }
+    }
+
+    private fun saveStallHistory() {
+        try { stallFile.writeText("$stallCount\nv=${versionLabel()}") } catch (_: Throwable) {}
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         installCrashGuard()
+        loadStallHistory() // v7.1: context is attached here — safe to read filesDir
 
         // Consume the last crash report (read + delete atomically) BEFORE the
         // game boots so nothing below can resurrect it into a launch loop.
@@ -209,7 +233,7 @@ class AndroidLauncher : AndroidApplication() {
     private fun handleStall() {
         val where = DummySurfersGame.bootStatus ?: "?"
         stallCount++
-        try { stallFile.writeText(stallCount.toString()) } catch (_: Throwable) {}
+        saveStallHistory()
         // persist for diagnosis (also picked up by the crash-report path —
         // offered only if THIS app version ends up showing it)
         try {

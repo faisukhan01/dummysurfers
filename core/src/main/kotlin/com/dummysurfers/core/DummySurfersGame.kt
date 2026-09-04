@@ -150,7 +150,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         @Volatile var bootProgress: Float = 0f          // 0..1
         @Volatile var bootReady: Boolean = false
         @Volatile var bootError: String? = null
-        @Volatile var bootVersion: String = "7.0.0"     // launcher injects the full label
+        @Volatile var bootVersion: String = "7.1.0"     // launcher injects the full label
         @Volatile var bootLogText: String = ""
     }
 
