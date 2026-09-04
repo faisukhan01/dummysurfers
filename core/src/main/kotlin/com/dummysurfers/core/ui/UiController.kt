@@ -285,7 +285,7 @@ class UiController(val theme: UiTheme) : InputAdapter() {
 
         // giant gold RUN jelly button + play glyph (v5.3)
         theme.cardShadow(batch, vw / 2 - 210f, 384f, 420f, 136f)
-        if (btn("play", vw / 2 - 210f, 384f, 420f, 136f, Palette.UI_GOLD_BTN, "RUN", theme.fontLarge)) {
+        if (btn("play", vw / 2 - 210f, 384f, 420f, 136f, Palette.UI_GOLD_BTN, "PLAY", theme.fontLarge)) {
             b.startRun()
         }
         theme.playIcon(batch, vw / 2 - 124f, 384f + 46f, 44f)

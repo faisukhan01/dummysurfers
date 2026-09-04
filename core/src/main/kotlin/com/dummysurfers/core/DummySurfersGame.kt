@@ -150,7 +150,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         @Volatile var bootProgress: Float = 0f          // 0..1
         @Volatile var bootReady: Boolean = false
         @Volatile var bootError: String? = null
-        @Volatile var bootVersion: String = "7.1.0"     // launcher injects the full label
+        @Volatile var bootVersion: String = "7.2.0"     // launcher injects the full label
         @Volatile var bootLogText: String = ""
     }
 
@@ -358,6 +358,16 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
                 "baked=${TextureGen.bakedHits} cached=${TextureGen.cacheHits} fast=$fast need=$need ${if (ok) "OK" else "FAIL"}", false) } catch (_: Throwable) {}
             if (!ok) Runtime.getRuntime().exit(3)
         }
+        // v7.2 QA-only: DS_REQUIRE_WEDGE_SKIPS=<N> hard-fails when fewer than
+        // N blacklisted/substituted art entries were skipped — proves the
+        // wedge-skipper actually fired (seed texcache/tv3/wedge-blacklist.txt).
+        System.getenv("DS_REQUIRE_WEDGE_SKIPS")?.toIntOrNull()?.let { need ->
+            val got = TextureGen.wedgeSkips
+            val ok = got >= need
+            try { Gdx.files.local("texcache-qa.txt").writeString(
+                "wedgeSkips=$got need=$need ${if (ok) "OK" else "FAIL"}", false) } catch (_: Throwable) {}
+            if (!ok) Runtime.getRuntime().exit(3)
+        }
         // v7.0.0 bake mode (desktop only): the boot painted + exported every
         // texture — leave cleanly so the gradle task completes.
         if (System.getenv("DS_QUIT_AFTER_BOOT") == "1") Gdx.app.exit()
@@ -416,55 +426,45 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         val vh = GameConfig.VIRTUAL_HEIGHT
         val cx = vw / 2f
         batch.begin()
+        // ── v7.2 CLEAN GAME SPLASH — the checklist page is GONE ──────────
+        // The user lived through v6.1–v7.1 boot screens that looked like a
+        // diagnostics report. Real games show a logo and a bar — nothing
+        // else. Every line of status text, the version string, the stage
+        // checklist and the tips are deleted. Internal status still ticks
+        // (watchdog + logs) — it just is never painted on screen again.
         f.setColor(1f, 0.79f, 0.24f, 1f)
-        f.data.setScale(3.1f)
+        f.data.setScale(3.4f)
         fontLayout.setText(f, "DUMMY SURFERS")
-        f.draw(batch, "DUMMY SURFERS", cx - fontLayout.width / 2f, vh * 0.80f)
-        f.setColor(0.79f, 0.82f, 0.95f, 1f)
-        f.data.setScale(1.0f)
-        val ver = "v${bootVersion} - loading"
-        fontLayout.setText(f, ver)
-        f.draw(batch, ver, cx - fontLayout.width / 2f, vh * 0.74f)
-        // stage checklist
-        f.data.setScale(0.85f)
-        var y = vh * 0.58f
-        for (st in BootStage.entries) {
-            if (st == BootStage.DONE) break
-            val mark = if (st.ordinal < bootStage.ordinal) "[x] " else if (st.ordinal == bootStage.ordinal) " >  " else "[ ] "
-            val line = mark + st.label
-            f.setColor(
-                when {
-                    st.ordinal < bootStage.ordinal -> 0.45f; st.ordinal == bootStage.ordinal -> 1f; else -> 0.30f
-                },
-                when {
-                    st.ordinal < bootStage.ordinal -> 0.48f; st.ordinal == bootStage.ordinal -> 0.79f; else -> 0.32f
-                },
-                0.62f, 1f
-            )
-            f.draw(batch, line, cx - 170f, y)
-            y -= 44f
-        }
-        f.setColor(1f, 1f, 1f, 1f)
-        f.data.setScale(0.95f)
-        // v7.0.0: art ships inside the APK — the tip tells the truth now
-        val tip = when {
-            TextureGen.bakedHits > 0 -> "art loaded from the app — zero painting, instant start"
-            TextureGen.cacheHits > 0 -> "loaded saved art — fast start!"
-            else -> "painting the world once — this device will cache it"
-        }
-        fontLayout.setText(f, tip)
-        f.draw(batch, tip, cx - fontLayout.width / 2f, vh * 0.22f)
-        batch.end()
+        f.draw(batch, "DUMMY SURFERS", cx - fontLayout.width / 2f, vh * 0.70f)
+        f.setColor(1f, 0.79f, 0.24f, 0.9f)
+        f.data.setScale(1.15f)
+        fontLayout.setText(f, "BY FAISAL KHAN")
+        f.draw(batch, "BY FAISAL KHAN", cx - fontLayout.width / 2f, vh * 0.645f)
         f.setColor(1f, 1f, 1f, 1f)
         f.data.setScale(1f)
+        batch.end()
+        f.setColor(1f, 1f, 1f, 1f)
         // progress bar via ShapeRenderer (independent of the batch)
         if (::sr.isInitialized) {
+            // v7.2: smooth bar — stage position + live fraction inside the
+            // art chunks, so it never sits still while work is happening.
+            val inArt = bootStage == BootStage.TEX_A || bootStage == BootStage.TEX_B || bootStage == BootStage.TEX_C
+            val stageFrac = if (inArt) TextureGen.chunkProgress.coerceIn(0f, 1f) else 1f
+            val barF = ((bootStage.ordinal + stageFrac) / (BootStage.entries.size - 1f)).coerceIn(0.03f, 1f)
             sr.projectionMatrix = camera.combined
             sr.begin(ShapeRenderer.ShapeType.Filled)
             sr.setColor(0.13f, 0.14f, 0.30f, 1f)
-            sr.rect(cx - 250f, vh * 0.635f, 500f, 30f)
+            sr.rect(cx - 250f, vh * 0.56f, 500f, 22f)
             sr.setColor(1f, 0.79f, 0.24f, 1f)
-            sr.rect(cx - 244f, vh * 0.635f + 6f, 488f * bootProgress.coerceIn(0.02f, 1f), 18f)
+            sr.rect(cx - 244f, vh * 0.56f + 6f, 488f * barF, 10f)
+            // three bouncing gold dots — alive, zero textures needed
+            val bob = (time * 5.2f)
+            for (i in 0 until 3) {
+                val phase = bob + i * 0.55f
+                val dy = Math.abs(Math.sin(phase.toDouble())).toFloat() * 14f
+                sr.setColor(1f, 0.79f, 0.24f, 0.85f)
+                sr.circle(cx - 36f + i * 36f, vh * 0.47f + dy, 7f)
+            }
             sr.end()
         }
         gl.glDisable(GL20.GL_BLEND)
@@ -565,6 +565,9 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
 
         // v6.1 staged boot: one step + one visible loading frame per tick.
         if (bootStage != BootStage.DONE) {
+            // v7.2: the launcher can park us in SafeMode from OUTSIDE the GL
+            // thread (stall ladder exhausted) — react on the next frame.
+            if (!safeMode && DummySurfersGame.bootError != null) enterSafeMode()
             try {
                 stepBoot()
             } catch (t: Throwable) {
@@ -1465,6 +1468,16 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
             GameState.MENU -> {
                 if (menuPanel == MenuPanel.NONE) ui.drawMenu(time) else ui.drawPanel(time)
                 ui.drawToast(rawDt)
+                // v7.2: tiny build tag in the menu corner — verify-your-build
+                // without ever showing the player a diagnostic-looking page.
+                val bf = bootFont
+                if (bf != null) {
+                    bf.setColor(1f, 1f, 1f, 0.45f)
+                    bf.data.setScale(0.62f)
+                    bf.draw(batch, "v$bootVersion", 14f, 34f)
+                    bf.setColor(1f, 1f, 1f, 1f)
+                    bf.data.setScale(1f)
+                }
             }
             GameState.TUTORIAL -> ui.drawTutorial(time)
             GameState.PLAYING -> ui.drawHud(time)

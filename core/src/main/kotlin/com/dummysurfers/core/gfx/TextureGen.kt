@@ -172,7 +172,78 @@ object TextureGen {
     private fun checkDeadline() {
         if (System.nanoTime() > deadlineNs) throw TexTimeout(currentTexName)
     }
-    @Volatile private var currentTexName = "?"
+    @Volatile var currentTexName = "?"
+        private set
+
+    // ── v7.2 WEDGE SKIPPER — the field device's final cure ─────────────
+    // Forensics: one device deterministically froze INSIDE its GL driver
+    // while creating ONE specific texture — v6.3 froze PAINTING it, v7.1
+    // froze LOADING the same baked PNG, both at the same chunk position.
+    // No same-thread timeout can interrupt a blocked native GL call, so
+    // the cure runs across a restart: the launcher's watchdog records
+    // WHICH texture was current when the stall fired (recordWedge), the
+    // process restarts, and this blacklist turns that exact texture into
+    // an instant substitute on the retry. The poison texture is skipped,
+    // boot completes, the menu comes. The file lives INSIDE the cache
+    // generation dir, so a future art bump starts clean automatically.
+    @Volatile private var wedgeBlacklist: Set<String> = emptySet()
+    @Volatile private var _wedgeSkips = 0
+    val wedgeSkips: Int get() = _wedgeSkips
+
+    private fun wedgeFile(): com.badlogic.gdx.files.FileHandle =
+        Gdx.files.local("texcache/$CACHE_GEN/wedge-blacklist.txt")
+
+    private fun loadWedgeBlacklist() {
+        wedgeBlacklist = try {
+            wedgeFile().readString().split('\n')
+                .map { it.trim().take(64) }
+                .filter { it.isNotEmpty() && it != "?" }
+                .toSet()
+        } catch (_: Throwable) { emptySet() }
+    }
+
+    /** Called by the Android launcher when a boot stall fires. Returns true
+     *  when this adds a NEW name (real progress — a restart is worth it). */
+    fun recordWedge(name: String?): Boolean {
+        val n = (name ?: return false).trim().take(64)
+        if (n.isEmpty() || n == "?") return false
+        return try {
+            val f = wedgeFile()
+            val existing = try {
+                f.readString().split('\n').map { it.trim() }.filter { it.isNotEmpty() }
+            } catch (_: Throwable) { emptyList() }
+            if (n in existing) return false
+            f.writeString((existing + n).takeLast(12).joinToString("\n"), false)
+            true
+        } catch (_: Throwable) { false }
+    }
+
+    // v7.2 GLOBAL ART BUDGET — the menu is guaranteed on every device:
+    // the art stages may spend at most this much CUMULATIVE WORK TIME
+    // (decode + upload inside texture creation) before every remaining
+    // texture becomes an instant substitute. Wall-clock between frames is
+    // NOT counted — a merely slow machine (weak GPU, slow shader compiles)
+    // finishes all 80 loads; a nightmare device (2s PER texture) still gets
+    // its menu after ~90s of work instead of never. True FREEZES (a call
+    // that never returns) cannot be timed from inside — those are the
+    // launcher watchdog's job, and the wedge blacklist skips them on the
+    // next attempt.
+    private val ART_BUDGET_NS = 90_000_000_000L
+    @Volatile private var artSpentNs = 0L
+    @Volatile var artBudgetBreached = false
+        private set
+
+    private fun maybeBreachArtBudget() {
+        if (!artBudgetBreached && artSpentNs > ART_BUDGET_NS) {
+            artBudgetBreached = true
+            Gdx.app.error("DS-Tex", "art budget breached — substituting the rest so the menu arrives")
+        }
+ }
+
+    // v7.2 per-texture progress INSIDE a chunk, as a 0..1 fraction — the
+    // splash bar moves smoothly and the watchdog sees sub-second ticks.
+    @Volatile var chunkProgress = 0f
+        private set
 
     // v6.2 per-texture progress: "painting textures 2/3 · 7 painted" feeds the
     // loading screen + native overlay, so the player SEES movement inside a
@@ -180,11 +251,13 @@ object TextureGen {
     @Volatile private var reporter: ((String) -> Unit)? = null
     @Volatile private var chunkLabel = ""
     private var chunkDone = 0
+    private var chunkTotal = 1
 
     private fun tick() {
         chunkDone++
+        chunkProgress = (chunkDone.toFloat() / chunkTotal).coerceIn(0f, 1f)
         val r = reporter ?: return
-        try { r(if (chunkLabel.isEmpty()) "painting…" else "$chunkLabel · $chunkDone painted") } catch (_: Throwable) {}
+        try { r(if (chunkLabel.isEmpty()) "painting…" else "$chunkLabel · $chunkDone loaded") } catch (_: Throwable) {}
     }
 
     // ── v6.3 PNG STARTUP CACHE — the "it takes too time to open" killer ───
@@ -304,7 +377,22 @@ object TextureGen {
 
     private fun tex(name: String, c: () -> Texture): Texture {
         currentTexName = name
-        cachedTex(name)?.let { hit -> tick(); return hit }
+        // v7.2: a texture that previously FROZE this device's GL driver is
+        // never attempted again — instant substitute, boot continues.
+        if (name in wedgeBlacklist) {
+            _wedgeSkips++
+            tick()
+            return try { subTex() } catch (_: Throwable) { anyFatal = true; throw TexTimeout(name) }
+        }
+        // v7.2: global art budget — even a pathological device reaches the menu.
+        maybeBreachArtBudget()
+        if (artBudgetBreached) {
+            _wedgeSkips++
+            tick()
+            return try { subTex() } catch (_: Throwable) { anyFatal = true; throw TexTimeout(name) }
+        }
+        val workStart = System.nanoTime()
+        cachedTex(name)?.let { hit -> artSpentNs += System.nanoTime() - workStart; tick(); return hit }
         armDeadline()
         val t0 = System.nanoTime()
         val result = try {
@@ -318,6 +406,7 @@ object TextureGen {
             com.badlogic.gdx.Gdx.app.error("DS-Tex", "texture '$name' $why", t)
             try { subTex() } catch (_: Throwable) { anyFatal = true; throw t }
         }
+        artSpentNs += System.nanoTime() - t0
         tick()
         return result
     }
@@ -325,22 +414,33 @@ object TextureGen {
     private fun texArray(name: String, count: Int, c: (Int) -> Texture): Array<Texture> =
         Array(count) { i -> tex("$name#$i") { c(i) } }
 
-    private fun texNine(name: String, c: () -> NinePatch): NinePatch =
-        try {
-            // v7.0.1 BUGFIX (cache pollution): nine painters build their pixmap
-            // through the tex(Pixmap) overload, which SAVES under currentTexName.
-            // texNine never set it, so the save inherited the PREVIOUS texture's
-            // name — e.g. panelNine's 64×64 pixmap landed as preview-3.png in
-            // the bake/filesDir cache (shadowed by the real .lin file today,
-            // but a one-line ordering change away from shipping wrong art).
-            // Now the save is attributed to the nine's own name.
-            currentTexName = name
+    private fun texNine(name: String, c: () -> NinePatch): NinePatch {
+        currentTexName = name
+        // v7.0.1 BUGFIX (cache pollution): nine painters build their pixmap
+        // through the tex(Pixmap) overload, which SAVES under currentTexName.
+        // texNine never set it, so the save inherited the PREVIOUS texture's
+        // name — e.g. panelNine's 64×64 pixmap landed as preview-3.png in
+        // the bake/filesDir cache (shadowed by the real .lin file today,
+        // but a one-line ordering change away from shipping wrong art).
+        // Now the save is attributed to the nine's own name.
+        // v7.2: same wedge-skip + art-budget protection as tex().
+        if (name in wedgeBlacklist) {
+            _wedgeSkips++; tick()
+            return try { NinePatch(subTex(), 1, 1, 1, 1) } catch (t: Throwable) { anyFatal = true; throw TexTimeout(name) }
+        }
+        maybeBreachArtBudget()
+        if (artBudgetBreached) {
+            _wedgeSkips++; tick()
+            return try { NinePatch(subTex(), 1, 1, 1, 1) } catch (t: Throwable) { anyFatal = true; throw TexTimeout(name) }
+        }
+        return try {
             armDeadline(); val r = c(); tick(); r
         } catch (t: Throwable) {
             genErrors++
             com.badlogic.gdx.Gdx.app.error("DS-Tex", "ninepatch failed — white substitute", t)
             try { NinePatch(subTex(), 1, 1, 1, 1) } catch (_: Throwable) { anyFatal = true; throw t }
         }
+    }
 
     fun generate(reporter: ((String) -> Unit)? = null) {
         chunkA(reporter); chunkB(reporter); chunkC(reporter)
@@ -353,7 +453,11 @@ object TextureGen {
     // reporter callback feeding the visible loading screen / native overlay.
     fun chunkA(reporter: ((String) -> Unit)? = null) {
         genErrors = 0; anyFatal = false; cacheHits = 0; bakedHits = 0
-        this.reporter = reporter; chunkLabel = "loading art 1/3"; chunkDone = 0
+        // v7.2: fresh boot → fresh skip state; re-read the wedge list from
+        // disk (a SafeMode retry re-enters chunks in the SAME process).
+        _wedgeSkips = 0; artBudgetBreached = false; chunkProgress = 0f; artSpentNs = 0L
+        loadWedgeBlacklist()
+        this.reporter = reporter; chunkLabel = "loading art 1/3"; chunkDone = 0; chunkTotal = 15
         reporter?.invoke(chunkLabel)
         white = tex("white") { solid(4, 4, Color.WHITE) }
         disc = tex("disc") { radial(64, Color(1f, 1f, 1f, 1f), 0.86f) } // solid core, 14% feather
@@ -374,7 +478,7 @@ object TextureGen {
     }
 
     fun chunkB(reporter: ((String) -> Unit)? = null) {
-        this.reporter = reporter; chunkLabel = "loading art 2/3"; chunkDone = 0
+        this.reporter = reporter; chunkLabel = "loading art 2/3"; chunkDone = 0; chunkTotal = 30; chunkProgress = 0f
         reporter?.invoke(chunkLabel)
         rainbowBurst = tex("rainbowBurst") { burst(512) }
         coinFrames = texArray("coin", 10) { coin(72, it, 10) }
@@ -396,7 +500,7 @@ object TextureGen {
     }
 
     fun chunkC(reporter: ((String) -> Unit)? = null) {
-        this.reporter = reporter; chunkLabel = "loading art 3/3"; chunkDone = 0
+        this.reporter = reporter; chunkLabel = "loading art 3/3"; chunkDone = 0; chunkTotal = 26; chunkProgress = 0f
         reporter?.invoke(chunkLabel)
         trainSides = texArray("trainSide", Palette.TRAIN_LIVERIES.size) { trainSide(it) }
         trainFronts = texArray("trainFront", Palette.TRAIN_LIVERIES.size) { trainFront(it) }

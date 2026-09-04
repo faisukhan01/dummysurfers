@@ -172,6 +172,17 @@ class AndroidLauncher : AndroidApplication() {
         // Keep the screen on while the game is visible (same effect the old
         // useWakelock=true chased, with zero native/lifecycle involvement).
         try { window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) } catch (_: Throwable) {}
+        // v7.2: draw edge-to-edge on notched/cutout displays — the camera
+        // cutout area is game space now (kills the black bar some devices
+        // reserved above the GL surface).
+        if (Build.VERSION.SDK_INT >= 28) {
+            try {
+                window.attributes = window.attributes.apply {
+                    layoutInDisplayCutoutMode =
+                        android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                }
+            } catch (_: Throwable) {}
+        }
         initialize(game, config)
     }
 
@@ -232,6 +243,12 @@ class AndroidLauncher : AndroidApplication() {
 
     private fun handleStall() {
         val where = DummySurfersGame.bootStatus ?: "?"
+        // v7.2 THE WEDGE SKIPPER: record WHICH texture was being created when
+        // the boot froze. The restart then boots with that texture skipped
+        // (instant substitute) — a deterministic driver wedge is neutralized
+        // on the very next attempt instead of freezing identically forever.
+        val wedgedTex = try { com.dummysurfers.core.gfx.TextureGen.currentTexName } catch (_: Throwable) { "?" }
+        val newSkip = try { com.dummysurfers.core.gfx.TextureGen.recordWedge(wedgedTex) } catch (_: Throwable) { false }
         stallCount++
         saveStallHistory()
         // persist for diagnosis (also picked up by the crash-report path —
@@ -239,14 +256,25 @@ class AndroidLauncher : AndroidApplication() {
         try {
             File(filesDir, "crash-last.txt").writeText(reportTextRaw(
                 "boot stall #$stallCount",
-                "The boot froze at '$where' with no progress for ${com.dummysurfers.core.BootWatchdog.STALL_MS / 1000}s.\n\n" +
+                "The boot froze at '$where' with no progress for ${com.dummysurfers.core.BootWatchdog.STALL_MS / 1000}s.\n" +
+                "texture being created: $wedgedTex (blacklisted for the next attempt)\n\n" +
                 "boot log:\n${DummySurfersGame.bootLogText}"))
         } catch (_: Throwable) {}
-        if (stallCount <= 1) {
-            // first stall this install: one silent self-heal — restart the
-            // process. If the boot freezes again the watcher records it and
-            // STOPS: no loops, no dialogs, no page — by design.
+        // v7.2 ladder: restart ONLY while the skip list is GROWING — each
+        // restart un-wedges exactly one more texture, so a device with a few
+        // poisoned textures self-heals one per restart and the blacklist cap
+        // (12) makes an infinite restart loop impossible by construction.
+        // No new name (unknown position / non-art stage) → park in SafeMode:
+        // the game shows its tap-to-retry screen and a tap re-boots with the
+        // full skip list active. Every path ends somewhere playable.
+        val inArtStage = where.contains("loading art")
+        if (newSkip && inArtStage) {
             uiThread.postDelayed({ restartApp() }, 500)
+        } else {
+            try {
+                DummySurfersGame.bootError =
+                    "this device froze while preparing game art — tap the screen to recover"
+            } catch (_: Throwable) {}
         }
     }
 
