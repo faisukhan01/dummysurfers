@@ -145,22 +145,75 @@ object TextureGen {
     var generated = false         // true after a successful full/partial generate() (safe dispose)
     var anyFatal = false          // true if even the guard's substitute Texture couldn't be created
 
+    // ── v6.2 PAINT DEADLINE — the "30 minutes on painting textures 2/3" killer ──
+    // Field report (v6.1.0): a device sat on "painting textures 2/3" for 30+
+    // minutes with the UI thread perfectly alive — the GL thread was stuck
+    // inside chunkB with NO time limit anywhere. Now every texture paints
+    // under a hard deadline: the heavy per-pixel loops poll [checkDeadline]
+    // every few rows, a breach throws [TexTimeout], the existing tex() guard
+    // substitutes a tiny white texture and the boot CONTINUES. A texture can
+    // cost seconds, never minutes — and never an infinite stall.
+    class TexTimeout(name: String) :
+        RuntimeException("paint deadline exceeded while painting '$name'")
+
+    // Base budget per texture: generous for phones (the heaviest single
+    // texture, burst 512², takes <100ms on a mid phone, <3s on a potato).
+    // Adaptive: a device that painted the last texture in T gets 6·T for the
+    // next one, so genuinely slow-but-healthy devices never breach.
+    @Volatile private var budgetNs: Long =
+        (System.getenv("DS_TEX_BUDGET_MS")?.toLongOrNull()?.coerceAtLeast(1L) ?: 2_500L) * 1_000_000L
+    @Volatile private var deadlineNs = 0L
+    private val envBudget = System.getenv("DS_TEX_BUDGET_MS")?.toLongOrNull() != null // QA: fixed tiny budget
+
+    private fun armDeadline() { deadlineNs = System.nanoTime() + budgetNs }
+    private fun checkDeadline() {
+        if (System.nanoTime() > deadlineNs) throw TexTimeout(currentTexName)
+    }
+    @Volatile private var currentTexName = "?"
+
+    // v6.2 per-texture progress: "painting textures 2/3 · 7 painted" feeds the
+    // loading screen + native overlay, so the player SEES movement inside a
+    // chunk and the Android watchdog can tell "slow" from "frozen".
+    @Volatile private var reporter: ((String) -> Unit)? = null
+    @Volatile private var chunkLabel = ""
+    private var chunkDone = 0
+
+    private fun tick() {
+        chunkDone++
+        val r = reporter ?: return
+        try { r(if (chunkLabel.isEmpty()) "painting…" else "$chunkLabel · $chunkDone painted") } catch (_: Throwable) {}
+    }
+
     private fun subTex(): Texture = Texture(4, 4, Pixmap.Format.RGBA8888)
 
-    private fun tex(name: String, c: () -> Texture): Texture =
-        try { c() } catch (t: Throwable) {
+    private fun tex(name: String, c: () -> Texture): Texture {
+        currentTexName = name
+        armDeadline()
+        val t0 = System.nanoTime()
+        val result = try {
+            val r = c()
+            val dur = System.nanoTime() - t0
+            if (!envBudget && dur > budgetNs / 6) budgetNs = dur * 6 // adapt to the device
+            r
+        } catch (t: Throwable) {
+            val why = if (t is TexTimeout) "deadline exceeded — white substitute" else "failed — white substitute"
             genErrors++
-            com.badlogic.gdx.Gdx.app.error("DS-Tex", "texture '$name' failed — white substitute", t)
+            com.badlogic.gdx.Gdx.app.error("DS-Tex", "texture '$name' $why", t)
             try { subTex() } catch (_: Throwable) { anyFatal = true; throw t }
         }
+        tick()
+        return result
+    }
 
     private fun texArray(name: String, count: Int, c: (Int) -> Texture): Array<Texture> =
         Array(count) { i -> tex("$name#$i") { c(i) } }
 
     private fun texNine(name: String, c: () -> NinePatch): NinePatch =
-        try { c() } catch (t: Throwable) {
+        try {
+            armDeadline(); val r = c(); tick(); r
+        } catch (t: Throwable) {
             genErrors++
-            com.badlogic.gdx.Gdx.app.error("DS-Tex", "ninepatch '$name' failed — white substitute", t)
+            com.badlogic.gdx.Gdx.app.error("DS-Tex", "ninepatch failed — white substitute", t)
             try { NinePatch(subTex(), 1, 1, 1, 1) } catch (_: Throwable) { anyFatal = true; throw t }
         }
 
@@ -175,7 +228,8 @@ object TextureGen {
     // reporter callback feeding the visible loading screen / native overlay.
     fun chunkA(reporter: ((String) -> Unit)? = null) {
         genErrors = 0; anyFatal = false
-        reporter?.invoke("painting textures 1/3")
+        this.reporter = reporter; chunkLabel = "painting textures 1/3"; chunkDone = 0
+        reporter?.invoke(chunkLabel)
         white = tex("white") { solid(4, 4, Color.WHITE) }
         disc = tex("disc") { radial(64, Color(1f, 1f, 1f, 1f), 0.86f) } // solid core, 14% feather
         hazeBand = tex("hazeBand") { horizonHaze(8, 256) }
@@ -195,7 +249,8 @@ object TextureGen {
     }
 
     fun chunkB(reporter: ((String) -> Unit)? = null) {
-        reporter?.invoke("painting textures 2/3")
+        this.reporter = reporter; chunkLabel = "painting textures 2/3"; chunkDone = 0
+        reporter?.invoke(chunkLabel)
         rainbowBurst = tex("rainbowBurst") { burst(512) }
         coinFrames = texArray("coin", 10) { coin(72, it, 10) }
         powerIcons = texArray("powerIcon", 6) { arrayOf(magnetIcon(), starIcon(), shieldIcon(), boltIcon(), springIcon(), rocketIcon())[it] }
@@ -209,7 +264,8 @@ object TextureGen {
     }
 
     fun chunkC(reporter: ((String) -> Unit)? = null) {
-        reporter?.invoke("painting textures 3/3")
+        this.reporter = reporter; chunkLabel = "painting textures 3/3"; chunkDone = 0
+        reporter?.invoke(chunkLabel)
         trainSides = texArray("trainSide", Palette.TRAIN_LIVERIES.size) { trainSide(it) }
         trainFronts = texArray("trainFront", Palette.TRAIN_LIVERIES.size) { trainFront(it) }
         trainRears = texArray("trainRear", Palette.TRAIN_LIVERIES.size) { trainRear(it) }
@@ -394,17 +450,22 @@ object TextureGen {
 
     private fun radial(size: Int, c: Color, coreCut: Float): Texture {
         val p = Pixmap(size, size, Pixmap.Format.RGBA8888)
-        val half = size / 2f
-        for (y in 0 until size) for (x in 0 until size) {
-            val dx = (x - half) / half
-            val dy = (y - half) / half
-            val d = kotlin.math.sqrt(dx * dx + dy * dy)
-            val a = if (d <= coreCut) 0f else (1f - (d - coreCut) / (1f - coreCut)).coerceIn(0f, 1f)
-            val aa = a * a * (3f - 2f * a)
-            p.setColor(c.r, c.g, c.b, c.a * aa)
-            p.drawPixel(x, y)
-        }
-        val t = Texture(p); p.dispose(); return t
+        try {
+            val half = size / 2f
+            for (y in 0 until size) {
+                if (y % 16 == 0) checkDeadline()
+                for (x in 0 until size) {
+                    val dx = (x - half) / half
+                    val dy = (y - half) / half
+                    val d = kotlin.math.sqrt(dx * dx + dy * dy)
+                    val a = if (d <= coreCut) 0f else (1f - (d - coreCut) / (1f - coreCut)).coerceIn(0f, 1f)
+                    val aa = a * a * (3f - 2f * a)
+                    p.setColor(c.r, c.g, c.b, c.a * aa)
+                    p.drawPixel(x, y)
+                }
+            }
+            val t = Texture(p); p.dispose(); return t
+        } catch (t: Throwable) { p.dispose(); throw t }
     }
 
     /** v4.5 inverse radial: fully transparent through 62% of the radius, then a
@@ -413,18 +474,23 @@ object TextureGen {
      *  smeared over the whole screen whenever the guard stayed close (DS_CHASE QA). */
     private fun edgeVignette(size: Int): Texture {
         val p = Pixmap(size, size, Pixmap.Format.RGBA8888)
-        val half = size / 2f
-        for (y in 0 until size) for (x in 0 until size) {
-            val dx = (x - half) / half
-            val dy = (y - half) / half
-            // corners are at d≈1.41 — normalize so the frame edges sit at ~0.86
-            val d = kotlin.math.sqrt(dx * dx + dy * dy) / 1.41f * 2f
-            val a = ((d - 0.62f) / 0.38f).coerceIn(0f, 1f)
-            val aa = a * a * (3f - 2f * a)
-            p.setColor(0f, 0f, 0f, aa)
-            p.drawPixel(x, y)
-        }
-        val t = Texture(p); p.dispose(); return t
+        try {
+            val half = size / 2f
+            for (y in 0 until size) {
+                if (y % 16 == 0) checkDeadline()
+                for (x in 0 until size) {
+                    val dx = (x - half) / half
+                    val dy = (y - half) / half
+                    // corners are at d≈1.41 — normalize so the frame edges sit at ~0.86
+                    val d = kotlin.math.sqrt(dx * dx + dy * dy) / 1.41f * 2f
+                    val a = ((d - 0.62f) / 0.38f).coerceIn(0f, 1f)
+                    val aa = a * a * (3f - 2f * a)
+                    p.setColor(0f, 0f, 0f, aa)
+                    p.drawPixel(x, y)
+                }
+            }
+            val t = Texture(p); p.dispose(); return t
+        } catch (t: Throwable) { p.dispose(); throw t }
     }
 
     private fun verticalGradient(w: Int, h: Int, vararg stops: Color): Texture {
@@ -472,25 +538,27 @@ object TextureGen {
      *  the old hard-edged 5-circle stamp that read as blurred ovals. */
     private fun cloud(w: Int, h: Int, seed: Long): Texture {
         val p = Pixmap(w, h, Pixmap.Format.RGBA8888)
-        val rng = Random(seed)
-        val puffs = 7 + rng.nextInt(3)
-        // blob layout along a low baseline: flat-ish bottom, puffy shoulders,
-        // a big center boss
-        val cs = FloatArray(puffs * 3)
-        for (i in 0 until puffs) {
-            val fx = (i + 0.5f) / puffs
-            cs[i * 3] = w * (0.10f + 0.80f * fx) + rng.nextInt(16) - 8
-            cs[i * 3 + 1] = h * (0.58f + rng.nextFloat() * 0.16f)
-            val boss = if (i == puffs / 2) 1.30f else 1f
-            cs[i * 3 + 2] = h * (0.26f + rng.nextFloat() * 0.20f) * boss
-        }
-        // soft shading pass (feathered discs)
-        for (i in 0 until puffs) softDisc(p, cs[i * 3], cs[i * 3 + 1], cs[i * 3 + 2], 0.66f)
-        // flattened base slab
-        softDisc(p, w * 0.5f, h * 0.74f, w * 0.36f, 0.60f)
-        // bright white core pass (smaller, hotter)
-        for (i in 0 until puffs) softDisc(p, cs[i * 3] - cs[i * 3 + 2] * 0.08f, cs[i * 3 + 1] - cs[i * 3 + 2] * 0.22f, cs[i * 3 + 2] * 0.70f, 0.95f)
-        return tex(p)
+        try {
+            val rng = Random(seed)
+            val puffs = 7 + rng.nextInt(3)
+            // blob layout along a low baseline: flat-ish bottom, puffy shoulders,
+            // a big center boss
+            val cs = FloatArray(puffs * 3)
+            for (i in 0 until puffs) {
+                val fx = (i + 0.5f) / puffs
+                cs[i * 3] = w * (0.10f + 0.80f * fx) + rng.nextInt(16) - 8
+                cs[i * 3 + 1] = h * (0.58f + rng.nextFloat() * 0.16f)
+                val boss = if (i == puffs / 2) 1.30f else 1f
+                cs[i * 3 + 2] = h * (0.26f + rng.nextFloat() * 0.20f) * boss
+            }
+            // soft shading pass (feathered discs)
+            for (i in 0 until puffs) softDisc(p, cs[i * 3], cs[i * 3 + 1], cs[i * 3 + 2], 0.66f)
+            // flattened base slab
+            softDisc(p, w * 0.5f, h * 0.74f, w * 0.36f, 0.60f)
+            // bright white core pass (smaller, hotter)
+            for (i in 0 until puffs) softDisc(p, cs[i * 3] - cs[i * 3 + 2] * 0.08f, cs[i * 3 + 1] - cs[i * 3 + 2] * 0.22f, cs[i * 3 + 2] * 0.70f, 0.95f)
+            return tex(p)
+        } catch (t: Throwable) { p.dispose(); throw t }
     }
 
     /** Feathered disc stamp used by [cloud] — smoothstep radial falloff. */
@@ -500,7 +568,9 @@ object TextureGen {
         val x1 = (cx + r).toInt().coerceAtMost(p.width - 1)
         val y0 = (cy - r).toInt().coerceAtLeast(0)
         val y1 = (cy + r).toInt().coerceAtMost(p.height - 1)
+        var rows = 0
         for (y in y0..y1) {
+            if (++rows % 16 == 0) checkDeadline()
             for (x in x0..x1) {
                 val dx = x - cx; val dy = y - cy
                 val d2 = dx * dx + dy * dy
@@ -516,22 +586,25 @@ object TextureGen {
     /** City silhouette strip, wraps horizontally for parallax scrolling. */
     private fun skyline(w: Int, h: Int, seed: Long, dark: Int, alpha: Float, dense: Boolean): Texture {
         val p = Pixmap(w, h, Pixmap.Format.RGBA8888)
-        val c = Color(dark).apply { this.a = alpha }
-        p.setColor(c)
-        val rng = Random(seed)
-        var x = 0
-        while (x < w) {
-            val bw = if (dense) 26 + rng.nextInt(40) else 40 + rng.nextInt(80)
-            val bh = (if (dense) 0.35f else 0.2f) + rng.nextFloat() * (if (dense) 0.6f else 0.65f)
-            val top = (h - bh * h).toInt()
-            p.fillRectangle(x, top, min(bw, w - x), h - top)
-            // antenna on some buildings
-            if (rng.nextFloat() < 0.3f) p.fillRectangle(x + bw / 2, top - 14, 2, 14)
-            // water towers / blocks
-            if (rng.nextFloat() < 0.25f) p.fillRectangle(x + bw / 4, top - 8, bw / 3, 8)
-            x += bw + rng.nextInt(12)
-        }
-        val t = Texture(p); p.dispose(); return t
+        try {
+            val c = Color(dark).apply { this.a = alpha }
+            p.setColor(c)
+            val rng = Random(seed)
+            var x = 0
+            while (x < w) {
+                if (x % 128 < 64) checkDeadline()
+                val bw = if (dense) 26 + rng.nextInt(40) else 40 + rng.nextInt(80)
+                val bh = (if (dense) 0.35f else 0.2f) + rng.nextFloat() * (if (dense) 0.6f else 0.65f)
+                val top = (h - bh * h).toInt()
+                p.fillRectangle(x, top, min(bw, w - x), h - top)
+                // antenna on some buildings
+                if (rng.nextFloat() < 0.3f) p.fillRectangle(x + bw / 2, top - 14, 2, 14)
+                // water towers / blocks
+                if (rng.nextFloat() < 0.25f) p.fillRectangle(x + bw / 4, top - 8, bw / 3, 8)
+                x += bw + rng.nextInt(12)
+            }
+            val t = Texture(p); p.dispose(); return t
+        } catch (t: Throwable) { p.dispose(); throw t }
     }
 
     /** Spinning gold coin, frame f of total (perspective squeeze). */
@@ -1038,9 +1111,15 @@ object TextureGen {
             p.fillRectangle((cx - hw - margin).toInt(), yy, ((hw + margin) * 2f).toInt(), 1)
         }
         var yy = domeTop
-        while (yy <= capEdge.toInt()) { domeRow(yy, OUT, 3.5f); yy++ }
+        while (yy <= capEdge.toInt()) {
+            if (yy % 16 == 0) checkDeadline()
+            domeRow(yy, OUT, 3.5f); yy++
+        }
         yy = domeTop
-        while (yy <= capEdge.toInt()) { domeRow(yy, ch.cap, 0f); yy++ }
+        while (yy <= capEdge.toInt()) {
+            if (yy % 16 == 0) checkDeadline()
+            domeRow(yy, ch.cap, 0f); yy++
+        }
         // seam stitch lines on the dome
         p.setColor(mul(ch.cap, 0.8f))
         p.fillRectangle((cx - 24).toInt(), domeTop + 18, 3, 58)
@@ -1550,38 +1629,41 @@ object TextureGen {
 
     private fun burst(size: Int): Texture {
         val p = Pixmap(size, size, Pixmap.Format.RGBA8888)
-        val half = size / 2f
-        val wedges = intArrayOf(0xe23c3cff.toInt(), 0xf28c1aff.toInt(), 0xffd23eff.toInt(), 0x4fbf4fff.toInt())
-        for (y in 0 until size) {
-            for (x in 0 until size) {
-                val dx = (x - half) / half
-                val dy = (y - half) / half
-                val d = kotlin.math.sqrt(dx * dx + dy * dy)
-                if (d > 1f) continue
-                var ang = kotlin.math.atan2(dy, dx) / (2f * PI.toFloat()) + 1.0f
-                ang = (ang % 1f + 1f) % 1f
-                val seg = (ang * 4f)
-                val i = seg.toInt() % 4
-                val f = seg - seg.toInt()
-                val a = wedges[i]
-                val b = wedges[(i + 1) % 4]
-                val blend = f * f * (3f - 2f * f)
-                fun ch(v: Int, shift: Int): Float =
-                    (((v shr shift) and 0xff) / 255f) * (1f - blend) + (((b shr shift) and 0xff) / 255f) * blend
-                val core = (d * d * d).coerceIn(0f, 1f)
-                p.setColor(ch(a, 16), ch(a, 8), ch(a, 0), 1f)
-                p.drawPixel(x, y)
-                if (core > 0f && x % 2 == 0 && y % 2 == 0) {
-                    // lighten center toward warm white
-                    p.setColor(
-                        (ch(a, 16) + (1f - ch(a, 16)) * core * 0.85f),
-                        (ch(a, 8) + (1f - ch(a, 8)) * core * 0.85f),
-                        (ch(a, 0) + (1f - ch(a, 0)) * core * 0.85f), 1f
-                    )
+        try {
+            val half = size / 2f
+            val wedges = intArrayOf(0xe23c3cff.toInt(), 0xf28c1aff.toInt(), 0xffd23eff.toInt(), 0x4fbf4fff.toInt())
+            for (y in 0 until size) {
+                if (y % 16 == 0) checkDeadline()
+                for (x in 0 until size) {
+                    val dx = (x - half) / half
+                    val dy = (y - half) / half
+                    val d = kotlin.math.sqrt(dx * dx + dy * dy)
+                    if (d > 1f) continue
+                    var ang = kotlin.math.atan2(dy, dx) / (2f * PI.toFloat()) + 1.0f
+                    ang = (ang % 1f + 1f) % 1f
+                    val seg = (ang * 4f)
+                    val i = seg.toInt() % 4
+                    val f = seg - seg.toInt()
+                    val a = wedges[i]
+                    val b = wedges[(i + 1) % 4]
+                    val blend = f * f * (3f - 2f * f)
+                    fun ch(v: Int, shift: Int): Float =
+                        (((v shr shift) and 0xff) / 255f) * (1f - blend) + (((b shr shift) and 0xff) / 255f) * blend
+                    val core = (d * d * d).coerceIn(0f, 1f)
+                    p.setColor(ch(a, 16), ch(a, 8), ch(a, 0), 1f)
                     p.drawPixel(x, y)
+                    if (core > 0f && x % 2 == 0 && y % 2 == 0) {
+                        // lighten center toward warm white
+                        p.setColor(
+                            (ch(a, 16) + (1f - ch(a, 16)) * core * 0.85f),
+                            (ch(a, 8) + (1f - ch(a, 8)) * core * 0.85f),
+                            (ch(a, 0) + (1f - ch(a, 0)) * core * 0.85f), 1f
+                        )
+                        p.drawPixel(x, y)
+                    }
                 }
             }
-        }
-        val t = Texture(p); p.dispose(); return t
+            val t = Texture(p); p.dispose(); return t
+        } catch (t: Throwable) { p.dispose(); throw t }
     }
 }
