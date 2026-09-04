@@ -150,7 +150,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         @Volatile var bootProgress: Float = 0f          // 0..1
         @Volatile var bootReady: Boolean = false
         @Volatile var bootError: String? = null
-        @Volatile var bootVersion: String = "6.3.0"     // launcher injects the full label
+        @Volatile var bootVersion: String = "7.0.0"     // launcher injects the full label
         @Volatile var bootLogText: String = ""
     }
 
@@ -176,9 +176,11 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
     //      render (that combination painted a permanent black screen).
     private enum class BootStage(val label: String) {
         BATCH("engine"),
-        TEX_A("painting textures 1/3"),
-        TEX_B("painting textures 2/3"),
-        TEX_C("painting textures 3/3"),
+        // v7.0.0: the phone no longer PAINTS textures — it loads PNGs baked
+        // into the APK (gfx-baked). The label says what actually happens.
+        TEX_A("loading art 1/3"),
+        TEX_B("loading art 2/3"),
+        TEX_C("loading art 3/3"),
         FONTS("fonts"),
         SCENE("3D world"),
         UI("interface"),
@@ -335,24 +337,30 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         bootReady = true
         bootStatus = "ready"
         bootProgress = 1f
-        // v6.3: surface the PNG-cache fast path in the boot report itself
+        // v7.0.0: surface the SHIPPED-ART fast path in the boot report itself
+        if (TextureGen.bakedHits > 0) bootLog.add(
+            "art: ${TextureGen.bakedHits} texture(s) loaded from baked PNGs — the device never paints")
         if (TextureGen.cacheHits > 0) bootLog.add(
             "texcache: ${TextureGen.cacheHits} texture(s) loaded from PNG cache — fast boot")
         bootLogText = bootLog.joinToString("\n").ifEmpty { "clean boot" }
         com.dummysurfers.core.BootWatchdog.reset() // boot made it — disarm the stall judge
         if (TextureGen.genErrors > 0) Gdx.app.log("DS-BOOT", "booted with ${TextureGen.genErrors} substituted texture(s)")
-        Gdx.app.log("DS-BOOT", "texcache: ${TextureGen.cacheHits} hit(s) from PNG cache")
+        Gdx.app.log("DS-BOOT", "art: ${TextureGen.bakedHits} baked + ${TextureGen.cacheHits} cached = ${TextureGen.fastHits} fast load(s)")
         Gdx.app.log("DS-BOOT", "staged boot complete — ${bootLog.size} fallback note(s)")
-        // v6.3 QA-only (desktop): DS_REQUIRE_TEXCACHE_HITS=<N> hard-fails the
-        // process when the PNG cache under-delivers. Result also lands in
-        // texcache-qa.txt — gradle-captured stdout drops backend writes.
-        // Zero effect on devices (env is never set on Android).
+        // v6.3/v7.0 QA-only (desktop): DS_REQUIRE_TEXCACHE_HITS=<N> hard-fails
+        // the process when the no-paint fast path (baked + cached) under-
+        // delivers. Result lands in texcache-qa.txt — gradle-captured stdout
+        // drops backend writes. Zero effect on devices (env never set there).
         System.getenv("DS_REQUIRE_TEXCACHE_HITS")?.toIntOrNull()?.let { need ->
-            val ok = TextureGen.cacheHits >= need
+            val fast = TextureGen.fastHits
+            val ok = fast >= need
             try { Gdx.files.local("texcache-qa.txt").writeString(
-                "hits=${TextureGen.cacheHits} need=$need ${if (ok) "OK" else "FAIL"}", false) } catch (_: Throwable) {}
+                "baked=${TextureGen.bakedHits} cached=${TextureGen.cacheHits} fast=$fast need=$need ${if (ok) "OK" else "FAIL"}", false) } catch (_: Throwable) {}
             if (!ok) Runtime.getRuntime().exit(3)
         }
+        // v7.0.0 bake mode (desktop only): the boot painted + exported every
+        // texture — leave cleanly so the gradle task completes.
+        if (System.getenv("DS_QUIT_AFTER_BOOT") == "1") Gdx.app.exit()
     }
 
     private fun enterSafeMode() {
@@ -438,7 +446,12 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         }
         f.setColor(1f, 1f, 1f, 1f)
         f.data.setScale(0.95f)
-        val tip = if (TextureGen.cacheHits > 0) "loaded saved art — fast start!" else "first launch paints the whole world - next launches load fast"
+        // v7.0.0: art ships inside the APK — the tip tells the truth now
+        val tip = when {
+            TextureGen.bakedHits > 0 -> "art loaded from the app — zero painting, instant start"
+            TextureGen.cacheHits > 0 -> "loaded saved art — fast start!"
+            else -> "painting the world once — this device will cache it"
+        }
         fontLayout.setText(f, tip)
         f.draw(batch, tip, cx - fontLayout.width / 2f, vh * 0.22f)
         batch.end()

@@ -204,10 +204,44 @@ object TextureGen {
     const val CACHE_GEN = "tv3"
     var cacheHits = 0
         private set
+
+    // ── v7.0.0 SHIPPED ART — the boot no longer paints ANYTHING on the phone ──
+    // Field history: v6.1 froze 30+ min inside "painting textures", v6.2 added
+    // per-texture deadlines + a watchdog + a restart ladder, v6.3 added a
+    // filesDir PNG cache — and the field device STILL wedged in the paint
+    // phase. Conclusion: no amount of in-process protection matters if the
+    // phone keeps executing per-pixel painters on its GL thread. So the phone
+    // now NEVER paints: every texture is painted ONCE on the desktop
+    // (`./gradlew :desktop:bakeTextures`), the PNGs are committed to
+    // android/assets/gfx-baked/tv3 and SHIP INSIDE THE APK. At runtime each
+    // texture loads straight from the baked PNG (identical bytes to a fresh
+    // paint — same painter, same seed, same CACHE_GEN). Painting survives
+    // ONLY as a belt-and-braces fallback for a texture missing from the
+    // baked set (e.g. a new painter added without re-baking), still bounded
+    // by the v6.2 deadlines.
+    var bakedHits = 0
+        private set
+    /** All textures that skipped painting this boot (baked + filesDir cache). */
+    val fastHits: Int get() = bakedHits + cacheHits
+    private val bakedOn = System.getenv("DS_NO_BAKED") == null
+
+    /** Bake mode (desktop task only): when set, every successful paint is
+     *  written as a PNG into this dir (android/assets/gfx-baked) and cache
+     *  READS are disabled so a bake always paints from live code. */
+    private val exportDir: String? = System.getenv("DS_TEXCACHE_EXPORT")?.trim()?.takeIf { it.isNotEmpty() }
     private val cacheOn = System.getenv("DS_NO_TEXCACHE") == null
 
+    /** `#` (texArray slot separator) becomes `-` in filenames — safe on every
+     *  filesystem and for Android AAPT2 asset packaging. */
+    private fun fileName(name: String, linear: Boolean): String =
+        "${name.replace('#', '-')}${if (linear) ".lin" else ""}.png"
+
     private fun cacheFile(name: String, linear: Boolean): FileHandle =
-        Gdx.files.local("texcache/$CACHE_GEN/$name${if (linear) ".lin" else ""}.png")
+        if (exportDir != null) Gdx.files.absolute("$exportDir/$CACHE_GEN/${fileName(name, linear)}")
+        else Gdx.files.local("texcache/$CACHE_GEN/${fileName(name, linear)}")
+
+    private fun bakedFile(name: String, linear: Boolean): FileHandle =
+        Gdx.files.internal("gfx-baked/$CACHE_GEN/${fileName(name, linear)}")
 
     private fun saveToCache(name: String, p: Pixmap, linear: Boolean = false) {
         if (!cacheOn || name == "?") return
@@ -218,7 +252,28 @@ object TextureGen {
     }
 
     private fun cachedTex(name: String): Texture? {
-        if (!cacheOn) return null
+        // Bake run: always paint from live code, never satisfy from a cache.
+        if (exportDir != null || !cacheOn) return null
+        // 1) BAKED art shipped inside the APK — the phone's normal path.
+        if (bakedOn) {
+            for (linear in booleanArrayOf(true, false)) {
+                val f = bakedFile(name, linear)
+                if (!f.exists()) continue
+                try {
+                    val pm = Pixmap(f)
+                    val t = Texture(pm)
+                    pm.dispose()
+                    if (linear) t.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+                    bakedHits++
+                    return t
+                } catch (_: Throwable) {
+                    // baked file unreadable → fall through, paint it live
+                }
+            }
+        }
+        // 2) filesDir PNG cache (paints that happened on THIS device —
+        //    covers the fallback path so a missing baked file costs one paint,
+        //    once, ever).
         for (linear in booleanArrayOf(true, false)) {
             val f = cacheFile(name, linear)
             if (!f.exists()) continue
@@ -272,6 +327,14 @@ object TextureGen {
 
     private fun texNine(name: String, c: () -> NinePatch): NinePatch =
         try {
+            // v7.0.1 BUGFIX (cache pollution): nine painters build their pixmap
+            // through the tex(Pixmap) overload, which SAVES under currentTexName.
+            // texNine never set it, so the save inherited the PREVIOUS texture's
+            // name — e.g. panelNine's 64×64 pixmap landed as preview-3.png in
+            // the bake/filesDir cache (shadowed by the real .lin file today,
+            // but a one-line ordering change away from shipping wrong art).
+            // Now the save is attributed to the nine's own name.
+            currentTexName = name
             armDeadline(); val r = c(); tick(); r
         } catch (t: Throwable) {
             genErrors++
@@ -289,8 +352,8 @@ object TextureGen {
     // split into three chunks the game runs on three separate frames, with a
     // reporter callback feeding the visible loading screen / native overlay.
     fun chunkA(reporter: ((String) -> Unit)? = null) {
-        genErrors = 0; anyFatal = false; cacheHits = 0
-        this.reporter = reporter; chunkLabel = "painting textures 1/3"; chunkDone = 0
+        genErrors = 0; anyFatal = false; cacheHits = 0; bakedHits = 0
+        this.reporter = reporter; chunkLabel = "loading art 1/3"; chunkDone = 0
         reporter?.invoke(chunkLabel)
         white = tex("white") { solid(4, 4, Color.WHITE) }
         disc = tex("disc") { radial(64, Color(1f, 1f, 1f, 1f), 0.86f) } // solid core, 14% feather
@@ -311,7 +374,7 @@ object TextureGen {
     }
 
     fun chunkB(reporter: ((String) -> Unit)? = null) {
-        this.reporter = reporter; chunkLabel = "painting textures 2/3"; chunkDone = 0
+        this.reporter = reporter; chunkLabel = "loading art 2/3"; chunkDone = 0
         reporter?.invoke(chunkLabel)
         rainbowBurst = tex("rainbowBurst") { burst(512) }
         coinFrames = texArray("coin", 10) { coin(72, it, 10) }
@@ -333,7 +396,7 @@ object TextureGen {
     }
 
     fun chunkC(reporter: ((String) -> Unit)? = null) {
-        this.reporter = reporter; chunkLabel = "painting textures 3/3"; chunkDone = 0
+        this.reporter = reporter; chunkLabel = "loading art 3/3"; chunkDone = 0
         reporter?.invoke(chunkLabel)
         trainSides = texArray("trainSide", Palette.TRAIN_LIVERIES.size) { trainSide(it) }
         trainFronts = texArray("trainFront", Palette.TRAIN_LIVERIES.size) { trainFront(it) }

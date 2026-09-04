@@ -13,12 +13,9 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.Gravity
-import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.FrameLayout
 import android.widget.LinearLayout
-import android.widget.ProgressBar
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
@@ -35,65 +32,54 @@ import java.util.Locale
 /**
  * Android entry point — portrait, GL ES 2.0, immersive.
  *
- * v6.1.0 "always visible" contract — the field reports ("error dialog then a
- * black blank page", "takes too time to open") came from three stacked gaps:
+ * v7.0.0 "SHIPPED ART" — THE PAGE IS GONE.
  *
- *  1. NATIVE LOADING OVERLAY (new): the moment the GL view exists we pin a
- *     real Android view on top of it — title, progress bar, live boot status
- *     (fed by the game's static BootBridge across the GL/UIThread wall).
- *     The player sees progress from the first second; the app can NEVER
- *     present a black window again, even if GL renders nothing at all.
- *  2. NATIVE ERROR CARD (new): if the boot bridge reports a failure, the
- *     overlay swaps to an error card with the exact stage + COPY REPORT —
- *     pure Android widgets, works even when the GL surface is completely
- *     dead. Taps pass through to the game so SafeMode's tap-to-retry works.
- *  3. The old report dialog now appears only AFTER the game is visibly up.
+ * Field history: v6.1.0 introduced a native boot-report overlay so startup
+ * was never a black screen; a device then sat on it ("painting textures 2/3")
+ * for 30+ minutes. v6.2 added per-texture paint deadlines + a stall watchdog
+ * + a restart ladder; v6.3 added a filesDir PNG cache — and the device STILL
+ * wedged inside the paint phase. Every patch protected the same wrong
+ * constant: the phone painting ~80 procedural textures on its GL thread.
+ * v7.0.0 deletes that constant: all art is painted ONCE on the desktop
+ * (`:desktop:bakeTextures`), committed under android/assets/gfx-baked, and
+ * ships inside the APK. The phone LOADS PNGs — the phase the device froze in
+ * no longer exists on the device, and with it the reason for the diagnostic
+ * page is gone:
  *
- *  Still true from v5.4/v6.0: any Java-side crash lands in crash-last.txt
- *  (read + deleted on next launch, offered as Copy/Share), every Activity
- *  lifecycle callback is guarded, and an initialize()-level failure shows
- *  the native fallback screen. The game itself boots in per-frame stages
- *  with its own fallbacks — see DummySurfersGame.
+ *  1. NO NATIVE BOOT OVERLAY ANYMORE — the user-visible boot report page is
+ *     removed. Boot is a ~1–2 s in-game (GL) loading frame, then the menu.
+ *  2. SILENT WATCHDOG stays (no UI): if boot shows zero progress for 20 s it
+ *     self-restarts once; a second freeze is recorded but never loops and
+ *     never nags. With no painting on the device this is expected to stay
+ *     at zero forever.
+ *  3. Crash reports from OTHER app versions are dropped on read — upgrading
+ *     can never resurrect an old version's "Something went wrong last time"
+ *     dialog. (Reports from the current version are still offered once,
+ *     after the game is visibly up.)
+ *  4. initialize()-level failure (no GL view at all) still shows the full
+ *     native fallback screen with Copy/Retry/Close.
+ *
+ * Still true from v5.4/v6.0: any Java-side crash lands in crash-last.txt,
+ * every Activity lifecycle callback is guarded, and the game boots in
+ * per-frame stages with its own fallbacks — see DummySurfersGame.
  */
 class AndroidLauncher : AndroidApplication() {
 
     private lateinit var game: DummySurfersGame
     private val uiThread = Handler(Looper.getMainLooper())
 
-    // ── boot overlay state ──────────────────────────────────────────────
-    private var overlayRoot: FrameLayout? = null
-    private var loadingBox: LinearLayout? = null
-    private var errorBox: LinearLayout? = null
-    private var statusTv: TextView? = null
-    private var tipTv: TextView? = null
-    private var versionTv: TextView? = null
-    private var progressBar: ProgressBar? = null
-    private var copyChip: Button? = null
-    private var errorBodyTv: TextView? = null
-    private var errorTitleTv: TextView? = null
-    private var restartChip: Button? = null
-    private var errorShown = false
-    private var overlayGone = false
-    private var waitedMs = 0L
-    private var pendingReport: String? = null
-    private var reportShown = true
-
-    // ── v6.2 BOOT STALL WATCHDOG ──────────────────────────────────────────
-    // v6.1.0 field report: a device sat on "painting textures 2/3" for 30+
-    // minutes. The overlay kept rendering the same text forever — nothing
-    // watched whether progress was actually HAPPENING. Now pollBoot feeds
-    // BootWatchdog every tick; on a stall we recover. Recovery ladder:
-    //   stall #1 (this install) → silent process restart (transient wedges
-    //     — memory pressure, a one-off driver hiccup — never reach the user)
-    //   stall #2+ → native "BOOT STILL FROZEN" card: RESTART APP / COPY
-    //     REPORT / CLOSE APP. Pure Android widgets — works even with the GL
-    //     thread hard-blocked inside a native call, which no GL-side code
-    //     could ever recover from.
+    // ── v7.0 silent boot watchdog (NO UI — the page is gone) ─────────────
+    // stall #1 (this install) → one silent process restart. stall #2+ →
+    // recorded only (crash-last.txt + boot-stalls.txt). Never loops, never
+    // nags — and with zero painting on the device it should never fire.
     private val stallFile: File get() = File(filesDir, "boot-stalls.txt")
-    private var stallCount = try { File(filesDir, "boot-stalls.txt").readText().trim().toIntOrNull() ?: 0 } catch (_: Throwable) { 0 }
+    private var stallCount = try {
+        File(filesDir, "boot-stalls.txt").readText().trim().toIntOrNull() ?: 0
+    } catch (_: Throwable) { 0 }
     private var stallHandled = false
     private var lastStatusSeen: String? = null
-    private val stallHistory = StringBuilder()
+    private var watcherDone = false
+    private var pendingReport: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -101,7 +87,9 @@ class AndroidLauncher : AndroidApplication() {
 
         // Consume the last crash report (read + delete atomically) BEFORE the
         // game boots so nothing below can resurrect it into a launch loop.
-        val report = try {
+        // v7.0: reports written by OTHER versions are dropped — an upgrade
+        // must never pop a stale "Something went wrong last time" dialog.
+        var report: String? = try {
             val f = File(filesDir, "crash-last.txt")
             if (f.isFile) {
                 val text = f.readText().take(6000)
@@ -112,8 +100,10 @@ class AndroidLauncher : AndroidApplication() {
             try { File(filesDir, "crash-last.txt").delete() } catch (_: Throwable) {}
             null
         }
+        if (report != null && !report.contains("version: v${versionLabel()}")) {
+            report = null // old version's stall/crash — meaningless now, silently dropped
+        }
         pendingReport = report
-        reportShown = report == null
 
         // The game's boot screen prints the real version — inject before boot.
         try { DummySurfersGame.bootVersion = versionLabel() } catch (_: Throwable) {}
@@ -129,7 +119,7 @@ class AndroidLauncher : AndroidApplication() {
             return
         }
 
-        installBootOverlay()
+        installSilentWatchdog()
     }
 
     private fun startGame() {
@@ -161,202 +151,41 @@ class AndroidLauncher : AndroidApplication() {
         initialize(game, config)
     }
 
-    // ── v6.1 native boot overlay ────────────────────────────────────────────
-    // Plain Android widgets pinned OVER the GL surface. Driven by the game's
-    // static BootBridge fields at 200ms ticks. This is the layer that makes a
-    // black/blank startup structurally impossible: it is visible from the
-    // first frames, shows live progress, and if boot fails it becomes the
-    // readable error card (no GL required).
-
-    private fun dp(v: Int): Int = (resources.displayMetrics.density * v).toInt()
-
-    private fun installBootOverlay() {
-        try {
-            val content = findViewById<ViewGroup>(android.R.id.content)
-            val root = FrameLayout(this).apply {
-                setBackgroundColor(Color.parseColor("#141830"))
-                isClickable = true
-                isFocusable = true
-            }
-
-            // ── loading box ──
-            val box = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                gravity = Gravity.CENTER_HORIZONTAL
-            }
-            fun label(text: String, size: Float, color: String, bold: Boolean = false): TextView =
-                TextView(this@AndroidLauncher).apply {
-                    this.text = text
-                    textSize = size
-                    setTextColor(Color.parseColor(color))
-                    setTypeface(typeface, if (bold) Typeface.BOLD else Typeface.NORMAL)
-                    gravity = Gravity.CENTER_HORIZONTAL
-                    setPadding(0, dp(6), 0, dp(6))
-                }
-            box.addView(label("DUMMY SURFERS", 30f, "#FFC93C", bold = true))
-            val ver = label("v${DummySurfersGame.bootVersion}", 13f, "#8A90B8")
-            versionTv = ver
-            box.addView(ver)
-            box.addView(label("Getting the run ready…", 16f, "#FFFFFF"))
-
-            val pb = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
-                max = 100
-                progress = 2
-                layoutParams = LinearLayout.LayoutParams(dp(230), ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-                    setMargins(0, dp(18), 0, dp(10))
-                }
-            }
-            progressBar = pb
-            box.addView(pb)
-
-            val status = label(DummySurfersGame.bootStatus, 14f, "#C9CFF2")
-            statusTv = status
-            box.addView(status)
-
-            val tip = label("First launch paints the world (up to a minute on slow phones) — next launches load much faster", 12f, "#8A90B8")
-            tipTv = tip
-            box.addView(tip)
-
-            val chip = chipButton("COPY REPORT", "#4A529E") {
-                copy(fullReport())
-                Toast.makeText(this@AndroidLauncher, "Report copied", Toast.LENGTH_SHORT).show()
-            }
-            copyChip = chip
-            chip.visibility = View.GONE
-            box.addView(chip)
-
-            // ── error box (hidden until a boot stage fails or boot stalls) ──
-            val ebox = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                gravity = Gravity.CENTER_HORIZONTAL
-                visibility = View.GONE
-                setPadding(dp(20), dp(30), dp(20), dp(20))
-            }
-            val eTitle = label("STARTUP PROBLEM", 24f, "#FF5A3C", bold = true)
-            errorTitleTv = eTitle
-            ebox.addView(eTitle)
-            ebox.addView(label("The app stays open. Copy this report to get it fixed:", 13f, "#FFFFFF"))
-            val body = TextView(this).apply {
-                textSize = 11f
-                typeface = Typeface.MONOSPACE
-                setTextColor(Color.parseColor("#C9CFF2"))
-                setPadding(dp(16), dp(12), dp(16), dp(12))
-                setTextIsSelectable(true)
-            }
-            errorBodyTv = body
-            val scroll = ScrollView(this).apply {
-                addView(body)
-                layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f).apply {
-                    setMargins(0, dp(10), 0, dp(10))
-                }
-            }
-            ebox.addView(scroll)
-            ebox.addView(chipButton("COPY REPORT", "#4A529E") {
-                copy(fullReport())
-                Toast.makeText(this@AndroidLauncher, "Report copied", Toast.LENGTH_SHORT).show()
-            })
-            ebox.addView(chipButton("RETRY BOOT", "#3DBB5A") {
-                try { DummySurfersGame.bootError = null; DummySurfersGame.bootReady = false } catch (_: Throwable) {}
-            })
-            val restart = chipButton("RESTART APP", "#E8901C") {
-                try { DummySurfersGame.bootReady = false } catch (_: Throwable) {}
-                restartApp()
-            }
-            restart.visibility = View.GONE // only the stall card shows this
-            restartChip = restart
-            ebox.addView(restart)
-            ebox.addView(label("…or tap the screen — the game retries by itself", 12f, "#8A90B8"))
-
-            root.addView(ebox, FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT).apply {
-                setMargins(dp(16), dp(24), dp(16), dp(24))
-            })
-            root.addView(box, FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-                gravity = Gravity.CENTER
-                setMargins(dp(28), 0, dp(28), 0)
-            })
-
-            content.addView(root, ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
-            overlayRoot = root
-            loadingBox = box
-            errorBox = ebox
-            uiThread.postDelayed(pollBoot, 200)
-        } catch (_: Throwable) {
-            // Overlay is a safety layer — it must never be the thing that
-            // breaks the app. GL boot screen + SafeMode still work without it.
-        }
+    // ── v7.0 silent watchdog poll — pure logic, zero UI ────────────────────
+    private fun installSilentWatchdog() {
+        uiThread.postDelayed(silentWatch, 250)
     }
 
-    private fun chipButton(label: String, bg: String, action: () -> Unit): Button =
-        Button(this).apply {
-            text = label
-            textSize = 14f
-            isAllCaps = false
-            setTextColor(Color.WHITE)
-            background = GradientDrawable().apply {
-                setColor(Color.parseColor(bg))
-                cornerRadius = dp(26).toFloat()
-            }
-            setOnClickListener { try { action() } catch (_: Throwable) {} }
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-                setMargins(0, dp(10), 0, 0)
-            }
-        }
-
-    private val pollBoot = object : Runnable {
+    private val silentWatch = object : Runnable {
         override fun run() {
+            var keepGoing = true
             try {
                 val ready = DummySurfersGame.bootReady
                 val err = DummySurfersGame.bootError
-                if (!overlayGone) {
-                    if (!errorShown) {
-                        progressBar?.progress = (DummySurfersGame.bootProgress * 100).toInt().coerceIn(0, 100)
-                        statusTv?.text = DummySurfersGame.bootStatus
-                        waitedMs += 200
-                        if (err != null) {
-                            showError(err)
-                        } else if (ready) {
-                            dismissOverlay()
-                        } else {
-                            // v6.2: watch for a FROZEN boot (no status/progress
-                            // change for 20s) and run the recovery ladder.
-                            checkStall(ready, err)
-                            if (!stallHandled && waitedMs > 30_000) {
-                                tipTv?.text = "Still loading — this device is very slow. If it never finishes, copy the report:"
-                                copyChip?.visibility = View.VISIBLE
-                            }
-                        }
-                    } else {
-                        // error/stall card visible
-                        if (ready) dismissOverlay()
-                        else if (!stallCardShown && err == null) showLoadingAgain()
-                        else if (!stallCardShown) errorBodyTv?.text = buildString {
-                            appendLine(DummySurfersGame.bootLogText)
-                            appendLine()
-                            appendLine("device: ${Build.MANUFACTURER} ${Build.MODEL} (Android ${Build.VERSION.RELEASE})")
-                            append("version: v${DummySurfersGame.bootVersion}")
-                        }
+                if (ready) {
+                    // a successful boot clears the stall history — a future
+                    // stall (if one ever happens) gets the free silent restart
+                    try { stallFile.delete() } catch (_: Throwable) {}
+                    // offer a CURRENT-VERSION crash report once, after the game
+                    // is visibly up; then the watcher retires
+                    if (pendingReport != null) {
+                        val rep = pendingReport
+                        pendingReport = null
+                        try { askToReport(rep!!) } catch (_: Throwable) {}
                     }
+                    watcherDone = true
+                    keepGoing = false
+                } else if (err == null) {
+                    checkStall(false, null)
                 }
-                // offer the consumed crash report only once the game is visibly up
-                if (ready && !reportShown && overlayGone) {
-                    pendingReport?.let { try { askToReport(it) } catch (_: Throwable) {} }
-                    reportShown = true
-                }
-                // a successful boot clears the stall history — future stalls
-                // get the free silent restart again
-                if (ready) try { stallFile.delete() } catch (_: Throwable) {}
+                // bootError != null → the GL SafeMode frame owns the recovery
+                // UX (tap anywhere to retry). Nothing native to do or show.
             } catch (_: Throwable) {}
-            if (!overlayGone || !reportShown) uiThread.postDelayed(this, 200)
+            if (keepGoing && !watcherDone) uiThread.postDelayed(this, 250)
         }
     }
 
-    // ── v6.2 stall recovery ladder ──────────────────────────────────────────
-    private var stallCardShown = false
-
+    // ── stall recovery (silent) ─────────────────────────────────────────────
     private fun checkStall(ready: Boolean, err: String?) {
         // a status change re-arms the watchdog (BootWatchdog resets internally;
         // the latch here stops repeated handling of ONE frozen episode)
@@ -381,9 +210,8 @@ class AndroidLauncher : AndroidApplication() {
         val where = DummySurfersGame.bootStatus ?: "?"
         stallCount++
         try { stallFile.writeText(stallCount.toString()) } catch (_: Throwable) {}
-        val at = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
-        stallHistory.appendLine("stall #$stallCount at '$where' (${at}) — no progress for ${com.dummysurfers.core.BootWatchdog.STALL_MS / 1000}s")
-        // persist for the next launch's report dialog (and for us)
+        // persist for diagnosis (also picked up by the crash-report path —
+        // offered only if THIS app version ends up showing it)
         try {
             File(filesDir, "crash-last.txt").writeText(reportTextRaw(
                 "boot stall #$stallCount",
@@ -391,38 +219,11 @@ class AndroidLauncher : AndroidApplication() {
                 "boot log:\n${DummySurfersGame.bootLogText}"))
         } catch (_: Throwable) {}
         if (stallCount <= 1) {
-            // first stall this install: silent self-heal — restart the process
-            tipTv?.text = "Frozen — restarting for a clean boot…"
+            // first stall this install: one silent self-heal — restart the
+            // process. If the boot freezes again the watcher records it and
+            // STOPS: no loops, no dialogs, no page — by design.
             uiThread.postDelayed({ restartApp() }, 500)
-        } else {
-            showStallCard()
         }
-    }
-
-    private fun showStallCard() {
-        stallCardShown = true
-        errorShown = true
-        errorTitleTv?.text = "BOOT STILL FROZEN"
-        loadingBox?.visibility = View.GONE
-        errorBox?.visibility = View.VISIBLE
-        restartChip?.visibility = View.VISIBLE
-        errorBodyTv?.text = buildString {
-            appendLine("The boot stopped moving at '"); append(DummySurfersGame.bootStatus ?: "?")
-            appendLine("' — this device froze instead of loading.")
-            appendLine()
-            appendLine("RESTART APP tries a fresh boot. If this keeps happening,")
-            appendLine("COPY REPORT and send it — it names the exact stage.")
-            appendLine()
-            appendLine(stallHistory.toString().trimEnd())
-            appendLine()
-            appendLine(DummySurfersGame.bootLogText)
-            appendLine()
-            appendLine("device: ${Build.MANUFACTURER} ${Build.MODEL} (Android ${Build.VERSION.RELEASE})")
-            append("version: v${DummySurfersGame.bootVersion}")
-        }
-        // let taps fall through to the GL SafeMode (tap anywhere to retry)
-        overlayRoot?.isClickable = false
-        overlayRoot?.isFocusable = false
     }
 
     /** Process-level restart — the ONLY recovery that works when the GL
@@ -438,21 +239,6 @@ class AndroidLauncher : AndroidApplication() {
         uiThread.postDelayed({ Runtime.getRuntime().exit(0) }, 300)
     }
 
-    /** Full report: header + status + stall history + boot log + device. */
-    private fun fullReport(): String = buildString {
-        appendLine("Dummy Surfers boot report — v${DummySurfersGame.bootVersion}")
-        appendLine("status: ${DummySurfersGame.bootStatus}")
-        DummySurfersGame.bootError?.let { appendLine("error: $it") }
-        if (stallHistory.isNotEmpty()) {
-            appendLine("stalls:")
-            appendLine(stallHistory.toString().trimEnd())
-        }
-        appendLine()
-        appendLine(DummySurfersGame.bootLogText)
-        appendLine()
-        append("device: ${Build.MANUFACTURER} ${Build.MODEL} (Android ${Build.VERSION.RELEASE}) · version: v${DummySurfersGame.bootVersion}")
-    }
-
     private fun reportTextRaw(what: String, body: String): String = buildString {
         appendLine("Dummy Surfers report — ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())}")
         appendLine("what: $what")
@@ -460,55 +246,6 @@ class AndroidLauncher : AndroidApplication() {
         appendLine("version: v${versionLabel()}")
         appendLine()
         append(body)
-    }
-
-    private fun showError(err: String) {
-        errorShown = true
-        errorTitleTv?.text = "STARTUP PROBLEM"
-        loadingBox?.visibility = View.GONE
-        errorBox?.visibility = View.VISIBLE
-        restartChip?.visibility = View.GONE // stage failure: tap-retry exists
-        errorBodyTv?.text = buildString {
-            appendLine(err)
-            appendLine()
-            if (stallHistory.isNotEmpty()) {
-                appendLine(stallHistory.toString().trimEnd())
-                appendLine()
-            }
-            append(DummySurfersGame.bootLogText)
-        }
-        // let taps fall through to the GL SafeMode (tap anywhere to retry)
-        overlayRoot?.isClickable = false
-        overlayRoot?.isFocusable = false
-    }
-
-    private fun showLoadingAgain() {
-        errorShown = false
-        stallCardShown = false
-        errorBox?.visibility = View.GONE
-        loadingBox?.visibility = View.VISIBLE
-        statusTv?.text = DummySurfersGame.bootStatus
-        tipTv?.text = "Retrying…"
-        copyChip?.visibility = View.GONE
-        waitedMs = 0L
-        overlayRoot?.isClickable = true
-        overlayRoot?.isFocusable = true
-    }
-
-    private fun dismissOverlay() {
-        val root = overlayRoot ?: return
-        overlayGone = true
-        try {
-            root.animate().alpha(0f).setDuration(260f.toLong()).withEndAction {
-                try { (root.parent as? ViewGroup)?.removeView(root) } catch (_: Throwable) {}
-            }.start()
-        } catch (_: Throwable) {
-            try { (root.parent as? ViewGroup)?.removeView(root) } catch (_: Throwable) {}
-        }
-        overlayRoot = null
-        uiThread.postDelayed({
-            if (!reportShown) uiThread.postDelayed(pollBoot, 200)
-        }, 300)
     }
 
     // ── v6.0 lifecycle immunity ──────────────────────────────────────────
@@ -537,7 +274,7 @@ class AndroidLauncher : AndroidApplication() {
         try { super.onDestroy() } catch (t: Throwable) {
             writeCrashFile("lifecycle onDestroy", t)
         }
-        try { uiThread.removeCallbacks(pollBoot) } catch (_: Throwable) {}
+        watcherDone = true
     }
 
     /** Full-native last resort when the GL view cannot even be created. */
