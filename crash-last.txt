@@ -1,0 +1,12 @@
+Dummy Surfers startup failure (safe mode)
+SCENE: RuntimeException: DS_FAIL_STAGE=SCENE (QA-simulated)
+
+java.lang.RuntimeException: DS_FAIL_STAGE=SCENE (QA-simulated)
+	at com.dummysurfers.core.DummySurfersGame.qaFailIfRequested(DummySurfersGame.kt:227)
+	at com.dummysurfers.core.DummySurfersGame.stepBoot(DummySurfersGame.kt:276)
+	at com.dummysurfers.core.DummySurfersGame.render(DummySurfersGame.kt:526)
+	at com.badlogic.gdx.backends.lwjgl3.Lwjgl3Window.update(Lwjgl3Window.java:387)
+	at com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application.loop(Lwjgl3Application.java:193)
+	at com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application.<init>(Lwjgl3Application.java:167)
+	at com.dummysurfers.desktop.DesktopLauncherKt.main(DesktopLauncher.kt:127)
+	at com.dummysurfers.desktop.DesktopLauncherKt.main(DesktopLauncher.kt)
