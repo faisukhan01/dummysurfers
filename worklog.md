@@ -391,3 +391,26 @@ Stage Summary:
 - If the user reports another stall: the boot-stalls counter + COPY REPORT now name the exact stage and stall history — diagnosis is copy-paste.
 - ⚠️ AXML version check: manifest strings are UTF-16LE; b'6.2.0' UTF-8 grep will lie to you.
 - Next round ideas: PNG startup cache (filesDir) for ~10x faster 2nd+ launches, SS-fidelity push (mission cards, train liveries close-up, guard+dog catch framing), hoverboard chip roundel.
+
+---
+Task ID: 16
+Agent: Z.ai Code (orchestrator)
+Task: "still the same issue — why you not fixing this??? make 100% sure permanently resolved + update github repo and commit graph and .apk" — kill the painting-textures hang for good, ship a fast boot, update everything.
+
+Work Log:
+- STATE AUDIT: v6.2.0 (code 28, watchdog + paint deadlines) was already shipped and CI-green at 15:00Z — but the user's freeze screenshot showed v6.1.0 (code 27). The 30-min hang is structurally impossible on v6.2.0+ (per-texture deadlines kill CPU-loop wedges; the 20s watchdog + restart ladder kills native blocks), so the phone was running the pre-fix APK. Regardless, hardened further and shipped v6.3.0 so the boot screen itself proves which build runs.
+- PARANOID CODE AUDIT (AndroidLauncher.kt 685 lines + BootWatchdog.kt + staged boot + TextureGen deadlines): recovery ladder sound — stall #1 = silent process restart, stall #2+ = native card; pollBoot feeds the watchdog on the UI thread independent of GL; boot-stalls.txt cleared on success; no remaining path can sit silent for 30 min.
+- v6.3.0 PNG STARTUP CACHE (01d29dd): every successful paint is saved as PNG under texcache/tv3/ (filesDir); subsequent boots load PNGs directly — no per-pixel painting at all (the exact region the device wedged inside is barely visited). Safety: per-recipe-generation dir; only successful paints cached; corrupt file self-deletes + repaints; filters travel with the file (.lin suffix); DS_NO_TEXCACHE=1 QA bypass. Also fixed powerIcon/navIcon painters painting ALL six icons per slot (36 paints → 10, ~30 wasted paints/boot eliminated).
+- BOOT UX: native overlay tip + GL boot tip now explain first-vs-second launch; boot report gains a "texcache: N loaded" line; finishBoot gained env-gated DS_REQUIRE_TEXCACHE_HITS=<N> hard-fail QA assertion.
+- QA HARNESS LESSON: gradle-captured stdout drops LWJGL3 Gdx.app.log AND in-loop println — QA evidence must be files/screenshots/exit codes. Earlier "UP-TO-DATE" compile once ran stale code; --rerun-tasks + --no-build-cache forced honest compiles. QUIT timers must exceed Xvfb boot time (~2s was mid-paint; 40s completes).
+- QA RESULTS (all on camera): cold boot writes cache (80 PNGs after a FULL cold boot; first partial run wrote 43 before its early QUIT); warm boot hits=42 (partial cache) then hits=79/80 after full cold re-cache; corrupt-file run self-healed (79 hits + 1 repaint, BUILD SUCCESSFUL); cold-cache assertion run hard-FAILED as designed (hits=0 need=40 → exit 3); DS_NO_TEXCACHE=1 + DS_TEX_BUDGET_MS=1 substitute path intact; STALLTEST 9/9; gameplay screenshots identical from cached art (trains/coins/HUD verified visually).
+- SHIP: 2 commits (Faisal Khan identity) 576e9d6→1461322, pushed with PAT. CI run 33894459123 SUCCESS. Release "Dummy Surfers v6.3.0" live 16:22Z (DummySurfers.apk 3,841,190 bytes). Downloaded the asset, unzipped, AndroidManifest.xml contains UTF-16LE "6.3.0" and NOT "6.2.0" (search the UNZIPPED manifest — raw zip bytes are deflate-compressed and will false-negative).
+- COMMIT GRAPH: 1027 commits, 100% authored faisukhan01 noreply email → all count. Remote HEAD = 1461322 by Faisal Khan.
+- PAGES: GitHub Pages API returns 404 on the repo (Pages not enabled) — the old "site had recent pushes" banner has nothing pending behind it now; no action possible/needed.
+- Landing page (sandbox site): v6.3.0 changelog card (7 items) + nav chip + footer updated; lint clean.
+
+Stage Summary:
+- The boot now has four independent layers: per-texture paint deadlines (seconds, never minutes) → per-texture progress ticks (20s watchdog can tell slow from frozen) → silent self-restart on first stall → native RESTART APP card on repeat. v6.3.0 additionally makes second+ boots skip painting entirely via the PNG cache.
+- CRITICAL USER GUIDANCE: the phone was on v6.1.0. They must UNINSTALL the old app and download FRESH from the stable URL; the boot screen must read "v6.3.0 (code 29)".
+- ⚠️ QA traps for next agent: verify APK versions on the UNZIPPED manifest (UTF-16LE); force --rerun-tasks when paranoid about gradle caching; never trust gradle-captured game stdout.
+- Next round ideas: DS_AUTO QUIT default later than 40s in docs; SS-fidelity push (mission cards, train liveries, guard+dog catch framing); hoverboard chip roundel.

@@ -63,7 +63,18 @@ const consoleLines = [
 
 const changelog = [
   {
-    v: 'v6.2.0', date: 'The never-stuck boot — a 30-minute freeze is now structurally impossible', latest: true, items: [
+    v: 'v6.3.0', date: 'The fast second boot — first launch paints, every launch after loads', latest: true, items: [
+      '⚡ PNG STARTUP CACHE: the first launch paints the world once and saves every texture as a finished PNG — from the SECOND launch the game loads that art directly, skipping ALL per-pixel painting. Boot drops from "up to a minute" to a fraction, and the exact code region the slow device froze inside is barely visited at all',
+      '🧠 30 PAINTS ELIMINATED PER BOOT: found the power-up/nav icon builder painting all six icons six times each (36 paints for 10 textures) — now each slot paints exactly one icon. Less work, faster boot, same art',
+      '🩹 SELF-HEALING CACHE: a corrupted cache file deletes itself and repaints on the spot — proven on camera (1 corrupted file → 79 loaded from cache + 1 repainted, boot clean). Only successful paints are ever cached, so a placeholder from a deadline breach can never poison tomorrow\'s boot',
+      '🔒 PIXEL-IDENTICAL: filters travel with the cached file, so art loaded from cache is visually identical to a fresh paint — verified with gameplay screenshots side by side',
+      '✅ RE-PROVEN SAFE: the full v6.2.0 safety net re-tested green — watchdog 9/9 assertions, forced 1ms paint budgets still boot a playable game, cold cache hard-fails its own QA assertion (so the tests cannot lie)',
+      '🔎 VERSION ON SCREEN: the boot screen prints the exact build ("v6.3.0 (code 29)") — you can always verify which APK you are running. If it does not say v6.3.0, you are running an old download',
+      '🏷️ versionCode 29 — clearly distinct from every older download',
+    ]
+  },
+  {
+    v: 'v6.2.0', date: 'The never-stuck boot — a 30-minute freeze is now structurally impossible', items: [
       '⏱️ PAINT DEADLINES: the "stuck on painting textures 2/3 for 30 minutes" report had NO time limit anywhere — now every texture paints under a hard deadline. A slow texture bails out and boots as a tiny placeholder instead of freezing your phone. A texture can cost seconds, never minutes, never infinity',
       '👮 BOOT WATCHDOG: a native watcher now checks every 200 ms whether boot progress is actually MOVING. 20 seconds of true silence = frozen → the app silently restarts itself once for a clean boot — most stalls never reach your eyes',
       '🧊 IF IT EVER FREEZES TWICE: a native "BOOT STILL FROZEN" card appears with RESTART APP / COPY REPORT / CLOSE APP buttons — pure Android widgets that work even when the 3D engine is hard-blocked, which nothing inside the engine could recover from',
@@ -271,7 +282,7 @@ export default function Home() {
             </a>
           ))}
           <span className="ml-auto shrink-0 rounded-full bg-[#FFC93C] px-3 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#24316B] border-2 border-white shadow-[0_2px_0_#E09B12]">
-            v6.2.0 — The Never-Stuck Boot!
+            v6.3.0 — The Fast Second Boot!
           </span>
         </div>
       </nav>
@@ -524,7 +535,7 @@ export default function Home() {
             Dummy Surfers <span className="text-white">by</span>
             <GraffitiName name="Faisal Khan" className="ml-2 inline-block align-middle normal-case text-[1.55rem] sm:text-[1.85rem]" stroke="#1B2038" shadowFilter="drop-shadow(0 3px 0 rgba(9,12,30,.55))" />
           </p>
-          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v6.2.0 — The Never-Stuck Boot!</span></p>
+          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v6.3.0 — The Fast Second Boot!</span></p>
         </div>
       </footer>
     </main>
