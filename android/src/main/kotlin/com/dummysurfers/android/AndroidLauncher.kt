@@ -213,7 +213,7 @@ class AndroidLauncher : AndroidApplication() {
             statusTv = status
             box.addView(status)
 
-            val tip = label("Painting the world for the first time — up to a minute on slower phones", 12f, "#8A90B8")
+            val tip = label("First launch paints the world (up to a minute on slow phones) — next launches load much faster", 12f, "#8A90B8")
             tipTv = tip
             box.addView(tip)
 

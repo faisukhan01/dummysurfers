@@ -150,7 +150,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         @Volatile var bootProgress: Float = 0f          // 0..1
         @Volatile var bootReady: Boolean = false
         @Volatile var bootError: String? = null
-        @Volatile var bootVersion: String = "6.1.0"     // launcher injects the full label
+        @Volatile var bootVersion: String = "6.3.0"     // launcher injects the full label
         @Volatile var bootLogText: String = ""
     }
 
@@ -335,10 +335,24 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         bootReady = true
         bootStatus = "ready"
         bootProgress = 1f
+        // v6.3: surface the PNG-cache fast path in the boot report itself
+        if (TextureGen.cacheHits > 0) bootLog.add(
+            "texcache: ${TextureGen.cacheHits} texture(s) loaded from PNG cache — fast boot")
         bootLogText = bootLog.joinToString("\n").ifEmpty { "clean boot" }
         com.dummysurfers.core.BootWatchdog.reset() // boot made it — disarm the stall judge
         if (TextureGen.genErrors > 0) Gdx.app.log("DS-BOOT", "booted with ${TextureGen.genErrors} substituted texture(s)")
+        Gdx.app.log("DS-BOOT", "texcache: ${TextureGen.cacheHits} hit(s) from PNG cache")
         Gdx.app.log("DS-BOOT", "staged boot complete — ${bootLog.size} fallback note(s)")
+        // v6.3 QA-only (desktop): DS_REQUIRE_TEXCACHE_HITS=<N> hard-fails the
+        // process when the PNG cache under-delivers. Result also lands in
+        // texcache-qa.txt — gradle-captured stdout drops backend writes.
+        // Zero effect on devices (env is never set on Android).
+        System.getenv("DS_REQUIRE_TEXCACHE_HITS")?.toIntOrNull()?.let { need ->
+            val ok = TextureGen.cacheHits >= need
+            try { Gdx.files.local("texcache-qa.txt").writeString(
+                "hits=${TextureGen.cacheHits} need=$need ${if (ok) "OK" else "FAIL"}", false) } catch (_: Throwable) {}
+            if (!ok) Runtime.getRuntime().exit(3)
+        }
     }
 
     private fun enterSafeMode() {
@@ -424,7 +438,7 @@ class DummySurfersGame : com.badlogic.gdx.ApplicationAdapter() {
         }
         f.setColor(1f, 1f, 1f, 1f)
         f.data.setScale(0.95f)
-        val tip = "first launch paints the whole world - this can take a minute"
+        val tip = if (TextureGen.cacheHits > 0) "loaded saved art — fast start!" else "first launch paints the whole world - next launches load fast"
         fontLayout.setText(f, tip)
         f.draw(batch, tip, cx - fontLayout.width / 2f, vh * 0.22f)
         batch.end()

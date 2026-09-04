@@ -1,7 +1,10 @@
 package com.dummysurfers.core.gfx
 
+import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.Pixmap
+import com.badlogic.gdx.graphics.PixmapIO
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.NinePatch
 import com.badlogic.gdx.graphics.g2d.TextureRegion
@@ -184,10 +187,69 @@ object TextureGen {
         try { r(if (chunkLabel.isEmpty()) "painting…" else "$chunkLabel · $chunkDone painted") } catch (_: Throwable) {}
     }
 
+    // ── v6.3 PNG STARTUP CACHE — the "it takes too time to open" killer ───
+    // First launch paints every texture with per-pixel Pixmap work (up to a
+    // minute on slow phones). From the SECOND launch each texture loads
+    // straight from a PNG in filesDir — no per-pixel painting at all, boot
+    // drops to a fraction of the time, and the GL thread spends almost no
+    // time in the exact code region the v6.1.0 device wedged inside.
+    // Safety rails:
+    //   • cache dir is per RECIPE GENERATION — bump CACHE_GEN after changing
+    //     any painter so stale art can never outlive a code change;
+    //   • only SUCCESSFUL paints are cached (deadline substitutes never are);
+    //   • a corrupt cache file is deleted and repainted on the spot;
+    //   • DS_NO_TEXCACHE=1 bypasses everything (desktop QA);
+    //   • filters travel with the file (".lin" suffix = Linear, applied on
+    //     load) so a cache hit is pixel-identical to a fresh paint.
+    const val CACHE_GEN = "tv3"
+    var cacheHits = 0
+        private set
+    private val cacheOn = System.getenv("DS_NO_TEXCACHE") == null
+
+    private fun cacheFile(name: String, linear: Boolean): FileHandle =
+        Gdx.files.local("texcache/$CACHE_GEN/$name${if (linear) ".lin" else ""}.png")
+
+    private fun saveToCache(name: String, p: Pixmap, linear: Boolean = false) {
+        if (!cacheOn || name == "?") return
+        try {
+            val f = cacheFile(name, linear)
+            if (!f.exists()) PixmapIO.writePNG(f, p)
+        } catch (_: Throwable) {}
+    }
+
+    private fun cachedTex(name: String): Texture? {
+        if (!cacheOn) return null
+        for (linear in booleanArrayOf(true, false)) {
+            val f = cacheFile(name, linear)
+            if (!f.exists()) continue
+            try {
+                val pm = Pixmap(f)
+                val t = Texture(pm)
+                pm.dispose()
+                if (linear) t.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+                cacheHits++
+                return t
+            } catch (_: Throwable) {
+                try { f.delete() } catch (_: Throwable) {}
+            }
+        }
+        return null
+    }
+
+    /** Single upload point for hand-painted pixmaps that keep the GL default
+     *  filters (tiles re-apply Repeat/Linear themselves right after). */
+    private fun paintUpload(p: Pixmap): Texture {
+        val t = Texture(p)
+        saveToCache(currentTexName, p)
+        p.dispose()
+        return t
+    }
+
     private fun subTex(): Texture = Texture(4, 4, Pixmap.Format.RGBA8888)
 
     private fun tex(name: String, c: () -> Texture): Texture {
         currentTexName = name
+        cachedTex(name)?.let { hit -> tick(); return hit }
         armDeadline()
         val t0 = System.nanoTime()
         val result = try {
@@ -227,7 +289,7 @@ object TextureGen {
     // split into three chunks the game runs on three separate frames, with a
     // reporter callback feeding the visible loading screen / native overlay.
     fun chunkA(reporter: ((String) -> Unit)? = null) {
-        genErrors = 0; anyFatal = false
+        genErrors = 0; anyFatal = false; cacheHits = 0
         this.reporter = reporter; chunkLabel = "painting textures 1/3"; chunkDone = 0
         reporter?.invoke(chunkLabel)
         white = tex("white") { solid(4, 4, Color.WHITE) }
@@ -253,8 +315,15 @@ object TextureGen {
         reporter?.invoke(chunkLabel)
         rainbowBurst = tex("rainbowBurst") { burst(512) }
         coinFrames = texArray("coin", 10) { coin(72, it, 10) }
-        powerIcons = texArray("powerIcon", 6) { arrayOf(magnetIcon(), starIcon(), shieldIcon(), boltIcon(), springIcon(), rocketIcon())[it] }
-        navIcons = texArray("navIcon", 4) { arrayOf(navPerson(), navBag(), navTasks(), navGear())[it] }
+        // v6.3: paint ONLY the icon this slot needs — the old arrayOf(...)[it]
+        // built all six pixmaps per slot (36 paints, 30 wasted) every boot.
+        powerIcons = texArray("powerIcon", 6) { i -> when (i) {
+            0 -> magnetIcon(); 1 -> starIcon(); 2 -> shieldIcon()
+            3 -> boltIcon();   4 -> springIcon(); else -> rocketIcon()
+        } }
+        navIcons = texArray("navIcon", 4) { i -> when (i) {
+            0 -> navPerson(); 1 -> navBag(); 2 -> navTasks(); else -> navGear()
+        } }
         trophy = tex("trophy") { navTrophy() }
         previews = texArray("preview", CharacterDef.ALL.size) { characterPreview(CharacterDef.ALL[it]) }
         panelNine = texNine("panelNine") { roundedNine(64, 18, Color(1f, 1f, 1f, 1f), border = false) }
@@ -354,7 +423,7 @@ object TextureGen {
                 p.setColor(0x9aa0a8ff.toInt()); p.fillRectangle(rx + 4, 0, 2, s)
             }
         }
-        val t = Texture(p); p.dispose()
+        val t = paintUpload(p)
         t.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat)
         t.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         return t
@@ -372,7 +441,7 @@ object TextureGen {
             p.setColor((0.61f * g).coerceAtMost(1f), (0.54f * g).coerceAtMost(1f), (0.42f * g).coerceAtMost(1f), 1f)
             p.fillRectangle(rnd.nextInt(s), rnd.nextInt(s), 1 + rnd.nextInt(2), 1 + rnd.nextInt(2))
         }
-        val t = Texture(p); p.dispose()
+        val t = paintUpload(p)
         t.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat)
         t.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         return t
@@ -413,7 +482,7 @@ object TextureGen {
         // grime top/bottom
         p.setColor(0x00000030); p.fillRectangle(0, 0, w, 10)
         p.setColor(0x00000022); p.fillRectangle(0, h - 8, w, 8)
-        val t = Texture(p); p.dispose()
+        val t = paintUpload(p)
         t.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat)
         t.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         return t
@@ -436,7 +505,7 @@ object TextureGen {
             p.setColor(0x00000030)
             p.fillRectangle(rnd.nextInt(s), rnd.nextInt(s), 4 + rnd.nextInt(10), 3 + rnd.nextInt(6))
         }
-        val t = Texture(p); p.dispose()
+        val t = paintUpload(p)
         t.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat)
         t.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         return t
@@ -445,7 +514,7 @@ object TextureGen {
     private fun solid(w: Int, h: Int, c: Color): Texture {
         val p = Pixmap(w, h, Pixmap.Format.RGBA8888)
         p.setColor(c); p.fill()
-        val t = Texture(p); p.dispose(); return t
+        return paintUpload(p)
     }
 
     private fun radial(size: Int, c: Color, coreCut: Float): Texture {
@@ -464,7 +533,7 @@ object TextureGen {
                     p.drawPixel(x, y)
                 }
             }
-            val t = Texture(p); p.dispose(); return t
+            return paintUpload(p)
         } catch (t: Throwable) { p.dispose(); throw t }
     }
 
@@ -489,7 +558,7 @@ object TextureGen {
                     p.drawPixel(x, y)
                 }
             }
-            val t = Texture(p); p.dispose(); return t
+            return paintUpload(p)
         } catch (t: Throwable) { p.dispose(); throw t }
     }
 
@@ -504,7 +573,7 @@ object TextureGen {
             p.setColor(a.r + (b.r - a.r) * f, a.g + (b.g - a.g) * f, a.b + (b.b - a.b) * f, 1f)
             p.drawLine(0, y, w - 1, y)
         }
-        val tex = Texture(p); p.dispose(); return tex
+        return paintUpload(p)
     }
 
     /** Fog: opaque at bottom → transparent at top (drawn near horizon). */
@@ -519,7 +588,7 @@ object TextureGen {
             p.setColor(c.r, c.g, c.b, aa)
             p.drawLine(0, y, w - 1, y)
         }
-        val tex = Texture(p); p.dispose(); return tex
+        return paintUpload(p)
     }
 
     private fun verticalGradientFade(w: Int, h: Int, c: Color): Texture {
@@ -530,7 +599,7 @@ object TextureGen {
             p.setColor(c.r, c.g, c.b, a)
             p.drawLine(0, y, w - 1, y)
         }
-        val tex = Texture(p); p.dispose(); return tex
+        return paintUpload(p)
     }
 
     /** v20-c PUFFY SS CLOUD — overlapping soft-edged radial blobs (7-9 puffs)
@@ -603,7 +672,7 @@ object TextureGen {
                 if (rng.nextFloat() < 0.25f) p.fillRectangle(x + bw / 4, top - 8, bw / 3, 8)
                 x += bw + rng.nextInt(12)
             }
-            val t = Texture(p); p.dispose(); return t
+            return paintUpload(p)
         } catch (t: Throwable) { p.dispose(); throw t }
     }
 
@@ -640,7 +709,7 @@ object TextureGen {
             p.setColor(1f, 1f, 0.85f, 0.85f)
             fillEllipse(p, cx - r * sx * 0.28f, cy - r * 0.4f, r * sx * 0.22f, r * 0.14f)
         }
-        val t = Texture(p); p.dispose(); return t
+        return paintUpload(p)
     }
 
     private fun fillEllipse(p: Pixmap, cx: Float, cy: Float, rx: Float, ry: Float) {
@@ -916,7 +985,7 @@ object TextureGen {
             p.setColor(0f, 0f, 0f, 0.10f)
             fillRoundRect(p, 3, size - 11, size - 6, 8, 4)
         }
-        val t = Texture(p); p.dispose()
+        val t = paintUpload(p)
         val m = radius + 3
         return NinePatch(t, m, m, m, m)
     }
@@ -942,7 +1011,7 @@ object TextureGen {
         // gloss band (a rounded strip that stays inside the disc silhouette)
         p.setColor(1f, 1f, 1f, 0.34f)
         fillRoundRect(p, 20, 10, 24, 8, 4)
-        val t = Texture(p); p.dispose()
+        val t = paintUpload(p)
         return NinePatch(t, 22, 22, 22, 22)
     }
 
@@ -952,8 +1021,7 @@ object TextureGen {
         val p = Pixmap(s, s, Pixmap.Format.RGBA8888)
         p.setColor(1f, 1f, 1f, 1f)
         p.fillTriangle(16, 8, 16, 56, 54, 32)
-        val t = Texture(p); p.dispose()
-        return t
+        return paintUpload(p)
     }
 
     // ── SS-chibi character portraits (menu + shop) ─────────────────────
@@ -1623,6 +1691,7 @@ object TextureGen {
         val t = Texture(p)
         // Linear filtering: smooth scaling everywhere (portraits, panels, coins)
         t.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+        saveToCache(currentTexName, p, linear = true)
         p.dispose()
         return t
     }
@@ -1663,7 +1732,7 @@ object TextureGen {
                     }
                 }
             }
-            val t = Texture(p); p.dispose(); return t
+            return paintUpload(p)
         } catch (t: Throwable) { p.dispose(); throw t }
     }
 }
