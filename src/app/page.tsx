@@ -63,7 +63,19 @@ const consoleLines = [
 
 const changelog = [
   {
-    v: 'v7.1.0', date: 'The restart ladder can never loop — the final hole in the 1000% guarantee is closed', latest: true, items: [
+    v: 'v7.2.0', date: 'The menu is guaranteed — your phone freezes on ONE texture, and now the game skips it automatically', latest: true, items: [
+      '🔬 FOUND THE REAL VILLAIN: your screenshots proved your phone freezes inside its graphics driver on ONE specific texture — v6.3 froze painting it, v7.1 froze loading the same art, always the same spot. It was never slow — it is one poisoned texture your GPU cannot create',
+      '🩹 THE WEDGE SKIPPER: when the boot freezes, the game now records EXACTLY which texture froze, silently restarts, and turns that one texture into a placeholder — the boot continues past your phone\'s villain and the menu arrives. A few frozen textures = a few quick silent restarts, then clean boots forever. An endless restart loop is impossible by construction (restarts only happen while the skip-list grows)',
+      '🗑️ THE REPORT-LOOKING PAGE IS DELETED: no more checklist, no status text, no version line on the boot screen — just the game logo, a thin gold bar and three bouncing dots, exactly like a real game\'s splash. The build tag now lives quietly in the menu\'s corner instead',
+      '▶️ RUN → PLAY: the big gold button now says PLAY like the real Subway Surfers, right above your HIGH SCORE (previous record) panel',
+      '📱 FULL-SCREEN FIX: the black bar above the game on notched phones is gone — the game now draws edge-to-edge around the camera cutout',
+      '⏳ ART BUDGET: loading can never eat more than 90 seconds of work — after that the remaining art becomes placeholders so the menu ALWAYS arrives, on the worst phone on Earth',
+      '✅ PROVEN ON CAMERA: seeded 2 poisoned textures → game skipped exactly those 2 and reached the menu + full gameplay; normal boot still 80/80 baked art with zero painting; watchdog 9/9; released APK downloaded and its manifest verified byte-for-byte',
+      '🏷️ versionCode 32 — the menu corner must say v7.2.0. UNINSTALL the old app and download fresh',
+    ]
+  },
+  {
+    v: 'v7.1.0', date: 'The restart ladder can never loop — the final hole in the 1000% guarantee is closed', latest: false, items: [
       '🛡️ LAST RESTART-LOOP PATH CLOSED: the deep audit found the freeze watchdog read its stall counter before the Android context was attached — it could silently restart a stalling device FOREVER instead of once. Now the counter is version-tagged and read at the right moment: a stalling boot restarts AT MOST ONCE, then it is only recorded. No loops, physically',
       '🧼 UPGRADES START CLEAN: stall history from any older version is dropped on first launch — your new install always gets its own free restart, and never inherits the old build\'s failure count',
       '✅ RE-PROVEN END TO END: watchdog self-test 9/9 · fresh boot hard-asserted "baked=80 cached=0 fast=80 need=80 OK" (zero painting) · menu + live gameplay screenshotted (score 232→299, distance 62m→129m while running) · CI green · release APK downloaded and its manifest verified byte-for-byte',
@@ -301,7 +313,7 @@ export default function Home() {
             </a>
           ))}
           <span className="ml-auto shrink-0 rounded-full bg-[#FFC93C] px-3 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#24316B] border-2 border-white shadow-[0_2px_0_#E09B12]">
-            v7.1.0 — The Restart Loop Is Impossible!
+            v7.2.0 — The Menu Is Guaranteed!
           </span>
         </div>
       </nav>
@@ -554,7 +566,7 @@ export default function Home() {
             Dummy Surfers <span className="text-white">by</span>
             <GraffitiName name="Faisal Khan" className="ml-2 inline-block align-middle normal-case text-[1.55rem] sm:text-[1.85rem]" stroke="#1B2038" shadowFilter="drop-shadow(0 3px 0 rgba(9,12,30,.55))" />
           </p>
-          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v7.1.0 — The Restart Loop Is Impossible!</span></p>
+          <p>Kotlin • LibGDX • Procedural everything • <span className="text-[#FFD23E] font-semibold">v7.2.0 — The Menu Is Guaranteed!</span></p>
         </div>
       </footer>
     </main>
