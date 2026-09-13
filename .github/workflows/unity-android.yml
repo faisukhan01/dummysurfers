@@ -84,38 +84,36 @@ jobs:
           docker ps --filter name=unity-build
 
       # --------------------------------------------------------------
-      # Personal license acquisition for Unity 6 headless:
-      #   [1] editor login (authenticates + caches access token)
-      #   [2] syncEntitlements (replicates the personal entitlement
-      #       from Unity's servers into the local license store)
-      #   [3] verify with showEntitlements + an editor license check
-      # Every call is wrapped in `timeout` so nothing can hang.
+      # Personal license claim — Unity.Licensing.Client's documented
+      # headless path:  --activate-all --include-personal  with
+      # username/password (Personal fallback when no paid seats exist).
+      # A services-config.json is written first because the CI image
+      # lacks a valid licensingServiceBaseUrl.
       # --------------------------------------------------------------
-      - name: Acquire Unity Personal license (login + sync entitlements)
+      - name: Acquire Unity Personal license (activate-all + include-personal)
         timeout-minutes: 15
         run: |
           docker exec unity-build bash -c '
             set +e
             CLIENT=/opt/unity/Editor/Data/Resources/Licensing/Client/Unity.Licensing.Client
-            echo "=== full client help ==="
-            timeout 30 "$CLIENT" --help 2>&1 | head -150 || true
-            echo "=== [1] editor login (caches access token) ==="
-            timeout 240 unity-editor -batchmode -nographics -quit \
-              -username "$UNITY_EMAIL" -password "$UNITY_PASSWORD" \
-              -logFile /dev/stdout 2>&1 | tail -8 || true
-            echo "=== [2] show remote entitlements (cloud) ==="
-            timeout 60 "$CLIENT" --showRemoteEntitlements 2>&1 | tail -30 || true
-            echo "=== [3] sync entitlements (claim personal license) ==="
-            timeout 90 "$CLIENT" --syncEntitlements 2>&1 | tail -30 || true
-            echo "=== [4] show local entitlements ==="
-            timeout 60 "$CLIENT" --showEntitlements 2>&1 | tail -30 || true
-            echo "=== [5] editor license check (no credentials) ==="
-            timeout 180 unity-editor -batchmode -nographics -quit \
-              -logFile /dev/stdout 2>&1 | tail -8 || true
-            echo "=== [6] force-free probe ==="
-            timeout 180 unity-editor -batchmode -nographics -quit -force-free \
-              -logFile /dev/stdout 2>&1 | tail -8 || true
-            echo "license acquisition diagnostics done"
+            echo "=== [0] services config (before) ==="
+            cat /usr/share/unity3d/config/services-config.json 2>/dev/null || echo "(none)"
+            mkdir -p /usr/share/unity3d/config
+            printf "%s\n" "{\"licensingServiceBaseUrl\":\"https://api.unity.com/v1/licensing\",\"enableEntitlementLicensing\":true}" > /usr/share/unity3d/config/services-config.json
+            echo "=== [0] services config (now) ==="
+            cat /usr/share/unity3d/config/services-config.json
+            echo "=== [1] show assigned seats ==="
+            timeout 60 "$CLIENT" --show-seats --username "$UNITY_EMAIL" --password "$UNITY_PASSWORD" 2>&1 | tail -20 || true
+            echo "=== [2] ACTIVATE personal (activate-all + include-personal) ==="
+            timeout 240 "$CLIENT" --activate-all --include-personal --username "$UNITY_EMAIL" --password "$UNITY_PASSWORD" 2>&1 | tail -30 || true
+            echo "=== [3] show local entitlements ==="
+            timeout 60 "$CLIENT" --showEntitlements 2>&1 | tail -20 || true
+            echo "=== [4] editor license check ==="
+            timeout 180 unity-editor -batchmode -nographics -quit -logFile /dev/stdout 2>&1 | tail -6 || true
+            echo "=== [5] fallback: update-license + re-check ==="
+            timeout 240 "$CLIENT" --update-license --username "$UNITY_EMAIL" --password "$UNITY_PASSWORD" 2>&1 | tail -20 || true
+            timeout 180 unity-editor -batchmode -nographics -quit -logFile /dev/stdout 2>&1 | tail -6 || true
+            echo "license step done"
             exit 0
           '
 
