@@ -51,13 +51,17 @@ namespace DummySurfer.Utilities
         {
             if (_lit == null)
             {
-                var rp = GraphicsSettings.currentRenderPipeline;
-                if (rp != null)
+                try
                 {
-                    _lit = Shader.Find("Universal Render Pipeline/Simple Lit");
-                    if (_lit == null) _lit = Shader.Find("Universal Render Pipeline/Lit");
-                    if (_lit == null) _lit = rp.defaultShader;
+                    var rp = GraphicsSettings.currentRenderPipeline;
+                    if (rp != null)
+                    {
+                        _lit = Shader.Find("Universal Render Pipeline/Simple Lit");
+                        if (_lit == null) _lit = Shader.Find("Universal Render Pipeline/Lit");
+                        if (_lit == null) { var d = rp.defaultShader; if (d != null) _lit = d; }
+                    }
                 }
+                catch (System.Exception e) { Debug.LogWarning("[VisualStyles] URP lit shader probe failed headlessly: " + e.Message); }
                 if (_lit == null) _lit = Shader.Find("Legacy Shaders/Diffuse");
                 if (_lit == null) _lit = Shader.Find("Sprites/Default");
                 if (_lit == null) _lit = Shader.Find("UI/Default");
@@ -71,12 +75,16 @@ namespace DummySurfer.Utilities
         {
             if (_unlit == null)
             {
-                var rp = GraphicsSettings.currentRenderPipeline;
-                if (rp != null)
+                try
                 {
-                    _unlit = Shader.Find("Universal Render Pipeline/Unlit");
-                    if (_unlit == null) _unlit = rp.defaultShader;
+                    var rp = GraphicsSettings.currentRenderPipeline;
+                    if (rp != null)
+                    {
+                        _unlit = Shader.Find("Universal Render Pipeline/Unlit");
+                        if (_unlit == null) { var d = rp.defaultShader; if (d != null) _unlit = d; }
+                    }
                 }
+                catch (System.Exception e) { Debug.LogWarning("[VisualStyles] URP unlit shader probe failed headlessly: " + e.Message); }
                 if (_unlit == null) _unlit = Shader.Find("Unlit/Color");
                 if (_unlit == null) _unlit = Shader.Find("Sprites/Default");
                 if (_unlit == null) _unlit = Shader.Find("UI/Default");
