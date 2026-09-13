@@ -80,7 +80,7 @@ namespace DummySurfer.EditorTools
             PlayerSettings.productName = "Dummy Surfer";
             PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, "com.dummysurfer.university");
             PlayerSettings.colorSpace = ColorSpace.Linear;
-            PlayerSettings.SetScriptingImplementation(BuildTargetGroup.Android, ScriptingImplementation.IL2CPP);
+            PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
             PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel24;
             PlayerSettings.Android.forceInternetPermission = true;   // Relay requires internet
