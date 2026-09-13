@@ -1,3 +1,4 @@
+using UnityEngine;
 using DummySurfer.Core;
 using DummySurfer.Data;
 using DummySurfer.Powerups;

@@ -64,7 +64,7 @@ namespace DummySurfer.Player
                 new Vector3(0.26f, 0.26f, 0.26f), stats.skin);
 
             // Cap (child of head so rig colors it): dome + brim
-            var cap = MakePart("Cap", PrimitiveType.Cylinder, head, new Vector3(0f, 0.10f, 0f),
+            var cap = MakePart("Cap", PrimitiveType.Cylinder, head.transform, new Vector3(0f, 0.10f, 0f),
                 new Vector3(0.30f, 0.05f, 0.30f), stats.secondary);
             MakePart("Brim", PrimitiveType.Cube, cap.transform, new Vector3(0f, -0.02f, 0.17f),
                 new Vector3(0.26f, 0.03f, 0.18f), stats.secondary);
@@ -114,8 +114,8 @@ namespace DummySurfer.Player
         {
             var c = go.GetComponent<Collider>();
             if (c == null) return;
-            if (Application.isPlaying) Destroy(c);
-            else DestroyImmediate(c);
+            if (Application.isPlaying) UnityEngine.Object.Destroy(c);
+            else UnityEngine.Object.DestroyImmediate(c);
         }
     }
 }

@@ -4,7 +4,7 @@ using Unity.Netcode;
 using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
 using Unity.Networking.Transport.Relay;
-using Unity.Transport;
+using Unity.Netcode.Transports.UTP;
 using UnityEngine;
 using DummySurfer.Core;
 using DummySurfer.Utilities;

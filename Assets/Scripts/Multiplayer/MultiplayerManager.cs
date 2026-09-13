@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Unity.Netcode;
-using Unity.Transport;
+using Unity.Netcode.Transports.UTP;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using DummySurfer.Core;
@@ -183,9 +183,7 @@ namespace DummySurfer.Multiplayer
                 if (playerPrefab == null)
                     throw new InvalidOperationException(
                         "NetworkRunner prefab is missing. Open Unity and run Tools > Dummy Surfer > 1. Setup Everything (see docs/SETUP_GUIDE.md).");
-                if (nm.NetworkConfig.Prefabs == null)
-                    nm.NetworkConfig.Prefabs = ScriptableObject.CreateInstance<NetworkPrefabsList>();
-                nm.NetworkConfig.Prefabs.Prefabs.Add(new NetworkPrefab { Prefab = playerPrefab });
+                nm.AddNetworkPrefab(playerPrefab);
                 go.AddComponent<ConnectionGuard>();
             }
             HookCallbacksOnce(nm);

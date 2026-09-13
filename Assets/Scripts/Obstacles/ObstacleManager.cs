@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using DummySurfer.Core;
+using DummySurfer.Data;
 using DummySurfer.Track;
 using DummySurfer.Utilities;
 

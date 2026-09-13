@@ -2,6 +2,7 @@ using UnityEngine;
 using DummySurfer.Collectibles;
 using DummySurfer.Core;
 using DummySurfer.Data;
+using DummySurfer.Utilities;
 
 using DummySurfer.Player;
 namespace DummySurfer.Powerups

@@ -5,7 +5,7 @@
         "DummySurfer.Runtime",
         "Unity.Netcode.Runtime",
         "Unity.Netcode.Editor",
-        "Unity.Transports",
+        "Unity.Networking.Transport",
         "Unity.Services.Core",
         "Unity.Services.Core.Components",
         "Unity.Services.Core.Configuration",

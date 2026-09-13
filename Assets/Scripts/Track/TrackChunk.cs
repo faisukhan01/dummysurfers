@@ -16,6 +16,7 @@ namespace DummySurfer.Track
     public sealed class TrackChunk : MonoBehaviour
     {
         public int ChunkIndex { get; private set; } = -1;
+        public float Length { get; internal set; }
 
         private ObstacleManager _om;
         private CollectibleManager _cm;

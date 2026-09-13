@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using DummySurfer.Utilities;
 
 namespace DummySurfer.UI
 {
@@ -119,7 +120,7 @@ namespace DummySurfer.UI
             slider.fillRect = fill.rectTransform;
             slider.handleRect = handle.rectTransform;
             slider.targetGraphic = handle;
-            slider.direction = Slider.Direction.LeftToRight;
+            slider.direction = UnityEngine.UI.Slider.Direction.LeftToRight;
             slider.value = value;
             return slider;
         }
@@ -171,7 +172,7 @@ namespace DummySurfer.UI
             field.textComponent = text;
             field.placeholder = ph;
             field.characterLimit = charLimit;
-            field.contentType = InputField.ContentType.UpperCase;
+            field.contentType = UnityEngine.UI.InputField.ContentType.UpperCase;
             field.onValueChanged.AddListener(onChanged);
             return field;
         }

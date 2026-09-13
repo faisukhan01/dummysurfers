@@ -1,4 +1,5 @@
 using DummySurfer.Data;
+using DummySurfer.Utilities;
 
 namespace DummySurfer.Player
 {
@@ -14,5 +15,7 @@ namespace DummySurfer.Player
         public static CharacterStats GetSelectedStats() => CharacterStats.Load(SelectedIndex);
 
         public static CharacterStats GetStatsFor(int index) => CharacterStats.Load(index);
+
+        public static void Select(int index) => SelectedIndex = index;
     }
 }

@@ -38,8 +38,8 @@ namespace DummySurfer.Obstacles
 
         private static void DestroyInMode(Object o)
         {
-            if (Application.isPlaying) Destroy(o);
-            else DestroyImmediate(o);
+            if (Application.isPlaying) UnityEngine.Object.Destroy(o);
+            else UnityEngine.Object.DestroyImmediate(o);
         }
 
         private static BoxCollider AddTrigger(GameObject root, Vector3 center, Vector3 size)
