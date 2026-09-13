@@ -84,20 +84,34 @@ jobs:
           docker ps --filter name=unity-build
 
       # --------------------------------------------------------------
-      # Explicit login — acquires the Unity Personal license for this
-      # container (GameCI's default entrypoint does NOT do this for
-      # personal email/password, so we do it ourselves).
+      # Explicit login + license claim. Unity 6's editor alone does NOT
+      # grab the personal entitlement after a headless login ("no license
+      # activation found for this computer"), so we also drive the
+      # Unity.Licensing.Client CLI directly (login + activate).
       # --------------------------------------------------------------
-      - name: Log in to Unity (Personal license activation)
+      - name: Acquire Unity Personal license (login + activate)
         timeout-minutes: 10
         run: |
           docker exec unity-build bash -c '
-            set -o pipefail
+            set +e
+            CLIENT=$(find /opt/unity -maxdepth 7 -type f -name "Unity.Licensing.Client" 2>/dev/null | head -n1)
+            echo "=== licensing client binary: $CLIENT ==="
+            if [ -n "$CLIENT" ]; then
+              echo "=== client help ==="
+              "$CLIENT" --help 2>&1 | head -60 || true
+              echo "=== client login ==="
+              "$CLIENT" login --username "$UNITY_EMAIL" --password "$UNITY_PASSWORD" 2>&1 | tail -25 || true
+              echo "=== client activate (personal, no serial) ==="
+              "$CLIENT" activate --username "$UNITY_EMAIL" --password "$UNITY_PASSWORD" 2>&1 | tail -25 || true
+              echo "=== client list ==="
+              "$CLIENT" list 2>&1 | tail -10 || true
+            fi
+            echo "=== editor login ==="
             unity-editor -batchmode -nographics -quit \
               -username "$UNITY_EMAIL" -password "$UNITY_PASSWORD" \
               -logFile /dev/stdout
             code=$?
-            echo "login exit code: $code (license verified in the next step)"
+            echo "editor login exit code: $code (the prep step verifies the license)"
             exit 0
           '
 

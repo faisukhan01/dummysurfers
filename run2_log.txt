@@ -1,0 +1,369 @@
+﻿2026-09-13T13:59:17.7927767Z Current runner version: '2.337.0'
+2026-09-13T13:59:17.7953528Z ##[group]Runner Image Provisioner
+2026-09-13T13:59:17.7954514Z Hosted Compute Agent
+2026-09-13T13:59:17.7955161Z Version: 20260828.587
+2026-09-13T13:59:17.7955879Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+2026-09-13T13:59:17.7956644Z Build Date: 2026-08-28T16:44:25Z
+2026-09-13T13:59:17.7957601Z Worker ID: {576dbafe-c6c3-422c-885f-e3a7dfd9d5cc}
+2026-09-13T13:59:17.7958481Z Azure Region: eastus
+2026-09-13T13:59:17.7959136Z ##[endgroup]
+2026-09-13T13:59:17.7960714Z ##[group]Operating System
+2026-09-13T13:59:17.7961444Z Ubuntu
+2026-09-13T13:59:17.7962022Z 24.04.5
+2026-09-13T13:59:17.7962601Z LTS
+2026-09-13T13:59:17.7963126Z ##[endgroup]
+2026-09-13T13:59:17.7963803Z ##[group]Runner Image
+2026-09-13T13:59:17.7964421Z Image: ubuntu-24.04
+2026-09-13T13:59:17.7965059Z Version: 20260907.300.1
+2026-09-13T13:59:17.7966403Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260907.300/images/ubuntu/Ubuntu2404-Readme.md
+2026-09-13T13:59:17.7968208Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260907.300
+2026-09-13T13:59:17.7969195Z ##[endgroup]
+2026-09-13T13:59:17.7970447Z ##[group]GITHUB_TOKEN Permissions
+2026-09-13T13:59:17.7972564Z Contents: write
+2026-09-13T13:59:17.7973330Z Metadata: read
+2026-09-13T13:59:17.7973946Z ##[endgroup]
+2026-09-13T13:59:17.7976109Z Secret source: Actions
+2026-09-13T13:59:17.7977139Z Cache mode: write
+2026-09-13T13:59:17.7978483Z Prepare workflow directory
+2026-09-13T13:59:17.8362316Z Prepare all required actions
+2026-09-13T13:59:17.8409939Z Getting action download info
+2026-09-13T13:59:18.0496474Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-09-13T13:59:18.1707066Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-09-13T13:59:18.2809331Z Download action repository 'softprops/action-gh-release@v2' (SHA:3bb12739c298aeb8a4eeaf626c5b8d85266b0e65)
+2026-09-13T13:59:18.4992692Z Complete job name: Unity 6 → Android APK
+2026-09-13T13:59:18.5761425Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-13T13:59:18.5770274Z ##[group]Run actions/checkout@v4
+2026-09-13T13:59:18.5771032Z with:
+2026-09-13T13:59:18.5771503Z   repository: faisukhan01/dummysurfers
+2026-09-13T13:59:18.5775106Z   token: ***
+2026-09-13T13:59:18.5775560Z   ssh-strict: true
+2026-09-13T13:59:18.5776001Z   ssh-user: git
+2026-09-13T13:59:18.5776450Z   persist-credentials: true
+2026-09-13T13:59:18.5776942Z   clean: true
+2026-09-13T13:59:18.5777605Z   sparse-checkout-cone-mode: true
+2026-09-13T13:59:18.5778138Z   fetch-depth: 1
+2026-09-13T13:59:18.5778581Z   fetch-tags: false
+2026-09-13T13:59:18.5779051Z   show-progress: true
+2026-09-13T13:59:18.5779573Z   lfs: false
+2026-09-13T13:59:18.5780053Z   submodules: false
+2026-09-13T13:59:18.5780540Z   set-safe-directory: true
+2026-09-13T13:59:18.5781062Z   allow-unsafe-pr-checkout: false
+2026-09-13T13:59:18.5781836Z env:
+2026-09-13T13:59:18.5782367Z   UNITY_IMAGE: unityci/editor:ubuntu-6000.0.32f1-android-3
+2026-09-13T13:59:18.5783054Z   KS_PASS: DummySurfersDebug!2024
+2026-09-13T13:59:18.5783587Z   KS_ALIAS: dummysurfers
+2026-09-13T13:59:18.5784056Z ##[endgroup]
+2026-09-13T13:59:18.6784093Z Syncing repository: faisukhan01/dummysurfers
+2026-09-13T13:59:18.6786624Z ##[group]Getting Git version info
+2026-09-13T13:59:18.6788127Z Working directory is '/home/runner/work/dummysurfers/dummysurfers'
+2026-09-13T13:59:18.6789870Z [command]/usr/bin/git version
+2026-09-13T13:59:18.6866884Z git version 2.55.0
+2026-09-13T13:59:18.6889428Z ##[endgroup]
+2026-09-13T13:59:18.6911854Z Temporarily overriding HOME='/home/runner/work/_temp/805bbfa1-5465-421e-9eb8-71c0f99697fe' before making global git config changes
+2026-09-13T13:59:18.6914657Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-13T13:59:18.6918014Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/dummysurfers/dummysurfers
+2026-09-13T13:59:18.6998744Z Deleting the contents of '/home/runner/work/dummysurfers/dummysurfers'
+2026-09-13T13:59:18.7003251Z ##[group]Initializing the repository
+2026-09-13T13:59:18.7004743Z [command]/usr/bin/git init /home/runner/work/dummysurfers/dummysurfers
+2026-09-13T13:59:18.7102110Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-09-13T13:59:18.7103769Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-09-13T13:59:18.7107997Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-09-13T13:59:18.7109227Z hint: call:
+2026-09-13T13:59:18.7109878Z hint:
+2026-09-13T13:59:18.7110720Z hint: 	git config --global init.defaultBranch <name>
+2026-09-13T13:59:18.7111914Z hint:
+2026-09-13T13:59:18.7112903Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-09-13T13:59:18.7114443Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-09-13T13:59:18.7115666Z hint:
+2026-09-13T13:59:18.7116428Z hint: 	git branch -m <name>
+2026-09-13T13:59:18.7117539Z hint:
+2026-09-13T13:59:18.7118595Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-09-13T13:59:18.7120303Z Initialized empty Git repository in /home/runner/work/dummysurfers/dummysurfers/.git/
+2026-09-13T13:59:18.7123166Z [command]/usr/bin/git remote add origin https://github.com/faisukhan01/dummysurfers
+2026-09-13T13:59:18.7174687Z ##[endgroup]
+2026-09-13T13:59:18.7175952Z ##[group]Disabling automatic garbage collection
+2026-09-13T13:59:18.7178772Z [command]/usr/bin/git config --local gc.auto 0
+2026-09-13T13:59:18.7211847Z ##[endgroup]
+2026-09-13T13:59:18.7213244Z ##[group]Setting up auth
+2026-09-13T13:59:18.7217161Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-13T13:59:18.7251420Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-13T13:59:18.7701529Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-13T13:59:18.7740989Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-13T13:59:18.7999061Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-13T13:59:18.8044154Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-13T13:59:18.8307562Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-09-13T13:59:18.8362247Z ##[endgroup]
+2026-09-13T13:59:18.8363866Z ##[group]Fetching the repository
+2026-09-13T13:59:18.8374911Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +0d18d1ca16c3738c13cf1b027440fe131fdfab57:refs/remotes/origin/main
+2026-09-13T13:59:19.0827643Z From https://github.com/faisukhan01/dummysurfers
+2026-09-13T13:59:19.0829981Z  * [new ref]         0d18d1ca16c3738c13cf1b027440fe131fdfab57 -> origin/main
+2026-09-13T13:59:19.0850795Z ##[endgroup]
+2026-09-13T13:59:19.0852456Z ##[group]Determining the checkout info
+2026-09-13T13:59:19.0854216Z ##[endgroup]
+2026-09-13T13:59:19.0855147Z [command]/usr/bin/git sparse-checkout disable
+2026-09-13T13:59:19.0914282Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-09-13T13:59:19.0962140Z ##[group]Checking out the ref
+2026-09-13T13:59:19.0965672Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-09-13T13:59:19.1077741Z Switched to a new branch 'main'
+2026-09-13T13:59:19.1083371Z branch 'main' set up to track 'origin/main'.
+2026-09-13T13:59:19.1089069Z ##[endgroup]
+2026-09-13T13:59:19.1131761Z [command]/usr/bin/git log -1 --format=%H
+2026-09-13T13:59:19.1158032Z 0d18d1ca16c3738c13cf1b027440fe131fdfab57
+2026-09-13T13:59:19.1470788Z ##[group]Run sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghc 2>/dev/null || true
+2026-09-13T13:59:19.1474124Z [36;1msudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghc 2>/dev/null || true[0m
+2026-09-13T13:59:19.1476320Z [36;1mdf -h /[0m
+2026-09-13T13:59:19.1518367Z shell: /usr/bin/bash -e {0}
+2026-09-13T13:59:19.1519437Z env:
+2026-09-13T13:59:19.1520515Z   UNITY_IMAGE: unityci/editor:ubuntu-6000.0.32f1-android-3
+2026-09-13T13:59:19.1522016Z   KS_PASS: DummySurfersDebug!2024
+2026-09-13T13:59:19.1523163Z   KS_ALIAS: dummysurfers
+2026-09-13T13:59:19.1524147Z ##[endgroup]
+2026-09-13T13:59:51.7438526Z Filesystem      Size  Used Avail Use% Mounted on
+2026-09-13T13:59:51.7452155Z /dev/root       145G   42G  103G  29% /
+2026-09-13T13:59:51.7494319Z ##[group]Run keytool -genkeypair -v \
+2026-09-13T13:59:51.7494746Z [36;1mkeytool -genkeypair -v \[0m
+2026-09-13T13:59:51.7495160Z [36;1m  -keystore "$GITHUB_WORKSPACE/dummysurfers.keystore" \[0m
+2026-09-13T13:59:51.7495583Z [36;1m  -alias "$KS_ALIAS" \[0m
+2026-09-13T13:59:51.7495944Z [36;1m  -keyalg RSA -keysize 2048 -validity 10000 \[0m
+2026-09-13T13:59:51.7496360Z [36;1m  -storepass "$KS_PASS" -keypass "$KS_PASS" \[0m
+2026-09-13T13:59:51.7496840Z [36;1m  -dname "CN=Dummy Surfer, OU=Games, O=DummySurfers, L=Web, S=Web, C=PK"[0m
+2026-09-13T13:59:51.7534240Z shell: /usr/bin/bash -e {0}
+2026-09-13T13:59:51.7534551Z env:
+2026-09-13T13:59:51.7534868Z   UNITY_IMAGE: unityci/editor:ubuntu-6000.0.32f1-android-3
+2026-09-13T13:59:51.7535279Z   KS_PASS: DummySurfersDebug!2024
+2026-09-13T13:59:51.7535596Z   KS_ALIAS: dummysurfers
+2026-09-13T13:59:51.7535888Z ##[endgroup]
+2026-09-13T13:59:52.5770133Z Generating 2,048 bit RSA key pair and self-signed certificate (SHA256withRSA) with a validity of 10,000 days
+2026-09-13T13:59:52.5791513Z 	for: CN=Dummy Surfer, OU=Games, O=DummySurfers, L=Web, ST=Web, C=PK
+2026-09-13T13:59:52.6978819Z [Storing /home/runner/work/dummysurfers/dummysurfers/dummysurfers.keystore]
+2026-09-13T13:59:52.8061342Z ##[group]Run docker run -d --name unity-build \
+2026-09-13T13:59:52.8061768Z [36;1mdocker run -d --name unity-build \[0m
+2026-09-13T13:59:52.8062172Z [36;1m  -v "/home/runner/work/dummysurfers/dummysurfers:/project" \[0m
+2026-09-13T13:59:52.8062555Z [36;1m  -w /project \[0m
+2026-09-13T13:59:52.8062819Z [36;1m  -e UNITY_EMAIL -e UNITY_PASSWORD \[0m
+2026-09-13T13:59:52.8063187Z [36;1m  -e CI_KEYSTORE_PATH=/project/dummysurfers.keystore \[0m
+2026-09-13T13:59:52.8063551Z [36;1m  -e "CI_KEYSTORE_PASS=$KS_PASS" \[0m
+2026-09-13T13:59:52.8063852Z [36;1m  -e "CI_KEYALIAS_NAME=$KS_ALIAS" \[0m
+2026-09-13T13:59:52.8064145Z [36;1m  -e "CI_KEYALIAS_PASS=$KS_PASS" \[0m
+2026-09-13T13:59:52.8064442Z [36;1m  "$UNITY_IMAGE" \[0m
+2026-09-13T13:59:52.8064706Z [36;1m  bash -c 'sleep infinity'[0m
+2026-09-13T13:59:52.8065026Z [36;1mdocker ps --filter name=unity-build[0m
+2026-09-13T13:59:52.8101684Z shell: /usr/bin/bash -e {0}
+2026-09-13T13:59:52.8101948Z env:
+2026-09-13T13:59:52.8102259Z   UNITY_IMAGE: unityci/editor:ubuntu-6000.0.32f1-android-3
+2026-09-13T13:59:52.8102610Z   KS_PASS: DummySurfersDebug!2024
+2026-09-13T13:59:52.8102879Z   KS_ALIAS: dummysurfers
+2026-09-13T13:59:52.8103615Z   UNITY_EMAIL: ***
+2026-09-13T13:59:52.8103875Z   UNITY_PASSWORD: ***
+2026-09-13T13:59:52.8104095Z ##[endgroup]
+2026-09-13T13:59:52.9187438Z Unable to find image 'unityci/editor:ubuntu-6000.0.32f1-android-3' locally
+2026-09-13T13:59:53.1552541Z ubuntu-6000.0.32f1-android-3: Pulling from unityci/editor
+2026-09-13T13:59:53.2319861Z 96c832531c38: Pulling fs layer
+2026-09-13T13:59:53.2321673Z 9a4d47d5aa13: Pulling fs layer
+2026-09-13T13:59:53.2322112Z 46805e80f2d7: Pulling fs layer
+2026-09-13T13:59:53.2322999Z dc7a969c82d9: Pulling fs layer
+2026-09-13T13:59:53.2323505Z a1ff4bc3f481: Pulling fs layer
+2026-09-13T13:59:53.2324056Z a636358af2c8: Pulling fs layer
+2026-09-13T13:59:53.2324541Z bef3b93c3984: Pulling fs layer
+2026-09-13T13:59:53.2325002Z d3a5feebe29b: Pulling fs layer
+2026-09-13T13:59:53.2325451Z 6f0c43bdc54a: Pulling fs layer
+2026-09-13T13:59:53.2325874Z 6249af217ef6: Pulling fs layer
+2026-09-13T13:59:53.2326275Z 15ab8eaea03e: Pulling fs layer
+2026-09-13T13:59:53.2326605Z 4f4fb700ef54: Pulling fs layer
+2026-09-13T13:59:53.2326961Z 50691484cf26: Pulling fs layer
+2026-09-13T13:59:53.2327443Z f669ff192e7c: Pulling fs layer
+2026-09-13T13:59:53.2327816Z dc7a969c82d9: Waiting
+2026-09-13T13:59:53.2328049Z a1ff4bc3f481: Waiting
+2026-09-13T13:59:53.2328266Z 50691484cf26: Waiting
+2026-09-13T13:59:53.2328474Z 6f0c43bdc54a: Waiting
+2026-09-13T13:59:53.2328834Z f669ff192e7c: Waiting
+2026-09-13T13:59:53.2329072Z 6249af217ef6: Waiting
+2026-09-13T13:59:53.2329288Z 15ab8eaea03e: Waiting
+2026-09-13T13:59:53.2329505Z 4f4fb700ef54: Waiting
+2026-09-13T13:59:53.2329728Z a636358af2c8: Waiting
+2026-09-13T13:59:53.2330146Z bef3b93c3984: Waiting
+2026-09-13T13:59:53.2330588Z d3a5feebe29b: Waiting
+2026-09-13T13:59:53.3373411Z 9a4d47d5aa13: Verifying Checksum
+2026-09-13T13:59:53.3373976Z 9a4d47d5aa13: Download complete
+2026-09-13T13:59:53.4422092Z 96c832531c38: Verifying Checksum
+2026-09-13T13:59:53.4429816Z 96c832531c38: Download complete
+2026-09-13T13:59:53.4968246Z dc7a969c82d9: Verifying Checksum
+2026-09-13T13:59:53.4970427Z dc7a969c82d9: Download complete
+2026-09-13T13:59:53.5078873Z a1ff4bc3f481: Download complete
+2026-09-13T13:59:53.5359038Z bef3b93c3984: Download complete
+2026-09-13T13:59:53.5497821Z a636358af2c8: Download complete
+2026-09-13T13:59:53.5659628Z d3a5feebe29b: Verifying Checksum
+2026-09-13T13:59:53.5668681Z d3a5feebe29b: Download complete
+2026-09-13T13:59:53.5986712Z 6249af217ef6: Verifying Checksum
+2026-09-13T13:59:53.5989276Z 6249af217ef6: Download complete
+2026-09-13T13:59:53.6332165Z 15ab8eaea03e: Download complete
+2026-09-13T13:59:53.6639773Z 4f4fb700ef54: Verifying Checksum
+2026-09-13T13:59:53.6640321Z 4f4fb700ef54: Download complete
+2026-09-13T13:59:53.6972341Z 50691484cf26: Verifying Checksum
+2026-09-13T13:59:53.6973298Z 50691484cf26: Download complete
+2026-09-13T13:59:53.7371177Z f669ff192e7c: Verifying Checksum
+2026-09-13T13:59:53.7372005Z f669ff192e7c: Download complete
+2026-09-13T13:59:53.7479852Z 46805e80f2d7: Verifying Checksum
+2026-09-13T13:59:53.7483178Z 46805e80f2d7: Download complete
+2026-09-13T13:59:54.8044960Z 96c832531c38: Pull complete
+2026-09-13T13:59:54.8511821Z 9a4d47d5aa13: Pull complete
+2026-09-13T14:00:05.6194136Z 46805e80f2d7: Pull complete
+2026-09-13T14:00:12.3615079Z dc7a969c82d9: Pull complete
+2026-09-13T14:00:15.9040538Z 6f0c43bdc54a: Verifying Checksum
+2026-09-13T14:00:15.9040902Z 6f0c43bdc54a: Download complete
+2026-09-13T14:00:16.0134484Z a1ff4bc3f481: Pull complete
+2026-09-13T14:00:17.4024546Z a636358af2c8: Pull complete
+2026-09-13T14:00:17.4121942Z bef3b93c3984: Pull complete
+2026-09-13T14:00:17.4233031Z d3a5feebe29b: Pull complete
+2026-09-13T14:01:40.9178452Z 6f0c43bdc54a: Pull complete
+2026-09-13T14:01:40.9284005Z 6249af217ef6: Pull complete
+2026-09-13T14:01:40.9398719Z 15ab8eaea03e: Pull complete
+2026-09-13T14:01:40.9493851Z 4f4fb700ef54: Pull complete
+2026-09-13T14:01:40.9928961Z 50691484cf26: Pull complete
+2026-09-13T14:01:41.0490116Z f669ff192e7c: Pull complete
+2026-09-13T14:01:41.1280375Z Digest: sha256:23df66c4df7606137f5297ec23e1156e089708dfcbc0bf62b08ce9e772dce856
+2026-09-13T14:01:41.1295994Z Status: Downloaded newer image for unityci/editor:ubuntu-6000.0.32f1-android-3
+2026-09-13T14:01:41.1471089Z 7e3fc6aa6c49fa182d0605e4f174ab44ff48093577bf971f2e51520e24654cad
+2026-09-13T14:01:41.3369026Z CONTAINER ID   IMAGE                                         COMMAND                  CREATED                  STATUS                  PORTS     NAMES
+2026-09-13T14:01:41.3381322Z 7e3fc6aa6c49   unityci/editor:ubuntu-6000.0.32f1-android-3   "bash -c 'sleep infi…"   Less than a second ago   Up Less than a second             unity-build
+2026-09-13T14:01:41.3505808Z ##[group]Run docker exec unity-build bash -c '
+2026-09-13T14:01:41.3506241Z [36;1mdocker exec unity-build bash -c '[0m
+2026-09-13T14:01:41.3506544Z [36;1m  set -o pipefail[0m
+2026-09-13T14:01:41.3506844Z [36;1m  unity-editor -batchmode -nographics -quit \[0m
+2026-09-13T14:01:41.3509410Z [36;1m    -username "$UNITY_EMAIL"*** \[0m
+2026-09-13T14:01:41.3509743Z [36;1m    -logFile /dev/stdout[0m
+2026-09-13T14:01:41.3509999Z [36;1m  code=$?[0m
+2026-09-13T14:01:41.3510331Z [36;1m  echo "login exit code: $code (license verified in the next step)"[0m
+2026-09-13T14:01:41.3510702Z [36;1m  exit 0[0m
+2026-09-13T14:01:41.3510897Z [36;1m'[0m
+2026-09-13T14:01:41.3580474Z shell: /usr/bin/bash -e {0}
+2026-09-13T14:01:41.3580742Z env:
+2026-09-13T14:01:41.3581005Z   UNITY_IMAGE: unityci/editor:ubuntu-6000.0.32f1-android-3
+2026-09-13T14:01:41.3581363Z   KS_PASS: DummySurfersDebug!2024
+2026-09-13T14:01:41.3581650Z   KS_ALIAS: dummysurfers
+2026-09-13T14:01:41.3581870Z ##[endgroup]
+2026-09-13T14:01:41.7980129Z Unity Editor version:    6000.0.32f1 (b2e806cf271c)
+2026-09-13T14:01:41.7980749Z Branch:                  6000.0/staging
+2026-09-13T14:01:41.7981247Z Build type:              Release
+2026-09-13T14:01:41.7981585Z Batch mode:              YES
+2026-09-13T14:01:41.7981952Z System name:             Linux
+2026-09-13T14:01:41.7982494Z Distro version:          #22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026
+2026-09-13T14:01:41.7983055Z Kernel version:          6.17.0-1022-azure
+2026-09-13T14:01:41.7983469Z Architecture:            x86_64
+2026-09-13T14:01:41.7983874Z Available memory:        15989 MB
+2026-09-13T14:01:41.7984462Z CreateDirectory '/root/.cache/unity3d' failed:  (current dir: /project)
+2026-09-13T14:01:42.0988872Z UnityConnectLoginRequest: Failed to login - please check your username or password
+2026-09-13T14:01:42.0990089Z No sufficient permissions while processing request "https://core.cloud.unity3d.com/api/login", HTTP error code 401
+2026-09-13T14:01:42.4993296Z .UnityConnectLoginRequest: Failed to login - please check your username or password
+2026-09-13T14:01:42.4994652Z No sufficient permissions while processing request "https://core.cloud.unity3d.com/api/login", HTTP error code 401
+2026-09-13T14:01:42.4998994Z .[UnityConnect::TryLogin] Authentication Retry (1) ...
+2026-09-13T14:01:42.7998365Z UnityConnectLoginRequest: Failed to login - please check your username or password
+2026-09-13T14:01:42.7999996Z No sufficient permissions while processing request "https://core.cloud.unity3d.com/api/login", HTTP error code 401
+2026-09-13T14:01:42.8001413Z .[UnityConnect::TryLogin] Authentication Retry (2) ...
+2026-09-13T14:01:42.8002433Z [Licensing::Module] Trying to connect to existing licensing client channel...
+2026-09-13T14:01:42.8010836Z [Licensing::IpcConnector] Connection attempt to the License Client on channel: "LicenseClient-root" failed because channel doesn't exist; code: "0x80000002"
+2026-09-13T14:01:42.8013739Z [Licensing::Module] Successfully launched the LicensingClient (PId: 35)
+2026-09-13T14:01:43.3693117Z [Licensing::IpcConnector] Successfully connected to the License Client on channel: "LicenseClient-root" at "2026-09-13T14:01:43.368753Z"
+2026-09-13T14:01:43.3694600Z [SignatureVerifier] Application signature verification not supported on this platform.
+2026-09-13T14:01:43.4359939Z [Licensing::Client] Handshaking with LicensingClient:
+2026-09-13T14:01:43.4361248Z   Version:                 1.16.0+1c867a9
+2026-09-13T14:01:43.4388158Z   Session Id:              364d1ebe1c3541a4bc107f428a80f936
+2026-09-13T14:01:43.4391511Z   Correlation Id:          bc2bd3b0337dcdcd80d913f6a1a882bb
+2026-09-13T14:01:43.4392399Z   External correlation Id: 8599754240393963531
+2026-09-13T14:01:43.4393205Z   Machine Id:              D7nTUnjNAmtsUMcnoyrqkgIbYdM=
+2026-09-13T14:01:43.4394770Z [Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-root" (connect: 0.57s, validation: 0.07s, handshake: 0.00s)
+2026-09-13T14:01:43.4398159Z [Licensing::IpcConnector] Successfully connected to the License Notification on channel: "LicenseClient-root-notifications" at "2026-09-13T14:01:43.435009Z"
+2026-09-13T14:01:43.4400168Z [Licensing::Module] Connected to LicensingClient (PId: 35, launch time: 0.00, total connection time: 0.63s)
+2026-09-13T14:01:43.4401725Z [Licensing::Module] Error: Access token is unavailable; failed to update
+2026-09-13T14:01:43.4800772Z [Licensing::Client] Error: Code 500 while processing request (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)
+2026-09-13T14:01:43.4802540Z [Licensing::Client] Error: Code 500 while updating license in client (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)
+2026-09-13T14:01:43.5012023Z [Licensing::Client] Error: Code 404 while processing request (status: Found 0 entitlement groups and 0 free entitlements matching requested entitlement ids)
+2026-09-13T14:01:43.5022382Z [Licensing::Module] Error: 'com.unity.editor.headless' was not found.
+2026-09-13T14:01:43.5023057Z Pro License: NO
+2026-09-13T14:01:43.5023437Z Initialize udev device monitor.
+2026-09-13T14:01:43.5129145Z [Licensing::Client] Error: Code 404 while processing request (status: Found 0 entitlement groups and 0 free entitlements matching requested entitlement ids)
+2026-09-13T14:01:43.5131522Z No valid Unity Editor license found. Please activate your license.
+2026-09-13T14:01:43.5224171Z login exit code: 1 (license verified in the next step)
+2026-09-13T14:01:43.9820159Z ##[group]Run docker exec unity-build bash -c '
+2026-09-13T14:01:43.9820572Z [36;1mdocker exec unity-build bash -c '[0m
+2026-09-13T14:01:43.9820867Z [36;1m  set -o pipefail[0m
+2026-09-13T14:01:43.9821164Z [36;1m  unity-editor -batchmode -nographics -quit \[0m
+2026-09-13T14:01:43.9821493Z [36;1m    -projectPath /project \[0m
+2026-09-13T14:01:43.9821918Z [36;1m    -executeMethod DummySurfer.EditorTools.CiEntryPoint.PrepareCiBuild \[0m
+2026-09-13T14:01:43.9822375Z [36;1m    -logFile /dev/stdout[0m
+2026-09-13T14:01:43.9822620Z [36;1m'[0m
+2026-09-13T14:01:43.9858042Z shell: /usr/bin/bash -e {0}
+2026-09-13T14:01:43.9858296Z env:
+2026-09-13T14:01:43.9858561Z   UNITY_IMAGE: unityci/editor:ubuntu-6000.0.32f1-android-3
+2026-09-13T14:01:43.9858905Z   KS_PASS: DummySurfersDebug!2024
+2026-09-13T14:01:43.9859176Z   KS_ALIAS: dummysurfers
+2026-09-13T14:01:43.9859396Z ##[endgroup]
+2026-09-13T14:01:44.1197291Z Unity Editor version:    6000.0.32f1 (b2e806cf271c)
+2026-09-13T14:01:44.1198261Z Branch:                  6000.0/staging
+2026-09-13T14:01:44.1198737Z Build type:              Release
+2026-09-13T14:01:44.1199117Z Batch mode:              YES
+2026-09-13T14:01:44.1199551Z System name:             Linux
+2026-09-13T14:01:44.1200104Z Distro version:          #22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026
+2026-09-13T14:01:44.1200737Z Kernel version:          6.17.0-1022-azure
+2026-09-13T14:01:44.1201209Z Architecture:            x86_64
+2026-09-13T14:01:44.1201648Z Available memory:        15989 MB
+2026-09-13T14:01:44.1202346Z [Licensing::Module] Trying to connect to existing licensing client channel...
+2026-09-13T14:01:44.1203727Z [Licensing::IpcConnector] Connection attempt to the License Client on channel: "LicenseClient-root" failed because channel doesn't exist; code: "0x80000002"
+2026-09-13T14:01:44.1210416Z [Licensing::Module] Successfully launched the LicensingClient (PId: 92)
+2026-09-13T14:01:44.6901693Z [Licensing::IpcConnector] Successfully connected to the License Client on channel: "LicenseClient-root" at "2026-09-13T14:01:44.688822Z"
+2026-09-13T14:01:44.6903324Z [SignatureVerifier] Application signature verification not supported on this platform.
+2026-09-13T14:01:44.7592243Z [Licensing::Client] Handshaking with LicensingClient:
+2026-09-13T14:01:44.7594213Z   Version:                 1.16.0+1c867a9
+2026-09-13T14:01:44.7595902Z   Session Id:              8f08c6aabb4b44b4b0a22d400b4ff107
+2026-09-13T14:01:44.7598298Z   Correlation Id:          e5e11e962aa5edb0906e9d775c36f826
+2026-09-13T14:01:44.7599588Z   External correlation Id: 2423961263017367476
+2026-09-13T14:01:44.7600786Z   Machine Id:              D7nTUnjNAmtsUMcnoyrqkgIbYdM=
+2026-09-13T14:01:44.7603768Z [Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-root" (connect: 0.57s, validation: 0.07s, handshake: 0.00s)
+2026-09-13T14:01:44.7656632Z [Licensing::IpcConnector] Successfully connected to the License Notification on channel: "LicenseClient-root-notifications" at "2026-09-13T14:01:44.759212Z"
+2026-09-13T14:01:44.7660318Z [Licensing::Module] Connected to LicensingClient (PId: 92, launch time: 0.00, total connection time: 0.64s)
+2026-09-13T14:01:44.7662204Z [Licensing::Module] Error: Access token is unavailable; failed to update
+2026-09-13T14:01:44.7939437Z [Licensing::Client] Error: Code 500 while processing request (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)
+2026-09-13T14:01:44.7943376Z [Licensing::Client] Error: Code 500 while updating license in client (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)
+2026-09-13T14:01:44.8161823Z [Licensing::Client] Error: Code 404 while processing request (status: Found 0 entitlement groups and 0 free entitlements matching requested entitlement ids)
+2026-09-13T14:01:44.8164179Z [Licensing::Module] Error: 'com.unity.editor.headless' was not found.
+2026-09-13T14:01:44.8165700Z Pro License: NO
+2026-09-13T14:01:44.8167800Z Initialize udev device monitor.
+2026-09-13T14:01:44.8169995Z CreateDirectory '/root/.cache/unity3d' failed:  (current dir: /project)
+2026-09-13T14:01:44.8283070Z [Licensing::Client] Error: Code 404 while processing request (status: Found 0 entitlement groups and 0 free entitlements matching requested entitlement ids)
+2026-09-13T14:01:44.8288242Z No valid Unity Editor license found. Please activate your license.
+2026-09-13T14:01:44.9871221Z ##[error]Process completed with exit code 1.
+2026-09-13T14:01:44.9934014Z ##[group]Run ls -la "$GITHUB_WORKSPACE/build/Android" 2>/dev/null || echo "no build/Android dir"
+2026-09-13T14:01:44.9934718Z [36;1mls -la "$GITHUB_WORKSPACE/build/Android" 2>/dev/null || echo "no build/Android dir"[0m
+2026-09-13T14:01:44.9970625Z shell: /usr/bin/bash -e {0}
+2026-09-13T14:01:44.9970882Z env:
+2026-09-13T14:01:44.9971144Z   UNITY_IMAGE: unityci/editor:ubuntu-6000.0.32f1-android-3
+2026-09-13T14:01:44.9971492Z   KS_PASS: DummySurfersDebug!2024
+2026-09-13T14:01:44.9971755Z   KS_ALIAS: dummysurfers
+2026-09-13T14:01:44.9971974Z ##[endgroup]
+2026-09-13T14:01:45.0039480Z no build/Android dir
+2026-09-13T14:01:45.0065077Z ##[group]Run docker rm -f unity-build || true
+2026-09-13T14:01:45.0065435Z [36;1mdocker rm -f unity-build || true[0m
+2026-09-13T14:01:45.0096975Z shell: /usr/bin/bash -e {0}
+2026-09-13T14:01:45.0097469Z env:
+2026-09-13T14:01:45.0097738Z   UNITY_IMAGE: unityci/editor:ubuntu-6000.0.32f1-android-3
+2026-09-13T14:01:45.0098091Z   KS_PASS: DummySurfersDebug!2024
+2026-09-13T14:01:45.0098350Z   KS_ALIAS: dummysurfers
+2026-09-13T14:01:45.0098589Z ##[endgroup]
+2026-09-13T14:01:45.1042843Z unity-build
+2026-09-13T14:01:45.1193844Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-13T14:01:45.1195403Z Post job cleanup.
+2026-09-13T14:01:45.3985548Z [command]/usr/bin/git version
+2026-09-13T14:01:45.4038710Z git version 2.55.0
+2026-09-13T14:01:45.4083154Z Temporarily overriding HOME='/home/runner/work/_temp/4af63ca9-a3e7-43f6-9ccf-37ccd975f885' before making global git config changes
+2026-09-13T14:01:45.4091250Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-13T14:01:45.4092530Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/dummysurfers/dummysurfers
+2026-09-13T14:01:45.4150670Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-13T14:01:45.4192126Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-13T14:01:45.4482775Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-13T14:01:45.4512084Z http.https://github.com/.extraheader
+2026-09-13T14:01:45.4524579Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-09-13T14:01:45.4560147Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-13T14:01:45.4829459Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-13T14:01:45.4882399Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-13T14:01:45.5285988Z Cleaning up orphan processes
+2026-09-13T14:01:45.5716726Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
