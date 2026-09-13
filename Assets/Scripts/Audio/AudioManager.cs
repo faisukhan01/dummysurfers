@@ -53,7 +53,7 @@ namespace DummySurfer.Audio
 
         private void ApplyVolumes()
         {
-            if (_music != null) _music.volume = _musicVol * (Current == Core.GameState.Paused ? 0.4f : 1f);
+            if (_music != null) _music.volume = _musicVol * (GameStateManager.Ensure().Current == GameState.Paused ? 0.4f : 1f);
         }
 
         public void PlayMusic(MusicId id)

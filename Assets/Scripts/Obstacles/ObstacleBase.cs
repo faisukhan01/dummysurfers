@@ -10,8 +10,8 @@ namespace DummySurfer.Obstacles
     /// </summary>
     public abstract class ObstacleBase : MonoBehaviour
     {
-        public ObstacleKind Kind { get; protected set; }
-        public bool Lethal { get; protected set; } = true;
+        public ObstacleKind Kind { get; internal set; }
+        public bool Lethal { get; internal set; } = true;
         public float Length { get; protected set; } = 1f;
 
         public virtual void OnSpawned(Vector3 localPosition, float length)

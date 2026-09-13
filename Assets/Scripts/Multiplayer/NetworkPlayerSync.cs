@@ -52,6 +52,13 @@ namespace DummySurfer.Multiplayer
 
         public static event Action<PlayerController> LocalPlayerReady;
 
+        /// <summary>Clears remote opponent tracking (used on session shutdown).</summary>
+        public static void ResetRemoteTracking()
+        {
+            HasRemote = false;
+            RemoteZ = float.NegativeInfinity;
+        }
+
         public readonly NetworkVariable<RunnerNetState> State =
             new NetworkVariable<RunnerNetState>(default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 

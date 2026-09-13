@@ -146,8 +146,7 @@ namespace DummySurfer.Multiplayer
             if (nm != null && nm.IsListening) nm.Shutdown();
             JoinCode = "";
             LocalReady = false;
-            NetworkPlayerSync.HasRemote = false;
-            NetworkPlayerSync.RemoteZ = float.NegativeInfinity;
+            NetworkPlayerSync.ResetRemoteTracking();
             SetStatus(MpStatus.Idle, "");
         }
 
@@ -184,7 +183,9 @@ namespace DummySurfer.Multiplayer
                 if (playerPrefab == null)
                     throw new InvalidOperationException(
                         "NetworkRunner prefab is missing. Open Unity and run Tools > Dummy Surfer > 1. Setup Everything (see docs/SETUP_GUIDE.md).");
-                nm.PlayerPrefab = playerPrefab;
+                if (nm.NetworkConfig.Prefabs == null)
+                    nm.NetworkConfig.Prefabs = ScriptableObject.CreateInstance<NetworkPrefabsList>();
+                nm.NetworkConfig.Prefabs.Prefabs.Add(new NetworkPrefab { Prefab = playerPrefab });
                 go.AddComponent<ConnectionGuard>();
             }
             HookCallbacksOnce(nm);

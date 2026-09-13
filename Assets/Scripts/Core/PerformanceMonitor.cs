@@ -1,5 +1,7 @@
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.Rendering;
+using DummySurfer.Data;
 using DummySurfer.Utilities;
 
 namespace DummySurfer.Core

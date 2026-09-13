@@ -9,6 +9,10 @@ namespace DummySurfer.Utilities
         public static float Approach(this float current, float target, float rate, float dt)
             => Mathf.Lerp(current, target, 1f - Mathf.Exp(-rate * dt));
 
+        /// <summary>Frame-rate independent exponential approach for vectors.</summary>
+        public static Vector3 Approach(this Vector3 current, Vector3 target, float rate, float dt)
+            => current + (target - current) * (1f - Mathf.Exp(-rate * dt));
+
         public static Vector3 WithX(this Vector3 v, float x) { v.x = x; return v; }
         public static Vector3 WithY(this Vector3 v, float y) { v.y = y; return v; }
         public static Vector3 WithZ(this Vector3 v, float z) { v.z = z; return v; }
@@ -35,11 +39,21 @@ namespace DummySurfer.Utilities
         /// on all network operations (spec 3.2 / 10 ROOM FLOW: timeout, retry, error states).</summary>
         public static async System.Threading.Tasks.Task<T> WithTimeout<T>(this System.Threading.Tasks.Task<T> task, float seconds, string opName = "operation")
         {
-            var timeout = System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds(seconds));
+            var timeout = System.Threading.Tasks.Task.Delay(System.TimeSpan.FromSeconds(seconds));
             var finished = await System.Threading.Tasks.Task.WhenAny(task, timeout);
             if (finished != task)
-                throw new TimeoutException($"'{opName}' timed out after {seconds:0}s. Check your connection and try again.");
+                throw new System.TimeoutException($"'{opName}' timed out after {seconds:0}s. Check your connection and try again.");
             return await task;
+        }
+
+        /// <summary>Non-generic timeout wrapper for Task (fire-and-forget style ops).</summary>
+        public static async System.Threading.Tasks.Task WithTimeout(this System.Threading.Tasks.Task task, float seconds, string opName = "operation")
+        {
+            var timeout = System.Threading.Tasks.Task.Delay(System.TimeSpan.FromSeconds(seconds));
+            var finished = await System.Threading.Tasks.Task.WhenAny(task, timeout);
+            if (finished != task)
+                throw new System.TimeoutException($"'{opName}' timed out after {seconds:0}s. Check your connection and try again.");
+            await task;
         }
     }
 }

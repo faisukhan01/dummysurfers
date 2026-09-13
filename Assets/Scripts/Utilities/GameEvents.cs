@@ -52,8 +52,8 @@ namespace DummySurfer.Utilities
             public readonly bool HostReady;
             public readonly bool ClientReady;
             public readonly bool ClientConnected;
-            public LobbySnapshot(bool hasSession, string code, bool hostReady, bool clientReady, bool clientConnected)
-            { HasSession = hasSession; JoinCode = code; HostReady = hostReady; ClientReady = clientReady; ClientConnected = clientConnected; }
+            public LobbySnapshot(bool hasSession, string joinCode, bool hostReady, bool clientReady, bool clientConnected)
+            { HasSession = hasSession; JoinCode = joinCode; HostReady = hostReady; ClientReady = clientReady; ClientConnected = clientConnected; }
         }
         public static event Action<LobbySnapshot> LobbyChanged;
         public static void PublishLobbyChanged(LobbySnapshot s) => LobbyChanged?.Invoke(s);
