@@ -4,6 +4,7 @@ using DummySurfer.Multiplayer;
 using DummySurfer.Powerups;
 using DummySurfer.Utilities;
 
+using UnityEngine.UI;
 namespace DummySurfer.UI
 {
     /// <summary>

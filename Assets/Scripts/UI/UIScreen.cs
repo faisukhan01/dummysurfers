@@ -1,6 +1,7 @@
 using UnityEngine;
 using DummySurfer.Utilities;
 
+using UnityEngine.UI;
 namespace DummySurfer.UI
 {
     /// <summary>
@@ -34,9 +35,9 @@ namespace DummySurfer.UI
 
         protected virtual void OnShown() { }
 
-        protected Text AddText(string content, int size, Color color, Vector2 position,
+        protected Text AddText(string content, int fontSize, Color color, Vector2 position,
             Vector2 size, TextAnchor align = TextAnchor.MiddleCenter, bool bold = false)
-            => UICanvasBuilder.Text(Root, "T_" + content, content, size, color, align,
+            => UICanvasBuilder.Text(Root, "T_" + content, content, fontSize, color, align,
                 new Vector2(0.5f, 0.5f), position, size, bold);
 
         protected Button AddButton(string label, Vector2 position, Vector2 size, Color bg,

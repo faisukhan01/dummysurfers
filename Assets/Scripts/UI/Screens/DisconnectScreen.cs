@@ -3,6 +3,7 @@ using DummySurfer.Core;
 using DummySurfer.Multiplayer;
 using DummySurfer.Utilities;
 
+using UnityEngine.UI;
 namespace DummySurfer.UI
 {
     /// <summary>Graceful disconnect screen (spec 10: disconnects fail gracefully).</summary>

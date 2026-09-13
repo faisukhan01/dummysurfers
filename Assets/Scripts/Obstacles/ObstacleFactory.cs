@@ -2,6 +2,7 @@ using UnityEngine;
 using DummySurfer.Data;
 using DummySurfer.Utilities;
 
+using DummySurfer.Track;
 namespace DummySurfer.Obstacles
 {
     /// <summary>Original obstacle visuals built from primitives (spec 10 OBSTACLE VALIDATION).</summary>

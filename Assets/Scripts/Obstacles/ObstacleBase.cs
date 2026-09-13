@@ -1,6 +1,7 @@
 using UnityEngine;
 using DummySurfer.Player;
 
+using DummySurfer.Track;
 namespace DummySurfer.Obstacles
 {
     /// <summary>

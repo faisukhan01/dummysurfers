@@ -3,6 +3,7 @@ using DummySurfer.Core;
 using DummySurfer.Multiplayer;
 using DummySurfer.Utilities;
 
+using UnityEngine.UI;
 namespace DummySurfer.UI
 {
     /// <summary>Synchronized countdown overlay (online ticks arrive from MatchStateManager).</summary>

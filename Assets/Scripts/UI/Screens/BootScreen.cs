@@ -3,6 +3,7 @@ using UnityEngine;
 using DummySurfer.Core;
 using DummySurfer.Utilities;
 
+using UnityEngine.UI;
 namespace DummySurfer.UI
 {
     /// <summary>Splash/boot screen with service warm-up status.</summary>

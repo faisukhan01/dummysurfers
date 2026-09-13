@@ -61,9 +61,9 @@ namespace DummySurfer.UI
 
         public static Text Text(Transform parent, string name, string content, int size, Color color,
             TextAnchor align = TextAnchor.MiddleCenter, Vector2 anchor = default,
-            Vector2 position = default, Vector2 size = default, bool bold = false)
+            Vector2 position = default, Vector2 dims = default, bool bold = false)
         {
-            var rt = Centered(parent, name, anchor, position, size);
+            var rt = Centered(parent, name, anchor, position, dims);
             var t = rt.gameObject.AddComponent<Text>();
             t.font = DefaultFont();
             t.text = content;

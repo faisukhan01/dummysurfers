@@ -1,0 +1,1224 @@
+﻿2026-09-13T14:35:46.3605782Z Current runner version: '2.337.0'
+2026-09-13T14:35:46.3632901Z ##[group]Runner Image Provisioner
+2026-09-13T14:35:46.3633906Z Hosted Compute Agent
+2026-09-13T14:35:46.3634549Z Version: 20260828.587
+2026-09-13T14:35:46.3635298Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+2026-09-13T14:35:46.3636063Z Build Date: 2026-08-28T16:44:25Z
+2026-09-13T14:35:46.3636771Z Worker ID: {e5fa33f0-fea3-4fd8-95f3-c27c0ffbf6b9}
+2026-09-13T14:35:46.3637595Z Azure Region: westus
+2026-09-13T14:35:46.3638477Z ##[endgroup]
+2026-09-13T14:35:46.3640237Z ##[group]Operating System
+2026-09-13T14:35:46.3640912Z Ubuntu
+2026-09-13T14:35:46.3641440Z 24.04.5
+2026-09-13T14:35:46.3642115Z LTS
+2026-09-13T14:35:46.3642647Z ##[endgroup]
+2026-09-13T14:35:46.3643279Z ##[group]Runner Image
+2026-09-13T14:35:46.3643930Z Image: ubuntu-24.04
+2026-09-13T14:35:46.3644578Z Version: 20260907.300.1
+2026-09-13T14:35:46.3645909Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260907.300/images/ubuntu/Ubuntu2404-Readme.md
+2026-09-13T14:35:46.3647544Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260907.300
+2026-09-13T14:35:46.3648797Z ##[endgroup]
+2026-09-13T14:35:46.3650029Z ##[group]GITHUB_TOKEN Permissions
+2026-09-13T14:35:46.3651907Z Contents: write
+2026-09-13T14:35:46.3652709Z Metadata: read
+2026-09-13T14:35:46.3653299Z ##[endgroup]
+2026-09-13T14:35:46.3655402Z Secret source: Actions
+2026-09-13T14:35:46.3656620Z Cache mode: write
+2026-09-13T14:35:46.3657329Z Prepare workflow directory
+2026-09-13T14:35:46.4065330Z Prepare all required actions
+2026-09-13T14:35:46.4114469Z Getting action download info
+2026-09-13T14:35:46.7803484Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-09-13T14:35:46.8896192Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-09-13T14:35:47.0060057Z Download action repository 'softprops/action-gh-release@v2' (SHA:3bb12739c298aeb8a4eeaf626c5b8d85266b0e65)
+2026-09-13T14:35:47.4627775Z Complete job name: Unity 6 → Android APK
+2026-09-13T14:35:47.5460645Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-13T14:35:47.5469994Z ##[group]Run actions/checkout@v4
+2026-09-13T14:35:47.5470828Z with:
+2026-09-13T14:35:47.5471349Z   repository: faisukhan01/dummysurfers
+2026-09-13T14:35:47.5475703Z   token: ***
+2026-09-13T14:35:47.5476194Z   ssh-strict: true
+2026-09-13T14:35:47.5476672Z   ssh-user: git
+2026-09-13T14:35:47.5477161Z   persist-credentials: true
+2026-09-13T14:35:47.5477700Z   clean: true
+2026-09-13T14:35:47.5478406Z   sparse-checkout-cone-mode: true
+2026-09-13T14:35:47.5479003Z   fetch-depth: 1
+2026-09-13T14:35:47.5479483Z   fetch-tags: false
+2026-09-13T14:35:47.5479989Z   show-progress: true
+2026-09-13T14:35:47.5480537Z   lfs: false
+2026-09-13T14:35:47.5481052Z   submodules: false
+2026-09-13T14:35:47.5481556Z   set-safe-directory: true
+2026-09-13T14:35:47.5482131Z   allow-unsafe-pr-checkout: false
+2026-09-13T14:35:47.5482988Z env:
+2026-09-13T14:35:47.5483573Z   UNITY_IMAGE: unityci/editor:ubuntu-6000.0.32f1-android-3
+2026-09-13T14:35:47.5484322Z   KS_PASS: DummySurfersDebug!2024
+2026-09-13T14:35:47.5484915Z   KS_ALIAS: dummysurfers
+2026-09-13T14:35:47.5485428Z ##[endgroup]
+2026-09-13T14:35:47.6490441Z Syncing repository: faisukhan01/dummysurfers
+2026-09-13T14:35:47.6494331Z ##[group]Getting Git version info
+2026-09-13T14:35:47.6495521Z Working directory is '/home/runner/work/dummysurfers/dummysurfers'
+2026-09-13T14:35:47.6496841Z [command]/usr/bin/git version
+2026-09-13T14:35:47.6592931Z git version 2.55.0
+2026-09-13T14:35:47.6630983Z ##[endgroup]
+2026-09-13T14:35:47.6649681Z Temporarily overriding HOME='/home/runner/work/_temp/e8e87cac-5e6e-4036-9672-3d8ee75c1dc9' before making global git config changes
+2026-09-13T14:35:47.6652462Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-13T14:35:47.6655457Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/dummysurfers/dummysurfers
+2026-09-13T14:35:47.6717737Z Deleting the contents of '/home/runner/work/dummysurfers/dummysurfers'
+2026-09-13T14:35:47.6722189Z ##[group]Initializing the repository
+2026-09-13T14:35:47.6727634Z [command]/usr/bin/git init /home/runner/work/dummysurfers/dummysurfers
+2026-09-13T14:35:47.6872681Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-09-13T14:35:47.6874844Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-09-13T14:35:47.6876772Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-09-13T14:35:47.6878363Z hint: call:
+2026-09-13T14:35:47.6879101Z hint:
+2026-09-13T14:35:47.6879899Z hint: 	git config --global init.defaultBranch <name>
+2026-09-13T14:35:47.6881550Z hint:
+2026-09-13T14:35:47.6882383Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-09-13T14:35:47.6883494Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-09-13T14:35:47.6884360Z hint:
+2026-09-13T14:35:47.6884883Z hint: 	git branch -m <name>
+2026-09-13T14:35:47.6885430Z hint:
+2026-09-13T14:35:47.6886147Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-09-13T14:35:47.6896670Z Initialized empty Git repository in /home/runner/work/dummysurfers/dummysurfers/.git/
+2026-09-13T14:35:47.6900446Z [command]/usr/bin/git remote add origin https://github.com/faisukhan01/dummysurfers
+2026-09-13T14:35:47.6951415Z ##[endgroup]
+2026-09-13T14:35:47.6952880Z ##[group]Disabling automatic garbage collection
+2026-09-13T14:35:47.6956014Z [command]/usr/bin/git config --local gc.auto 0
+2026-09-13T14:35:47.6988986Z ##[endgroup]
+2026-09-13T14:35:47.6999739Z ##[group]Setting up auth
+2026-09-13T14:35:47.7001098Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-13T14:35:47.7043554Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-13T14:35:47.7464961Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-13T14:35:47.7508458Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-13T14:35:47.7746306Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-13T14:35:47.7786544Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-13T14:35:47.8023919Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-09-13T14:35:47.8065189Z ##[endgroup]
+2026-09-13T14:35:47.8075098Z ##[group]Fetching the repository
+2026-09-13T14:35:47.8076796Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +2600a76bc30484945886c8b866209893729fbfcc:refs/remotes/origin/main
+2026-09-13T14:35:48.2225198Z From https://github.com/faisukhan01/dummysurfers
+2026-09-13T14:35:48.2227705Z  * [new ref]         2600a76bc30484945886c8b866209893729fbfcc -> origin/main
+2026-09-13T14:35:48.2233541Z ##[endgroup]
+2026-09-13T14:35:48.2234999Z ##[group]Determining the checkout info
+2026-09-13T14:35:48.2236437Z ##[endgroup]
+2026-09-13T14:35:48.2238422Z [command]/usr/bin/git sparse-checkout disable
+2026-09-13T14:35:48.2294400Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-09-13T14:35:48.2327171Z ##[group]Checking out the ref
+2026-09-13T14:35:48.2331553Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-09-13T14:35:48.2484423Z Switched to a new branch 'main'
+2026-09-13T14:35:48.2490836Z branch 'main' set up to track 'origin/main'.
+2026-09-13T14:35:48.2499034Z ##[endgroup]
+2026-09-13T14:35:48.2544612Z [command]/usr/bin/git log -1 --format=%H
+2026-09-13T14:35:48.2572549Z 2600a76bc30484945886c8b866209893729fbfcc
+2026-09-13T14:35:48.2909218Z ##[group]Run sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghc 2>/dev/null || true
+2026-09-13T14:35:48.2912694Z [36;1msudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghc 2>/dev/null || true[0m
+2026-09-13T14:35:48.2914971Z [36;1mdf -h /[0m
+2026-09-13T14:35:48.2959719Z shell: /usr/bin/bash -e {0}
+2026-09-13T14:35:48.2960930Z env:
+2026-09-13T14:35:48.2962125Z   UNITY_IMAGE: unityci/editor:ubuntu-6000.0.32f1-android-3
+2026-09-13T14:35:48.2963759Z   KS_PASS: DummySurfersDebug!2024
+2026-09-13T14:35:48.2965009Z   KS_ALIAS: dummysurfers
+2026-09-13T14:35:48.2966124Z ##[endgroup]
+2026-09-13T14:36:58.2452208Z Filesystem      Size  Used Avail Use% Mounted on
+2026-09-13T14:36:58.2452974Z /dev/root       145G   42G  103G  29% /
+2026-09-13T14:36:58.2493077Z ##[group]Run keytool -genkeypair -v \
+2026-09-13T14:36:58.2493451Z [36;1mkeytool -genkeypair -v \[0m
+2026-09-13T14:36:58.2493818Z [36;1m  -keystore "$GITHUB_WORKSPACE/dummysurfers.keystore" \[0m
+2026-09-13T14:36:58.2494186Z [36;1m  -alias "$KS_ALIAS" \[0m
+2026-09-13T14:36:58.2494488Z [36;1m  -keyalg RSA -keysize 2048 -validity 10000 \[0m
+2026-09-13T14:36:58.2494859Z [36;1m  -storepass "$KS_PASS" -keypass "$KS_PASS" \[0m
+2026-09-13T14:36:58.2495305Z [36;1m  -dname "CN=Dummy Surfer, OU=Games, O=DummySurfers, L=Web, S=Web, C=PK"[0m
+2026-09-13T14:36:58.2531485Z shell: /usr/bin/bash -e {0}
+2026-09-13T14:36:58.2531750Z env:
+2026-09-13T14:36:58.2532014Z   UNITY_IMAGE: unityci/editor:ubuntu-6000.0.32f1-android-3
+2026-09-13T14:36:58.2532373Z   KS_PASS: DummySurfersDebug!2024
+2026-09-13T14:36:58.2532644Z   KS_ALIAS: dummysurfers
+2026-09-13T14:36:58.2532883Z ##[endgroup]
+2026-09-13T14:36:59.4809850Z Generating 2,048 bit RSA key pair and self-signed certificate (SHA256withRSA) with a validity of 10,000 days
+2026-09-13T14:36:59.4828358Z 	for: CN=Dummy Surfer, OU=Games, O=DummySurfers, L=Web, ST=Web, C=PK
+2026-09-13T14:36:59.8265858Z [Storing /home/runner/work/dummysurfers/dummysurfers/dummysurfers.keystore]
+2026-09-13T14:37:00.0203127Z ##[group]Run docker run -d --name unity-build \
+2026-09-13T14:37:00.0203574Z [36;1mdocker run -d --name unity-build \[0m
+2026-09-13T14:37:00.0203996Z [36;1m  -v "/home/runner/work/dummysurfers/dummysurfers:/project" \[0m
+2026-09-13T14:37:00.0204383Z [36;1m  -w /project \[0m
+2026-09-13T14:37:00.0204675Z [36;1m  -e UNITY_EMAIL -e UNITY_PASSWORD \[0m
+2026-09-13T14:37:00.0205062Z [36;1m  -e CI_KEYSTORE_PATH=/project/dummysurfers.keystore \[0m
+2026-09-13T14:37:00.0205436Z [36;1m  -e "CI_KEYSTORE_PASS=$KS_PASS" \[0m
+2026-09-13T14:37:00.0205755Z [36;1m  -e "CI_KEYALIAS_NAME=$KS_ALIAS" \[0m
+2026-09-13T14:37:00.0206061Z [36;1m  -e "CI_KEYALIAS_PASS=$KS_PASS" \[0m
+2026-09-13T14:37:00.0206367Z [36;1m  "$UNITY_IMAGE" \[0m
+2026-09-13T14:37:00.0206625Z [36;1m  bash -c 'sleep infinity'[0m
+2026-09-13T14:37:00.0206950Z [36;1mdocker ps --filter name=unity-build[0m
+2026-09-13T14:37:00.0242878Z shell: /usr/bin/bash -e {0}
+2026-09-13T14:37:00.0243147Z env:
+2026-09-13T14:37:00.0243447Z   UNITY_IMAGE: unityci/editor:ubuntu-6000.0.32f1-android-3
+2026-09-13T14:37:00.0243812Z   KS_PASS: DummySurfersDebug!2024
+2026-09-13T14:37:00.0244086Z   KS_ALIAS: dummysurfers
+2026-09-13T14:37:00.0244578Z   UNITY_EMAIL: ***
+2026-09-13T14:37:00.0244825Z   UNITY_PASSWORD: ***
+2026-09-13T14:37:00.0245041Z ##[endgroup]
+2026-09-13T14:37:00.1445147Z Unable to find image 'unityci/editor:ubuntu-6000.0.32f1-android-3' locally
+2026-09-13T14:37:01.2856747Z ubuntu-6000.0.32f1-android-3: Pulling from unityci/editor
+2026-09-13T14:37:01.5703836Z 96c832531c38: Pulling fs layer
+2026-09-13T14:37:01.5706930Z 9a4d47d5aa13: Pulling fs layer
+2026-09-13T14:37:01.5707578Z 46805e80f2d7: Pulling fs layer
+2026-09-13T14:37:01.5708588Z dc7a969c82d9: Pulling fs layer
+2026-09-13T14:37:01.5709068Z a1ff4bc3f481: Pulling fs layer
+2026-09-13T14:37:01.5709561Z a636358af2c8: Pulling fs layer
+2026-09-13T14:37:01.5710022Z bef3b93c3984: Pulling fs layer
+2026-09-13T14:37:01.5710499Z d3a5feebe29b: Pulling fs layer
+2026-09-13T14:37:01.5710801Z 6f0c43bdc54a: Pulling fs layer
+2026-09-13T14:37:01.5711064Z 6249af217ef6: Pulling fs layer
+2026-09-13T14:37:01.5711415Z 15ab8eaea03e: Pulling fs layer
+2026-09-13T14:37:01.5711692Z 4f4fb700ef54: Pulling fs layer
+2026-09-13T14:37:01.5711931Z 50691484cf26: Pulling fs layer
+2026-09-13T14:37:01.5712175Z f669ff192e7c: Pulling fs layer
+2026-09-13T14:37:01.5712407Z a1ff4bc3f481: Waiting
+2026-09-13T14:37:01.5712628Z a636358af2c8: Waiting
+2026-09-13T14:37:01.5712831Z bef3b93c3984: Waiting
+2026-09-13T14:37:01.5713033Z d3a5feebe29b: Waiting
+2026-09-13T14:37:01.5713235Z 6f0c43bdc54a: Waiting
+2026-09-13T14:37:01.5713438Z dc7a969c82d9: Waiting
+2026-09-13T14:37:01.5713649Z 6249af217ef6: Waiting
+2026-09-13T14:37:01.5713864Z 15ab8eaea03e: Waiting
+2026-09-13T14:37:01.5714068Z 4f4fb700ef54: Waiting
+2026-09-13T14:37:01.5714268Z 50691484cf26: Waiting
+2026-09-13T14:37:01.5714502Z f669ff192e7c: Waiting
+2026-09-13T14:37:01.7950120Z 9a4d47d5aa13: Verifying Checksum
+2026-09-13T14:37:01.7950932Z 9a4d47d5aa13: Download complete
+2026-09-13T14:37:01.8867951Z 96c832531c38: Verifying Checksum
+2026-09-13T14:37:01.8870624Z 96c832531c38: Download complete
+2026-09-13T14:37:02.1183720Z a1ff4bc3f481: Verifying Checksum
+2026-09-13T14:37:02.1184284Z a1ff4bc3f481: Download complete
+2026-09-13T14:37:02.1391373Z dc7a969c82d9: Verifying Checksum
+2026-09-13T14:37:02.1393987Z dc7a969c82d9: Download complete
+2026-09-13T14:37:02.1548785Z 46805e80f2d7: Verifying Checksum
+2026-09-13T14:37:02.1549529Z 46805e80f2d7: Download complete
+2026-09-13T14:37:02.3459361Z a636358af2c8: Download complete
+2026-09-13T14:37:02.3612408Z bef3b93c3984: Verifying Checksum
+2026-09-13T14:37:02.3615248Z bef3b93c3984: Download complete
+2026-09-13T14:37:02.3679817Z d3a5feebe29b: Verifying Checksum
+2026-09-13T14:37:02.3683278Z d3a5feebe29b: Download complete
+2026-09-13T14:37:02.5855923Z 15ab8eaea03e: Download complete
+2026-09-13T14:37:02.5866631Z 6249af217ef6: Verifying Checksum
+2026-09-13T14:37:02.5867176Z 6249af217ef6: Download complete
+2026-09-13T14:37:02.8043234Z 4f4fb700ef54: Verifying Checksum
+2026-09-13T14:37:02.8044353Z 4f4fb700ef54: Download complete
+2026-09-13T14:37:02.8046713Z 50691484cf26: Verifying Checksum
+2026-09-13T14:37:02.8047231Z 50691484cf26: Download complete
+2026-09-13T14:37:03.0292118Z f669ff192e7c: Verifying Checksum
+2026-09-13T14:37:03.0293645Z f669ff192e7c: Download complete
+2026-09-13T14:37:03.1318844Z 96c832531c38: Pull complete
+2026-09-13T14:37:04.0304186Z 9a4d47d5aa13: Pull complete
+2026-09-13T14:37:14.0235925Z 46805e80f2d7: Pull complete
+2026-09-13T14:37:19.9215360Z dc7a969c82d9: Pull complete
+2026-09-13T14:37:23.0179759Z a1ff4bc3f481: Pull complete
+2026-09-13T14:37:24.8663784Z a636358af2c8: Pull complete
+2026-09-13T14:37:24.9136131Z 6f0c43bdc54a: Verifying Checksum
+2026-09-13T14:37:24.9136792Z 6f0c43bdc54a: Download complete
+2026-09-13T14:37:25.7144038Z bef3b93c3984: Pull complete
+2026-09-13T14:37:25.7282563Z d3a5feebe29b: Pull complete
+2026-09-13T14:38:49.9152010Z 6f0c43bdc54a: Pull complete
+2026-09-13T14:38:49.9251054Z 6249af217ef6: Pull complete
+2026-09-13T14:38:49.9369410Z 15ab8eaea03e: Pull complete
+2026-09-13T14:38:49.9484803Z 4f4fb700ef54: Pull complete
+2026-09-13T14:38:49.9880424Z 50691484cf26: Pull complete
+2026-09-13T14:38:50.0392505Z f669ff192e7c: Pull complete
+2026-09-13T14:38:50.1201118Z Digest: sha256:23df66c4df7606137f5297ec23e1156e089708dfcbc0bf62b08ce9e772dce856
+2026-09-13T14:38:50.1217253Z Status: Downloaded newer image for unityci/editor:ubuntu-6000.0.32f1-android-3
+2026-09-13T14:38:50.1403200Z 33f6e5eed7d7a269ae4a4703238409c4c55d8dc17167848b965549b54bc2a15b
+2026-09-13T14:38:50.3371924Z CONTAINER ID   IMAGE                                         COMMAND                  CREATED                  STATUS                  PORTS     NAMES
+2026-09-13T14:38:50.3394276Z 33f6e5eed7d7   unityci/editor:ubuntu-6000.0.32f1-android-3   "bash -c 'sleep infi…"   Less than a second ago   Up Less than a second             unity-build
+2026-09-13T14:38:50.3467102Z ##[group]Run docker exec unity-build bash -c '
+2026-09-13T14:38:50.3467537Z [36;1mdocker exec unity-build bash -c '[0m
+2026-09-13T14:38:50.3467820Z [36;1m  set +e[0m
+2026-09-13T14:38:50.3468484Z [36;1m  CLIENT=/opt/unity/Editor/Data/Resources/Licensing/Client/Unity.Licensing.Client[0m
+2026-09-13T14:38:50.3468978Z [36;1m  echo "=== [0] services config (before) ==="[0m
+2026-09-13T14:38:50.3469453Z [36;1m  cat /usr/share/unity3d/config/services-config.json 2>/dev/null || echo "(none)"[0m
+2026-09-13T14:38:50.3469922Z [36;1m  mkdir -p /usr/share/unity3d/config[0m
+2026-09-13T14:38:50.3470698Z [36;1m  printf "%s\n" "{\"licensingServiceBaseUrl\":\"https://api.unity.com/v1/licensing\",\"enableEntitlementLicensing\":true}" > /usr/share/unity3d/config/services-config.json[0m
+2026-09-13T14:38:50.3471483Z [36;1m  echo "=== [0] services config (now) ==="[0m
+2026-09-13T14:38:50.3471849Z [36;1m  cat /usr/share/unity3d/config/services-config.json[0m
+2026-09-13T14:38:50.3472245Z [36;1m  echo "=== [1] show assigned seats ==="[0m
+2026-09-13T14:38:50.3472798Z [36;1m  timeout 60 "$CLIENT" --show-seats --username "$UNITY_EMAIL" --password "$UNITY_PASSWORD" 2>&1 | tail -20 || true[0m
+2026-09-13T14:38:50.3473437Z [36;1m  echo "=== [2] ACTIVATE personal (activate-all + include-personal) ==="[0m
+2026-09-13T14:38:50.3474156Z [36;1m  timeout 240 "$CLIENT" --activate-all --include-personal --username "$UNITY_EMAIL" --password "$UNITY_PASSWORD" 2>&1 | tail -30 || true[0m
+2026-09-13T14:38:50.3474821Z [36;1m  echo "=== [3] show local entitlements ==="[0m
+2026-09-13T14:38:50.3475215Z [36;1m  timeout 60 "$CLIENT" --showEntitlements 2>&1 | tail -20 || true[0m
+2026-09-13T14:38:50.3475607Z [36;1m  echo "=== [4] editor license check ==="[0m
+2026-09-13T14:38:50.3476118Z [36;1m  timeout 180 unity-editor -batchmode -nographics -quit -logFile /dev/stdout 2>&1 | tail -6 || true[0m
+2026-09-13T14:38:50.3476689Z [36;1m  echo "=== [5] fallback: update-license + re-check ==="[0m
+2026-09-13T14:38:50.3477302Z [36;1m  timeout 240 "$CLIENT" --update-license --username "$UNITY_EMAIL" --password "$UNITY_PASSWORD" 2>&1 | tail -20 || true[0m
+2026-09-13T14:38:50.3478347Z [36;1m  timeout 180 unity-editor -batchmode -nographics -quit -logFile /dev/stdout 2>&1 | tail -6 || true[0m
+2026-09-13T14:38:50.3478874Z [36;1m  echo "license step done"[0m
+2026-09-13T14:38:50.3479130Z [36;1m  exit 0[0m
+2026-09-13T14:38:50.3479325Z [36;1m'[0m
+2026-09-13T14:38:50.3534140Z shell: /usr/bin/bash -e {0}
+2026-09-13T14:38:50.3534405Z env:
+2026-09-13T14:38:50.3534672Z   UNITY_IMAGE: unityci/editor:ubuntu-6000.0.32f1-android-3
+2026-09-13T14:38:50.3535023Z   KS_PASS: DummySurfersDebug!2024
+2026-09-13T14:38:50.3535287Z   KS_ALIAS: dummysurfers
+2026-09-13T14:38:50.3535523Z ##[endgroup]
+2026-09-13T14:38:50.4059262Z === [0] services config (before) ===
+2026-09-13T14:38:50.4079500Z (none)
+2026-09-13T14:38:50.4123968Z === [0] services config (now) ===
+2026-09-13T14:38:50.4133895Z {"licensingServiceBaseUrl":"https://api.unity.com/v1/licensing","enableEntitlementLicensing":true}
+2026-09-13T14:38:50.4140885Z === [1] show assigned seats ===
+2026-09-13T14:38:53.1205243Z Trying to get all seats ...
+2026-09-13T14:38:53.1207952Z 
+2026-09-13T14:38:53.1208574Z === [2] ACTIVATE personal (activate-all + include-personal) ===
+2026-09-13T14:38:57.0764681Z Trying to activate all seats ...
+2026-09-13T14:38:57.0765238Z Activation processed successfully.
+2026-09-13T14:38:57.0765593Z 
+2026-09-13T14:38:57.0765798Z Seat ID: 18968500515175-UnityPersonal
+2026-09-13T14:38:57.0766439Z Status: [200] ASSIGN_SEAT
+2026-09-13T14:38:57.0766723Z 
+2026-09-13T14:38:57.0766729Z 
+2026-09-13T14:38:57.0766938Z Trying to update entitlement license file ...
+2026-09-13T14:38:57.0767595Z Successfully updated UnityEntitlementLicense.xml!
+2026-09-13T14:38:57.0769372Z === [3] show local entitlements ===
+2026-09-13T14:38:57.8245300Z 	com.meta.xr.simulator.samples
+2026-09-13T14:38:57.8245949Z 	com.meta.xr.simulator.synthenvbuilder
+2026-09-13T14:38:57.8247997Z 	com.microsoft.mixedreality.openxr
+2026-09-13T14:38:57.8248797Z 	com.microsoft.mixedreality.webview.unity
+2026-09-13T14:38:57.8249350Z 	com.microsoft.mrtk.graphicstools.unity
+2026-09-13T14:38:57.8249874Z 	com.microsoft.mrtk.tts.windows
+2026-09-13T14:38:57.8250381Z 	com.microsoft.spatialaudio.spatializer.unity
+2026-09-13T14:38:57.8250948Z 	org.mixedrealitytoolkit.audio
+2026-09-13T14:38:57.8251399Z 	org.mixedrealitytoolkit.core
+2026-09-13T14:38:57.8251898Z 	org.mixedrealitytoolkit.diagnostics
+2026-09-13T14:38:57.8252430Z 	org.mixedrealitytoolkit.extendedassets
+2026-09-13T14:38:57.8252958Z 	org.mixedrealitytoolkit.input
+2026-09-13T14:38:57.8253482Z 	org.mixedrealitytoolkit.spatialmanipulation
+2026-09-13T14:38:57.8253989Z 	org.mixedrealitytoolkit.standardassets
+2026-09-13T14:38:57.8254325Z 	org.mixedrealitytoolkit.tools
+2026-09-13T14:38:57.8254650Z 	org.mixedrealitytoolkit.uxcomponents
+2026-09-13T14:38:57.8255016Z 	org.mixedrealitytoolkit.uxcomponents.noncanvas
+2026-09-13T14:38:57.8255394Z 	org.mixedrealitytoolkit.uxcore
+2026-09-13T14:38:57.8255732Z 	org.mixedrealitytoolkit.windowsspeech
+2026-09-13T14:38:57.8255948Z 
+2026-09-13T14:38:57.8256067Z === [4] editor license check ===
+2026-09-13T14:40:35.8772055Z Scripts have compiler errors.
+2026-09-13T14:40:35.8772566Z 
+2026-09-13T14:40:35.8773954Z [40m[32minfo[39m[22m[49m: Microsoft.Hosting.Lifetime[0]
+2026-09-13T14:40:35.8774820Z       Application is shutting down...
+2026-09-13T14:40:35.8775796Z [40m[32minfo[39m[22m[49m: Unity.ILPP.Runner.PostProcessingAssemblyLoadContext[0]
+2026-09-13T14:40:35.8776844Z       ALC ILPP context 1 is unloading
+2026-09-13T14:40:35.8777394Z === [5] fallback: update-license + re-check ===
+2026-09-13T14:40:38.8021262Z Trying to update entitlement license file ...
+2026-09-13T14:40:38.8022082Z Successfully updated UnityEntitlementLicense.xml!
+2026-09-13T14:40:56.7107501Z Scripts have compiler errors.
+2026-09-13T14:40:56.7108322Z 
+2026-09-13T14:40:56.7109106Z [40m[32minfo[39m[22m[49m: Microsoft.Hosting.Lifetime[0]
+2026-09-13T14:40:56.7110097Z       Application is shutting down...
+2026-09-13T14:40:56.7111398Z [40m[32minfo[39m[22m[49m: Unity.ILPP.Runner.PostProcessingAssemblyLoadContext[0]
+2026-09-13T14:40:56.7112409Z       ALC ILPP context 1 is unloading
+2026-09-13T14:40:56.7113413Z license step done
+2026-09-13T14:40:56.7191335Z ##[group]Run docker exec unity-build bash -c '
+2026-09-13T14:40:56.7191734Z [36;1mdocker exec unity-build bash -c '[0m
+2026-09-13T14:40:56.7192034Z [36;1m  set -o pipefail[0m
+2026-09-13T14:40:56.7192328Z [36;1m  unity-editor -batchmode -nographics -quit \[0m
+2026-09-13T14:40:56.7216148Z [36;1m    -projectPath /project \[0m
+2026-09-13T14:40:56.7216668Z [36;1m    -executeMethod DummySurfer.EditorTools.CiEntryPoint.PrepareCiBuild \[0m
+2026-09-13T14:40:56.7217128Z [36;1m    -logFile /dev/stdout[0m
+2026-09-13T14:40:56.7217409Z [36;1m'[0m
+2026-09-13T14:40:56.7254687Z shell: /usr/bin/bash -e {0}
+2026-09-13T14:40:56.7254944Z env:
+2026-09-13T14:40:56.7255220Z   UNITY_IMAGE: unityci/editor:ubuntu-6000.0.32f1-android-3
+2026-09-13T14:40:56.7255573Z   KS_PASS: DummySurfersDebug!2024
+2026-09-13T14:40:56.7255840Z   KS_ALIAS: dummysurfers
+2026-09-13T14:40:56.7256072Z ##[endgroup]
+2026-09-13T14:40:56.8636793Z [UnityConnectServicesConfig] Local config successfully read: "/usr/share/unity3d/config/services-config.json"
+2026-09-13T14:40:56.8638473Z [UnityConnectServicesConfig] "licensingServiceBaseUrl" was overridden with "https://api.unity.com/v1/licensing"
+2026-09-13T14:40:56.8639558Z [UnityConnectServicesConfig] Service configuration:
+2026-09-13T14:40:56.8640146Z     "servicesConfigBaseUrl": "",
+2026-09-13T14:40:56.8640593Z     "disableServicesWindow": false,
+2026-09-13T14:40:56.8641054Z     "disableUserLogin": false,
+2026-09-13T14:40:56.8641510Z     "entitlementCacheTimeoutInSeconds": 60,
+2026-09-13T14:40:56.8642059Z     "clientConnectTimeoutSec": 60,
+2026-09-13T14:40:56.8642792Z     "clientHandshakeTimeoutSec": 30,
+2026-09-13T14:40:56.8643222Z     "clientResolveEntitlementsTimeoutSec": 30,
+2026-09-13T14:40:56.8643548Z     "clientUpdateLicenseTimeoutSec": 30,
+2026-09-13T14:40:56.8644103Z     "licensingServiceBaseUrl": "https://api.unity.com/v1/licensing",
+2026-09-13T14:40:56.8644725Z     "enableProxyAutoconfig": "false"
+2026-09-13T14:40:56.8645001Z 
+2026-09-13T14:40:56.8661677Z Unity Editor version:    6000.0.32f1 (b2e806cf271c)
+2026-09-13T14:40:56.8662399Z Branch:                  6000.0/staging
+2026-09-13T14:40:56.8662902Z Build type:              Release
+2026-09-13T14:40:56.8663335Z Batch mode:              YES
+2026-09-13T14:40:56.8663742Z System name:             Linux
+2026-09-13T14:40:56.8664222Z Distro version:          #22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026
+2026-09-13T14:40:56.8664786Z Kernel version:          6.17.0-1022-azure
+2026-09-13T14:40:56.8665213Z Architecture:            x86_64
+2026-09-13T14:40:56.8667983Z Available memory:        15989 MB
+2026-09-13T14:40:56.8674553Z [Licensing::Module] Trying to connect to existing licensing client channel...
+2026-09-13T14:40:56.8676246Z [Licensing::IpcConnector] Connection attempt to the License Client on channel: "LicenseClient-root" failed because channel doesn't exist; code: "0x80000002"
+2026-09-13T14:40:56.8679856Z [Licensing::Module] Successfully launched the LicensingClient (PId: 5220)
+2026-09-13T14:40:57.4362549Z [Licensing::IpcConnector] Successfully connected to the License Client on channel: "LicenseClient-root" at "2026-09-13T14:40:57.435734Z"
+2026-09-13T14:40:57.4369174Z [SignatureVerifier] Application signature verification not supported on this platform.
+2026-09-13T14:40:57.4932388Z [Licensing::Client] Handshaking with LicensingClient:
+2026-09-13T14:40:57.4934225Z   Version:                 1.16.0+1c867a9
+2026-09-13T14:40:57.4935251Z   Session Id:              64936e6d816f42aa823258b2718b8a43
+2026-09-13T14:40:57.4936404Z   Correlation Id:          2f20c369462137773134765be48e208a
+2026-09-13T14:40:57.4937482Z   External correlation Id: 7487871322347209763
+2026-09-13T14:40:57.4938843Z   Machine Id:              D7nTUnjNAmtsUMcnoyrqkgIbYdM=
+2026-09-13T14:40:57.4940280Z [Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-root" (connect: 0.57s, validation: 0.06s, handshake: 0.00s)
+2026-09-13T14:40:57.4942922Z [Licensing::IpcConnector] Successfully connected to the License Notification on channel: "LicenseClient-root-notifications" at "2026-09-13T14:40:57.492837Z"
+2026-09-13T14:40:57.4944805Z [Licensing::Module] Connected to LicensingClient (PId: 5220, launch time: 0.00, total connection time: 0.63s)
+2026-09-13T14:40:57.4946438Z [Licensing::Module] Error: Access token is unavailable; failed to update
+2026-09-13T14:40:57.7990139Z [Licensing::Client] Successfully updated license
+2026-09-13T14:40:57.8223196Z [Licensing::Client] Successfully resolved entitlement details
+2026-09-13T14:40:57.8224302Z [Licensing::Module] Serial number assigned to: "18968500515175-UnityPersXXXX"
+2026-09-13T14:40:57.8224981Z Pro License: NO
+2026-09-13T14:40:57.8225354Z Initialize udev device monitor.
+2026-09-13T14:40:57.8346304Z [Licensing::Client] Successfully resolved entitlement details
+2026-09-13T14:40:57.8363844Z 
+2026-09-13T14:40:57.8364873Z COMMAND LINE ARGUMENTS:
+2026-09-13T14:40:57.8365765Z /opt/unity/Editor/Unity
+2026-09-13T14:40:57.8366190Z -batchmode
+2026-09-13T14:40:57.8366530Z -batchmode
+2026-09-13T14:40:57.8366879Z -nographics
+2026-09-13T14:40:57.8367207Z -quit
+2026-09-13T14:40:57.8367515Z -projectPath
+2026-09-13T14:40:57.8367932Z /project
+2026-09-13T14:40:57.8368449Z -executeMethod
+2026-09-13T14:40:57.8369059Z DummySurfer.EditorTools.CiEntryPoint.PrepareCiBuild
+2026-09-13T14:40:57.8369812Z -logFile
+2026-09-13T14:40:57.8370158Z /dev/stdout
+2026-09-13T14:40:57.8370601Z Successfully changed project path to: /project
+2026-09-13T14:40:57.8373807Z 
+2026-09-13T14:40:57.8379364Z (process:5214): Gtk-CRITICAL **: 14:40:57.836: gtk_label_set_text: assertion 'GTK_IS_LABEL (label)' failed
+2026-09-13T14:40:57.8380591Z 
+2026-09-13T14:40:57.8381105Z (process:5214): Gtk-CRITICAL **: 14:40:57.837: gtk_label_set_text: assertion 'GTK_IS_LABEL (label)' failed
+2026-09-13T14:40:57.8381982Z /project
+2026-09-13T14:40:57.8414533Z [UnityMemory] Configuration Parameters - Can be set up in boot.config
+2026-09-13T14:40:57.8415352Z     "memorysetup-bucket-allocator-granularity=16"
+2026-09-13T14:40:57.8415994Z     "memorysetup-bucket-allocator-bucket-count=8"
+2026-09-13T14:40:57.8416630Z     "memorysetup-bucket-allocator-block-size=33554432"
+2026-09-13T14:40:57.8417259Z     "memorysetup-bucket-allocator-block-count=8"
+2026-09-13T14:40:57.8417873Z     "memorysetup-main-allocator-block-size=16777216"
+2026-09-13T14:40:57.8418806Z     "memorysetup-thread-allocator-block-size=16777216"
+2026-09-13T14:40:57.8419523Z     "memorysetup-gfx-main-allocator-block-size=16777216"
+2026-09-13T14:40:57.8420251Z     "memorysetup-gfx-thread-allocator-block-size=16777216"
+2026-09-13T14:40:57.8420998Z     "memorysetup-cache-allocator-block-size=4194304"
+2026-09-13T14:40:57.8421510Z     "memorysetup-typetree-allocator-block-size=2097152"
+2026-09-13T14:40:57.8421924Z     "memorysetup-profiler-bucket-allocator-granularity=16"
+2026-09-13T14:40:57.8422339Z     "memorysetup-profiler-bucket-allocator-bucket-count=8"
+2026-09-13T14:40:57.8422767Z     "memorysetup-profiler-bucket-allocator-block-size=33554432"
+2026-09-13T14:40:57.8423203Z     "memorysetup-profiler-bucket-allocator-block-count=8"
+2026-09-13T14:40:57.8423610Z     "memorysetup-profiler-allocator-block-size=16777216"
+2026-09-13T14:40:57.8424023Z     "memorysetup-profiler-editor-allocator-block-size=1048576"
+2026-09-13T14:40:57.8424423Z     "memorysetup-temp-allocator-size-main=16777216"
+2026-09-13T14:40:57.8424781Z     "memorysetup-job-temp-allocator-block-size=2097152"
+2026-09-13T14:40:57.8425199Z     "memorysetup-job-temp-allocator-block-size-background=1048576"
+2026-09-13T14:40:57.8425685Z     "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+2026-09-13T14:40:57.8426178Z     "memorysetup-allocator-temp-initial-block-size-main=262144"
+2026-09-13T14:40:57.8426631Z     "memorysetup-allocator-temp-initial-block-size-worker=262144"
+2026-09-13T14:40:57.8427075Z     "memorysetup-temp-allocator-size-background-worker=32768"
+2026-09-13T14:40:57.8427476Z     "memorysetup-temp-allocator-size-job-worker=262144"
+2026-09-13T14:40:57.8427881Z     "memorysetup-temp-allocator-size-preload-manager=33554432"
+2026-09-13T14:40:57.8429080Z     "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+2026-09-13T14:40:57.8429831Z     "memorysetup-temp-allocator-size-audio-worker=65536"
+2026-09-13T14:40:57.8430222Z     "memorysetup-temp-allocator-size-cloud-worker=32768"
+2026-09-13T14:40:57.8430657Z     "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+2026-09-13T14:40:57.8431100Z     "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+2026-09-13T14:40:57.8431528Z     "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+2026-09-13T14:40:57.8431947Z     "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+2026-09-13T14:40:57.8432376Z     "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+2026-09-13T14:40:57.8432754Z     "memorysetup-temp-allocator-size-gfx=262144"
+2026-09-13T14:40:57.8433108Z Player connection [140314179683648]  Target information:
+2026-09-13T14:40:57.8433346Z 
+2026-09-13T14:40:57.8434006Z Player connection [140314179683648]  * "[IP] 172.17.0.2 [Port] 55504 [Flags] 2 [Guid] 1379815384 [EditorId] 1379815384 [Version] 1048832 [Id] LinuxEditor(16,172.17.0.2) [Debug] 1 [PackageName] LinuxEditor [ProjectName] Editor" 
+2026-09-13T14:40:57.8435049Z 
+2026-09-13T14:40:57.8435461Z Player connection [140314179683648] Host joined multi-casting on [225.0.0.222:54997]...
+2026-09-13T14:40:57.8436199Z Player connection [140314179683648] Host joined alternative multi-casting on [225.0.0.222:34997]...
+2026-09-13T14:40:57.8476764Z [Physics::Module] Initialized fallback backend.
+2026-09-13T14:40:57.8477354Z [Physics::Module] Id: 0xdecafbad
+2026-09-13T14:40:58.1465918Z [Package Manager] Connected to IPC stream "Upm-5214" after 0.2 seconds.
+2026-09-13T14:40:58.1468985Z Library Redirect Path: Library/
+2026-09-13T14:40:58.1480774Z [Licensing::Module] Error: "Unable to parse the subscription Id from the Floating license EntitlementGroupId: "18968500515175-UnityPersonal" for machineId D7nTUnjNAmtsUMcnoyrqkgIbYdM=
+2026-09-13T14:40:58.1497024Z [Package Manager] Restoring resolved packages state from cache
+2026-09-13T14:40:58.1639166Z [Licensing::Client] Successfully resolved entitlement details
+2026-09-13T14:40:58.1640911Z [Package Manager] Registered 45 packages:
+2026-09-13T14:40:58.1642085Z   Packages from [https://packages.unity.com]:
+2026-09-13T14:40:58.1643261Z     com.unity.inputsystem@1.11.2 (location: /project/Library/PackageCache/com.unity.inputsystem)
+2026-09-13T14:40:58.1644773Z     com.unity.netcode.gameobjects@1.12.0 (location: /project/Library/PackageCache/com.unity.netcode.gameobjects)
+2026-09-13T14:40:58.1646766Z     com.unity.services.authentication@3.4.0 (location: /project/Library/PackageCache/com.unity.services.authentication)
+2026-09-13T14:40:58.1648477Z     com.unity.services.relay@1.1.1 (location: /project/Library/PackageCache/com.unity.services.relay)
+2026-09-13T14:40:58.1649700Z     com.unity.test-framework@1.4.5 (location: /project/Library/PackageCache/com.unity.test-framework)
+2026-09-13T14:40:58.1650807Z     com.unity.transport@2.4.0 (location: /project/Library/PackageCache/com.unity.transport)
+2026-09-13T14:40:58.1652040Z     com.unity.mobile.android-logcat@1.4.2 (location: /project/Library/PackageCache/com.unity.mobile.android-logcat)
+2026-09-13T14:40:58.1653232Z     com.unity.collections@2.5.1 (location: /project/Library/PackageCache/com.unity.collections)
+2026-09-13T14:40:58.1654230Z     com.unity.burst@1.8.18 (location: /project/Library/PackageCache/com.unity.burst)
+2026-09-13T14:40:58.1655225Z     com.unity.mathematics@1.3.2 (location: /project/Library/PackageCache/com.unity.mathematics)
+2026-09-13T14:40:58.1656280Z     com.unity.ext.nunit@2.0.5 (location: /project/Library/PackageCache/com.unity.ext.nunit)
+2026-09-13T14:40:58.1657335Z     com.unity.services.qos@1.3.2 (location: /project/Library/PackageCache/com.unity.services.qos)
+2026-09-13T14:40:58.1658711Z     com.unity.services.core@1.14.0 (location: /project/Library/PackageCache/com.unity.services.core)
+2026-09-13T14:40:58.1660329Z     com.unity.nuget.newtonsoft-json@3.2.1 (location: /project/Library/PackageCache/com.unity.nuget.newtonsoft-json)
+2026-09-13T14:40:58.1661678Z     com.unity.nuget.mono-cecil@1.11.4 (location: /project/Library/PackageCache/com.unity.nuget.mono-cecil)
+2026-09-13T14:40:58.1663079Z     com.unity.test-framework.performance@3.0.3 (location: /project/Library/PackageCache/com.unity.test-framework.performance)
+2026-09-13T14:40:58.1664387Z     com.unity.searcher@4.9.2 (location: /project/Library/PackageCache/com.unity.searcher)
+2026-09-13T14:40:58.1665127Z   Built-in packages:
+2026-09-13T14:40:58.1665990Z     com.unity.render-pipelines.universal@17.0.13 (location: /project/Library/PackageCache/com.unity.render-pipelines.universal)
+2026-09-13T14:40:58.1667254Z     com.unity.ugui@2.0.0 (location: /project/Library/PackageCache/com.unity.ugui)
+2026-09-13T14:40:58.1668667Z     com.unity.modules.accessibility@1.0.0 (location: /project/Library/PackageCache/com.unity.modules.accessibility)
+2026-09-13T14:40:58.1669987Z     com.unity.modules.ai@1.0.0 (location: /project/Library/PackageCache/com.unity.modules.ai)
+2026-09-13T14:40:58.1671269Z     com.unity.modules.androidjni@1.0.0 (location: /project/Library/PackageCache/com.unity.modules.androidjni)
+2026-09-13T14:40:58.1672464Z     com.unity.modules.animation@1.0.0 (location: /project/Library/PackageCache/com.unity.modules.animation)
+2026-09-13T14:40:58.1673673Z     com.unity.modules.audio@1.0.0 (location: /project/Library/PackageCache/com.unity.modules.audio)
+2026-09-13T14:40:58.1674903Z     com.unity.modules.imgui@1.0.0 (location: /project/Library/PackageCache/com.unity.modules.imgui)
+2026-09-13T14:40:58.1676341Z     com.unity.modules.jsonserialize@1.0.0 (location: /project/Library/PackageCache/com.unity.modules.jsonserialize)
+2026-09-13T14:40:58.1678382Z     com.unity.modules.particlesystem@1.0.0 (location: /project/Library/PackageCache/com.unity.modules.particlesystem)
+2026-09-13T14:40:58.1679738Z     com.unity.modules.physics@1.0.0 (location: /project/Library/PackageCache/com.unity.modules.physics)
+2026-09-13T14:40:58.1681067Z     com.unity.modules.screencapture@1.0.0 (location: /project/Library/PackageCache/com.unity.modules.screencapture)
+2026-09-13T14:40:58.1682315Z     com.unity.modules.ui@1.0.0 (location: /project/Library/PackageCache/com.unity.modules.ui)
+2026-09-13T14:40:58.1683519Z     com.unity.modules.uielements@1.0.0 (location: /project/Library/PackageCache/com.unity.modules.uielements)
+2026-09-13T14:40:58.1684946Z     com.unity.modules.unitywebrequest@1.0.0 (location: /project/Library/PackageCache/com.unity.modules.unitywebrequest)
+2026-09-13T14:40:58.1686605Z     com.unity.modules.unitywebrequestassetbundle@1.0.0 (location: /project/Library/PackageCache/com.unity.modules.unitywebrequestassetbundle)
+2026-09-13T14:40:58.1688579Z     com.unity.modules.unitywebrequestaudio@1.0.0 (location: /project/Library/PackageCache/com.unity.modules.unitywebrequestaudio)
+2026-09-13T14:40:58.1690272Z     com.unity.modules.unitywebrequesttexture@1.0.0 (location: /project/Library/PackageCache/com.unity.modules.unitywebrequesttexture)
+2026-09-13T14:40:58.1691916Z     com.unity.modules.unitywebrequestwww@1.0.0 (location: /project/Library/PackageCache/com.unity.modules.unitywebrequestwww)
+2026-09-13T14:40:58.1693277Z     com.unity.modules.video@1.0.0 (location: /project/Library/PackageCache/com.unity.modules.video)
+2026-09-13T14:40:58.1694557Z     com.unity.modules.assetbundle@1.0.0 (location: /project/Library/PackageCache/com.unity.modules.assetbundle)
+2026-09-13T14:40:58.1695984Z     com.unity.modules.imageconversion@1.0.0 (location: /project/Library/PackageCache/com.unity.modules.imageconversion)
+2026-09-13T14:40:58.1697426Z     com.unity.modules.hierarchycore@1.0.0 (location: /project/Library/PackageCache/com.unity.modules.hierarchycore)
+2026-09-13T14:40:58.1699046Z     com.unity.render-pipelines.core@17.0.3 (location: /project/Library/PackageCache/com.unity.render-pipelines.core)
+2026-09-13T14:40:58.1700340Z     com.unity.shadergraph@17.0.3 (location: /project/Library/PackageCache/com.unity.shadergraph)
+2026-09-13T14:40:58.1702042Z     com.unity.render-pipelines.universal-config@17.0.3 (location: /project/Library/PackageCache/com.unity.render-pipelines.universal-config)
+2026-09-13T14:40:58.1703587Z     com.unity.modules.terrain@1.0.0 (location: /project/Library/PackageCache/com.unity.modules.terrain)
+2026-09-13T14:40:58.1705004Z     com.unity.rendering.light-transport@1.0.1 (location: /project/Library/PackageCache/com.unity.rendering.light-transport)
+2026-09-13T14:40:58.1707640Z [Package Manager] com.unity.services.relay is deprecated: The Relay package is deprecated and will not receive further updates. The SDK is now part of the unified Multiplayer Services package (com.unity.services.multiplayer). Migrate to that package to access ongoing support and improvements.
+2026-09-13T14:40:58.1774309Z [Physics::Module] Selected backend.
+2026-09-13T14:40:58.1774837Z [Physics::Module] Name: PhysX
+2026-09-13T14:40:58.1775461Z [Physics::Module] Id: 0xf2b8ea05
+2026-09-13T14:40:58.1776061Z [Physics::Module] SDK Version: 4.1.2
+2026-09-13T14:40:58.1776726Z [Physics::Module] Integration Version: 1.0.0
+2026-09-13T14:40:58.1777685Z [Physics::Module] Threading Mode: Multi-Threaded
+2026-09-13T14:40:58.1787966Z Unable to load player prefs
+2026-09-13T14:40:58.1811877Z [Subsystems] No new subsystems found in resolved package list.
+2026-09-13T14:40:58.1812954Z Package Manager log level set to [2]
+2026-09-13T14:40:58.1813758Z [Package Manager] Done registering packages in 0.03 seconds
+2026-09-13T14:40:58.1920394Z Refreshing native plugins compatible for Editor in 0.64 ms, found 0 plugins.
+2026-09-13T14:40:58.1921824Z Preloading 0 native plugins for Editor in 0.00 ms.
+2026-09-13T14:40:58.1922989Z Initialize engine version: 6000.0.32f1 (b2e806cf271c)
+2026-09-13T14:40:58.1925474Z [Subsystems] Discovering subsystems at path /opt/unity/Editor/Data/Resources/UnitySubsystems
+2026-09-13T14:40:58.1927208Z [Subsystems] Discovering subsystems at path /project/Assets
+2026-09-13T14:40:58.1929591Z Forcing GfxDevice: Null
+2026-09-13T14:40:58.1930160Z GfxDevice: creating device client; kGfxThreadingModeNonThreaded
+2026-09-13T14:40:58.1933118Z NullGfxDevice:
+2026-09-13T14:40:58.1933831Z     Version:  NULL 1.0 [1.0]
+2026-09-13T14:40:58.1934424Z     Renderer: Null Device
+2026-09-13T14:40:58.1935027Z     Vendor:   Unity Technologies
+2026-09-13T14:40:58.2087533Z [Licensing::Client] Successfully resolved entitlement details
+2026-09-13T14:40:58.2160413Z Initialize mono
+2026-09-13T14:40:58.2160847Z Mono path[0] = '/opt/unity/Editor/Data/Managed'
+2026-09-13T14:40:58.2161573Z Mono path[1] = '/opt/unity/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-linux'
+2026-09-13T14:40:58.2162370Z Mono config path = '/opt/unity/Editor/Data/MonoBleedingEdge/etc'
+2026-09-13T14:40:58.2163389Z Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56214
+2026-09-13T14:40:58.2465945Z Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+2026-09-13T14:40:58.2467377Z Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+2026-09-13T14:40:58.2468627Z ImportWorker Server TCP listen port: 0
+2026-09-13T14:40:58.2469481Z AcceleratorClientConnectionCallback - disconnected - :0
+2026-09-13T14:40:58.2540708Z Begin MonoManager ReloadAssembly
+2026-09-13T14:40:58.4257552Z Registering precompiled unity dll's ...
+2026-09-13T14:40:58.4410569Z [Licensing::Client] Successfully resolved entitlement details
+2026-09-13T14:40:58.4412518Z Register platform support module: /opt/unity/Editor/Data/PlaybackEngines/AndroidPlayer/UnityEditor.Android.Extensions.dll
+2026-09-13T14:40:58.4415685Z Register platform support module: /opt/unity/Editor/Data/PlaybackEngines/LinuxStandaloneSupport/UnityEditor.LinuxStandalone.Extensions.dll
+2026-09-13T14:40:58.4424070Z Registered in 0.016755 seconds.
+2026-09-13T14:40:58.6500815Z - Loaded All Assemblies, in  0.396 seconds
+2026-09-13T14:40:58.6793420Z Native extension for LinuxStandalone target not found
+2026-09-13T14:40:58.7056552Z Native extension for Android target not found
+2026-09-13T14:40:58.8867808Z Android Extension - Scanning For ADB Devices 59 ms
+2026-09-13T14:40:59.2065842Z Mono: successfully reloaded assembly
+2026-09-13T14:40:59.2434125Z - Finished resetting the current domain, in  0.593 seconds
+2026-09-13T14:40:59.2441265Z Domain Reload Profiling: 989ms
+2026-09-13T14:40:59.2441750Z 	BeginReloadAssembly (91ms)
+2026-09-13T14:40:59.2442186Z 		ExecutionOrderSort (0ms)
+2026-09-13T14:40:59.2442566Z 		DisableScriptedObjects (0ms)
+2026-09-13T14:40:59.2442938Z 		BackupInstance (0ms)
+2026-09-13T14:40:59.2443296Z 		ReleaseScriptingObjects (0ms)
+2026-09-13T14:40:59.2443696Z 		CreateAndSetChildDomain (1ms)
+2026-09-13T14:40:59.2444119Z 	RebuildCommonClasses (46ms)
+2026-09-13T14:40:59.2444549Z 	RebuildNativeTypeToScriptingClass (10ms)
+2026-09-13T14:40:59.2445027Z 	initialDomainReloadingComplete (79ms)
+2026-09-13T14:40:59.2445477Z 	LoadAllAssembliesAndSetupDomain (169ms)
+2026-09-13T14:40:59.2445912Z 		LoadAssemblies (90ms)
+2026-09-13T14:40:59.2446331Z 		RebuildTransferFunctionScriptingTraits (0ms)
+2026-09-13T14:40:59.2446803Z 		AnalyzeDomain (165ms)
+2026-09-13T14:40:59.2447167Z 			TypeCache.Refresh (164ms)
+2026-09-13T14:40:59.2447554Z 				TypeCache.ScanAssembly (152ms)
+2026-09-13T14:40:59.2447972Z 			BuildScriptInfoCaches (0ms)
+2026-09-13T14:40:59.2450966Z 			ResolveRequiredComponents (0ms)
+2026-09-13T14:40:59.2451387Z 	FinalizeReload (594ms)
+2026-09-13T14:40:59.2451738Z 		ReleaseScriptCaches (0ms)
+2026-09-13T14:40:59.2452101Z 		RebuildScriptCaches (0ms)
+2026-09-13T14:40:59.2452499Z 		SetupLoadedEditorAssemblies (536ms)
+2026-09-13T14:40:59.2452920Z 			LogAssemblyErrors (0ms)
+2026-09-13T14:40:59.2453370Z 			InitializePlatformSupportModulesInManaged (218ms)
+2026-09-13T14:40:59.2454649Z 			SetLoadedEditorAssemblies (5ms)
+2026-09-13T14:40:59.2455122Z 			BeforeProcessingInitializeOnLoad (64ms)
+2026-09-13T14:40:59.2455673Z 			ProcessInitializeOnLoadAttributes (147ms)
+2026-09-13T14:40:59.2456270Z 			ProcessInitializeOnLoadMethodAttributes (102ms)
+2026-09-13T14:40:59.2456894Z 			AfterProcessingInitializeOnLoad (0ms)
+2026-09-13T14:40:59.2457429Z 			EditorAssembliesLoaded (0ms)
+2026-09-13T14:40:59.2457911Z 		ExecutionOrderSort2 (0ms)
+2026-09-13T14:40:59.2458723Z 		AwakeInstancesAfterBackupRestoration (0ms)
+2026-09-13T14:40:59.2752661Z [Licensing::Client] Successfully resolved entitlement details
+2026-09-13T14:40:59.2766860Z [Licensing::Module] Error: "Unable to parse the subscription Id from the Floating license EntitlementGroupId: "18968500515175-UnityPersonal" for machineId D7nTUnjNAmtsUMcnoyrqkgIbYdM=
+2026-09-13T14:40:59.2789026Z Application.AssetDatabase Initial Refresh Start
+2026-09-13T14:40:59.9071970Z [40m[32minfo[39m[22m[49m: Microsoft.Hosting.Lifetime[14]
+2026-09-13T14:40:59.9073409Z       Now listening on: http://unix:/tmp/ilpp.sock-5fc8cbfa389331b1e255309fb814e130
+2026-09-13T14:40:59.9080408Z [40m[32minfo[39m[22m[49m: Microsoft.Hosting.Lifetime[0]
+2026-09-13T14:40:59.9081814Z       Application started. Press Ctrl+C to shut down.
+2026-09-13T14:40:59.9086332Z [40m[32minfo[39m[22m[49m: Microsoft.Hosting.Lifetime[0]
+2026-09-13T14:40:59.9089621Z       Hosting environment: Production
+2026-09-13T14:40:59.9090733Z [40m[32minfo[39m[22m[49m: Microsoft.Hosting.Lifetime[0]
+2026-09-13T14:40:59.9091690Z       Content root path: /project/
+2026-09-13T14:40:59.9562374Z [40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+2026-09-13T14:40:59.9564168Z       Request starting HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc -
+2026-09-13T14:40:59.9753799Z [40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+2026-09-13T14:40:59.9755867Z       Executing endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+2026-09-13T14:41:00.0100490Z [40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+2026-09-13T14:41:00.0102291Z       Executed endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+2026-09-13T14:41:00.0130591Z [40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+2026-09-13T14:41:00.0133028Z       Request finished HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc - - 200 - application/grpc 57.8040ms
+2026-09-13T14:41:00.0800367Z Starting: /opt/unity/Editor/Data/bee_backend --dont-print-to-structured-log --ipc --defer-dag-verification --dagfile="Library/Bee/2400b0aE.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+2026-09-13T14:41:00.0807391Z WorkingDir: /project
+2026-09-13T14:41:00.2506766Z [40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+2026-09-13T14:41:00.2509566Z       Request starting HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/ConfigurePostProcessors application/grpc -
+2026-09-13T14:41:00.2512879Z [40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+2026-09-13T14:41:00.2518559Z       Executing endpoint 'gRPC - /UnityILPP.PostProcessing/ConfigurePostProcessors'
+2026-09-13T14:41:00.2855690Z [40m[1m[33mwarn[39m[22m[49m: Unity.ILPP.Runner.PostProcessingAssemblyLoadContext[0]
+2026-09-13T14:41:00.2859080Z       Assembly system.runtime.interopservices.windowsruntime has duplicate hint path. Ignoring "/opt/unity/Editor/Data/UnityReferenceAssemblies/unity-4.8-api/Facades/System.Runtime.InteropServices.WindowsRuntime.dll" in favor of "/opt/unity/Editor/Data/NetStandard/Extensions/2.0.0/System.Runtime.InteropServices.WindowsRuntime.dll"
+2026-09-13T14:41:00.2862324Z [40m[1m[33mwarn[39m[22m[49m: Unity.ILPP.Runner.PostProcessingAssemblyLoadContext[0]
+2026-09-13T14:41:00.2865050Z       Assembly system.componentmodel.composition has duplicate hint path. Ignoring "/opt/unity/Editor/Data/UnityReferenceAssemblies/unity-4.8-api/System.ComponentModel.Composition.dll" in favor of "/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netfx/System.ComponentModel.Composition.dll"
+2026-09-13T14:41:00.3152761Z [40m[32minfo[39m[22m[49m: Unity.ILPP.Runner.PostProcessingAssemblyLoadContext[0]
+2026-09-13T14:41:00.3155025Z       Resolved Unity.Burst.Cecil, Version=0.11.4.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e with Library/PackageCache/com.unity.burst/Unity.Burst.CodeGen/Unity.Burst.Cecil.dll
+2026-09-13T14:41:00.3201371Z [40m[32minfo[39m[22m[49m: Unity.ILPP.Runner.PostProcessingAssemblyLoadContext[0]
+2026-09-13T14:41:00.3203563Z       Resolved Mono.Cecil, Version=0.11.4.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e with Library/PackageCache/com.unity.nuget.mono-cecil/Mono.Cecil.dll
+2026-09-13T14:41:00.3234053Z [40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+2026-09-13T14:41:00.3235379Z       Executed endpoint 'gRPC - /UnityILPP.PostProcessing/ConfigurePostProcessors'
+2026-09-13T14:41:00.3255091Z [40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+2026-09-13T14:41:00.3256643Z       Request finished HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/ConfigurePostProcessors application/grpc - - 200 - application/grpc 80.1904ms
+2026-09-13T14:41:00.3509357Z DisplayProgressbar: Compiling Scripts
+2026-09-13T14:41:02.3663700Z ExitCode: 3 Duration: 2s287ms
+2026-09-13T14:41:02.3672482Z [619/824    0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput
+2026-09-13T14:41:02.3673677Z [812/824    2s] Csc Library/Bee/artifacts/2400b0aE.dag/DummySurfer.Runtime.dll (+2 others)
+2026-09-13T14:41:02.3674432Z ##### CommandLine
+2026-09-13T14:41:02.3676152Z "/opt/unity/Editor/Data/NetCoreRuntime/dotnet" exec "/opt/unity/Editor/Data/DotNetSdkRoslyn/csc.dll" /nostdlib /noconfig /shared "@Library/Bee/artifacts/2400b0aE.dag/DummySurfer.Runtime.rsp" "@Library/Bee/artifacts/2400b0aE.dag/DummySurfer.Runtime.rsp2"
+2026-09-13T14:41:02.3678453Z ##### Contents of Library/Bee/artifacts/2400b0aE.dag/DummySurfer.Runtime.rsp
+2026-09-13T14:41:02.3679154Z -target:library
+2026-09-13T14:41:02.3679679Z -out:"Library/Bee/artifacts/2400b0aE.dag/DummySurfer.Runtime.dll"
+2026-09-13T14:41:02.3680514Z -refout:"Library/Bee/artifacts/2400b0aE.dag/DummySurfer.Runtime.ref.dll"
+2026-09-13T14:41:02.3680963Z -define:UNITY_6000_0_32
+2026-09-13T14:41:02.3681193Z -define:UNITY_6000_0
+2026-09-13T14:41:02.3681404Z -define:UNITY_6000
+2026-09-13T14:41:02.3681926Z -define:UNITY_5_3_OR_NEWER
+2026-09-13T14:41:02.3682170Z -define:UNITY_5_4_OR_NEWER
+2026-09-13T14:41:02.3682391Z -define:UNITY_5_5_OR_NEWER
+2026-09-13T14:41:02.3682605Z -define:UNITY_5_6_OR_NEWER
+2026-09-13T14:41:02.3682839Z -define:UNITY_2017_1_OR_NEWER
+2026-09-13T14:41:02.3683084Z -define:UNITY_2017_2_OR_NEWER
+2026-09-13T14:41:02.3683312Z -define:UNITY_2017_3_OR_NEWER
+2026-09-13T14:41:02.3683538Z -define:UNITY_2017_4_OR_NEWER
+2026-09-13T14:41:02.3683763Z -define:UNITY_2018_1_OR_NEWER
+2026-09-13T14:41:02.3683992Z -define:UNITY_2018_2_OR_NEWER
+2026-09-13T14:41:02.3684223Z -define:UNITY_2018_3_OR_NEWER
+2026-09-13T14:41:02.3684445Z -define:UNITY_2018_4_OR_NEWER
+2026-09-13T14:41:02.3684668Z -define:UNITY_2019_1_OR_NEWER
+2026-09-13T14:41:02.3684893Z -define:UNITY_2019_2_OR_NEWER
+2026-09-13T14:41:02.3685118Z -define:UNITY_2019_3_OR_NEWER
+2026-09-13T14:41:02.3685339Z -define:UNITY_2019_4_OR_NEWER
+2026-09-13T14:41:02.3685571Z -define:UNITY_2020_1_OR_NEWER
+2026-09-13T14:41:02.3685811Z -define:UNITY_2020_2_OR_NEWER
+2026-09-13T14:41:02.3686043Z -define:UNITY_2020_3_OR_NEWER
+2026-09-13T14:41:02.3686268Z -define:UNITY_2021_1_OR_NEWER
+2026-09-13T14:41:02.3686495Z -define:UNITY_2021_2_OR_NEWER
+2026-09-13T14:41:02.3686721Z -define:UNITY_2021_3_OR_NEWER
+2026-09-13T14:41:02.3686951Z -define:UNITY_2022_1_OR_NEWER
+2026-09-13T14:41:02.3687174Z -define:UNITY_2022_2_OR_NEWER
+2026-09-13T14:41:02.3687397Z -define:UNITY_2022_3_OR_NEWER
+2026-09-13T14:41:02.3687631Z -define:UNITY_2023_1_OR_NEWER
+2026-09-13T14:41:02.3687855Z -define:UNITY_2023_2_OR_NEWER
+2026-09-13T14:41:02.3688587Z -define:UNITY_2023_3_OR_NEWER
+2026-09-13T14:41:02.3688825Z -define:UNITY_6000_0_OR_NEWER
+2026-09-13T14:41:02.3689066Z -define:PLATFORM_ARCH_64
+2026-09-13T14:41:02.3689293Z -define:UNITY_64
+2026-09-13T14:41:02.3689510Z -define:UNITY_INCLUDE_TESTS
+2026-09-13T14:41:02.3689738Z -define:ENABLE_AUDIO
+2026-09-13T14:41:02.3689950Z -define:ENABLE_CACHING
+2026-09-13T14:41:02.3690165Z -define:ENABLE_CLOTH
+2026-09-13T14:41:02.3690397Z -define:ENABLE_MICROPHONE
+2026-09-13T14:41:02.3690650Z -define:ENABLE_MULTIPLE_DISPLAYS
+2026-09-13T14:41:02.3690897Z -define:ENABLE_PHYSICS
+2026-09-13T14:41:02.3691124Z -define:ENABLE_TEXTURE_STREAMING
+2026-09-13T14:41:02.3691384Z -define:ENABLE_VIRTUALTEXTURING
+2026-09-13T14:41:02.3691637Z -define:ENABLE_LZMA
+2026-09-13T14:41:02.3691856Z -define:ENABLE_UNITYEVENTS
+2026-09-13T14:41:02.3692086Z -define:ENABLE_VR
+2026-09-13T14:41:02.3692288Z -define:ENABLE_WEBCAM
+2026-09-13T14:41:02.3692518Z -define:ENABLE_UNITYWEBREQUEST
+2026-09-13T14:41:02.3692753Z -define:ENABLE_WWW
+2026-09-13T14:41:02.3692975Z -define:ENABLE_CLOUD_SERVICES
+2026-09-13T14:41:02.3693223Z -define:ENABLE_CLOUD_SERVICES_ADS
+2026-09-13T14:41:02.3693503Z -define:ENABLE_CLOUD_SERVICES_USE_WEBREQUEST
+2026-09-13T14:41:02.3693822Z -define:ENABLE_CLOUD_SERVICES_CRASH_REPORTING
+2026-09-13T14:41:02.3694127Z -define:ENABLE_CLOUD_SERVICES_PURCHASING
+2026-09-13T14:41:02.3694411Z -define:ENABLE_CLOUD_SERVICES_ANALYTICS
+2026-09-13T14:41:02.3694696Z -define:ENABLE_CLOUD_SERVICES_BUILD
+2026-09-13T14:41:02.3694962Z -define:ENABLE_EDITOR_GAME_SERVICES
+2026-09-13T14:41:02.3695256Z -define:ENABLE_UNITY_GAME_SERVICES_ANALYTICS_SUPPORT
+2026-09-13T14:41:02.3695590Z -define:ENABLE_CLOUD_LICENSE
+2026-09-13T14:41:02.3695834Z -define:ENABLE_EDITOR_HUB_LICENSE
+2026-09-13T14:41:02.3696094Z -define:ENABLE_WEBSOCKET_CLIENT
+2026-09-13T14:41:02.3696399Z -define:ENABLE_GENERATE_NATIVE_PLUGINS_FOR_ASSEMBLIES_API
+2026-09-13T14:41:02.3696730Z -define:ENABLE_DIRECTOR_AUDIO
+2026-09-13T14:41:02.3696974Z -define:ENABLE_DIRECTOR_TEXTURE
+2026-09-13T14:41:02.3697233Z -define:ENABLE_MANAGED_JOBS
+2026-09-13T14:41:02.3697489Z -define:ENABLE_MANAGED_TRANSFORM_JOBS
+2026-09-13T14:41:02.3697768Z -define:ENABLE_MANAGED_ANIMATION_JOBS
+2026-09-13T14:41:02.3698509Z -define:ENABLE_MANAGED_AUDIO_JOBS
+2026-09-13T14:41:02.3698965Z -define:ENABLE_MANAGED_UNITYTLS
+2026-09-13T14:41:02.3699375Z -define:INCLUDE_DYNAMIC_GI
+2026-09-13T14:41:02.3699774Z -define:ENABLE_SCRIPTING_GC_WBARRIERS
+2026-09-13T14:41:02.3700559Z -define:PLATFORM_SUPPORTS_MONO
+2026-09-13T14:41:02.3701032Z -define:RENDER_SOFTWARE_CURSOR
+2026-09-13T14:41:02.3701477Z -define:ENABLE_MARSHALLING_TESTS
+2026-09-13T14:41:02.3701888Z -define:ENABLE_VIDEO
+2026-09-13T14:41:02.3702326Z -define:ENABLE_NAVIGATION_OFFMESHLINK_TO_NAVMESHLINK
+2026-09-13T14:41:02.3702915Z -define:ENABLE_ACCELERATOR_CLIENT_DEBUGGING
+2026-09-13T14:41:02.3703421Z -define:TEXTCORE_1_0_OR_NEWER
+2026-09-13T14:41:02.3703888Z -define:EDITOR_ONLY_NAVMESH_BUILDER_DEPRECATED
+2026-09-13T14:41:02.3704412Z -define:PLATFORM_STANDALONE_LINUX
+2026-09-13T14:41:02.3704865Z -define:PLATFORM_STANDALONE
+2026-09-13T14:41:02.3705269Z -define:UNITY_STANDALONE_LINUX
+2026-09-13T14:41:02.3705675Z -define:UNITY_STANDALONE
+2026-09-13T14:41:02.3706076Z -define:UNITY_STANDALONE_LINUX_API
+2026-09-13T14:41:02.3706534Z -define:ENABLE_RUNTIME_GI
+2026-09-13T14:41:02.3706938Z -define:ENABLE_MOVIES
+2026-09-13T14:41:02.3707323Z -define:ENABLE_NETWORK
+2026-09-13T14:41:02.3707986Z -define:ENABLE_CRUNCH_TEXTURE_COMPRESSION
+2026-09-13T14:41:02.3708825Z -define:ENABLE_CLUSTER_SYNC
+2026-09-13T14:41:02.3709469Z -define:ENABLE_CLUSTERINPUT
+2026-09-13T14:41:02.3709930Z -define:ENABLE_SPATIALTRACKING
+2026-09-13T14:41:02.3710431Z -define:ENABLE_MODULAR_UNITYENGINE_ASSEMBLIES
+2026-09-13T14:41:02.3711027Z -define:PLATFORM_SUPPORTS_SPLIT_GRAPHICS_JOBS
+2026-09-13T14:41:02.3711489Z -define:PLATFORM_USES_EXPLICIT_MEMORY_MANAGER_INITIALIZER
+2026-09-13T14:41:02.3711824Z -define:ENABLE_MONO
+2026-09-13T14:41:02.3712043Z -define:NET_STANDARD_2_0
+2026-09-13T14:41:02.3712268Z -define:NET_STANDARD
+2026-09-13T14:41:02.3712704Z -define:NET_STANDARD_2_1
+2026-09-13T14:41:02.3712928Z -define:NETSTANDARD
+2026-09-13T14:41:02.3713143Z -define:NETSTANDARD2_1
+2026-09-13T14:41:02.3713364Z -define:ENABLE_PROFILER
+2026-09-13T14:41:02.3713579Z -define:DEBUG
+2026-09-13T14:41:02.3713770Z -define:TRACE
+2026-09-13T14:41:02.3713976Z -define:UNITY_ASSERTIONS
+2026-09-13T14:41:02.3714199Z -define:UNITY_EDITOR
+2026-09-13T14:41:02.3714411Z -define:UNITY_EDITOR_64
+2026-09-13T14:41:02.3714639Z -define:UNITY_EDITOR_LINUX
+2026-09-13T14:41:02.3714890Z -define:ENABLE_UNITY_COLLECTIONS_CHECKS
+2026-09-13T14:41:02.3715172Z -define:ENABLE_BURST_AOT
+2026-09-13T14:41:02.3715407Z -define:UNITY_TEAM_LICENSE
+2026-09-13T14:41:02.3715650Z -define:ENABLE_CUSTOM_RENDER_TEXTURE
+2026-09-13T14:41:02.3715914Z -define:ENABLE_DIRECTOR
+2026-09-13T14:41:02.3716149Z -define:ENABLE_LOCALIZATION
+2026-09-13T14:41:02.3716386Z -define:ENABLE_SPRITES
+2026-09-13T14:41:02.3716599Z -define:ENABLE_TERRAIN
+2026-09-13T14:41:02.3716812Z -define:ENABLE_TILEMAP
+2026-09-13T14:41:02.3717029Z -define:ENABLE_TIMELINE
+2026-09-13T14:41:02.3717270Z -define:ENABLE_LEGACY_INPUT_MANAGER
+2026-09-13T14:41:02.3717557Z -define:TEXTCORE_FONT_ENGINE_1_5_OR_NEWER
+2026-09-13T14:41:02.3717849Z -define:TEXTCORE_TEXT_ENGINE_1_5_OR_NEWER
+2026-09-13T14:41:02.3718599Z -define:CSHARP_7_OR_LATER
+2026-09-13T14:41:02.3718856Z -define:CSHARP_7_3_OR_NEWER
+2026-09-13T14:41:02.3719161Z -r:"/opt/unity/Editor/Data/Managed/UnityEditor.Graphs.dll"
+2026-09-13T14:41:02.3719671Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.AccessibilityModule.dll"
+2026-09-13T14:41:02.3720297Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.AdaptivePerformanceModule.dll"
+2026-09-13T14:41:02.3720902Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.BuildProfileModule.dll"
+2026-09-13T14:41:02.3721508Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.CoreBusinessMetricsModule.dll"
+2026-09-13T14:41:02.3722090Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.CoreModule.dll"
+2026-09-13T14:41:02.3722636Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.DeviceSimulatorModule.dll"
+2026-09-13T14:41:02.3723223Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.DiagnosticsModule.dll"
+2026-09-13T14:41:02.3723799Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.EditorToolbarModule.dll"
+2026-09-13T14:41:02.3724344Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.EmbreeModule.dll"
+2026-09-13T14:41:02.3725059Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.GIModule.dll"
+2026-09-13T14:41:02.3726261Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.GraphViewModule.dll"
+2026-09-13T14:41:02.3727531Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.GraphicsStateCollectionSerializerModule.dll"
+2026-09-13T14:41:02.3728673Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.GridAndSnapModule.dll"
+2026-09-13T14:41:02.3729222Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.GridModule.dll"
+2026-09-13T14:41:02.3729799Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.MultiplayerModule.dll"
+2026-09-13T14:41:02.3730372Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.Physics2DModule.dll"
+2026-09-13T14:41:02.3730906Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.PhysicsModule.dll"
+2026-09-13T14:41:02.3731435Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.PresetsUIModule.dll"
+2026-09-13T14:41:02.3731999Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.PropertiesModule.dll"
+2026-09-13T14:41:02.3732547Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.QuickSearchModule.dll"
+2026-09-13T14:41:02.3733084Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.SafeModeModule.dll"
+2026-09-13T14:41:02.3733633Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.SceneTemplateModule.dll"
+2026-09-13T14:41:02.3734196Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.SceneViewModule.dll"
+2026-09-13T14:41:02.3734745Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.ShaderFoundryModule.dll"
+2026-09-13T14:41:02.3735493Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.SketchUpModule.dll"
+2026-09-13T14:41:02.3736026Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.SpriteMaskModule.dll"
+2026-09-13T14:41:02.3736574Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.SpriteShapeModule.dll"
+2026-09-13T14:41:02.3737119Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.SubstanceModule.dll"
+2026-09-13T14:41:02.3737647Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.TerrainModule.dll"
+2026-09-13T14:41:02.3738456Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.TextCoreFontEngineModule.dll"
+2026-09-13T14:41:02.3739074Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.TextCoreTextEngineModule.dll"
+2026-09-13T14:41:02.3739662Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.TextRenderingModule.dll"
+2026-09-13T14:41:02.3740211Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.TilemapModule.dll"
+2026-09-13T14:41:02.3740739Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.TreeModule.dll"
+2026-09-13T14:41:02.3741270Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.UIAutomationModule.dll"
+2026-09-13T14:41:02.3741822Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.UIBuilderModule.dll"
+2026-09-13T14:41:02.3742363Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.UIElementsModule.dll"
+2026-09-13T14:41:02.3742943Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.UIElementsSamplesModule.dll"
+2026-09-13T14:41:02.3743506Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.UmbraModule.dll"
+2026-09-13T14:41:02.3744041Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.UnityConnectModule.dll"
+2026-09-13T14:41:02.3744564Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.VFXModule.dll"
+2026-09-13T14:41:02.3745067Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.VideoModule.dll"
+2026-09-13T14:41:02.3745555Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.XRModule.dll"
+2026-09-13T14:41:02.3746019Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEditor.dll"
+2026-09-13T14:41:02.3746466Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.AIModule.dll"
+2026-09-13T14:41:02.3746990Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.AccessibilityModule.dll"
+2026-09-13T14:41:02.3747718Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.AndroidJNIModule.dll"
+2026-09-13T14:41:02.3748657Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.AnimationModule.dll"
+2026-09-13T14:41:02.3749214Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.AssetBundleModule.dll"
+2026-09-13T14:41:02.3749741Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.AudioModule.dll"
+2026-09-13T14:41:02.3750266Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.ClusterInputModule.dll"
+2026-09-13T14:41:02.3750846Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.ClusterRendererModule.dll"
+2026-09-13T14:41:02.3751433Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.ContentLoadModule.dll"
+2026-09-13T14:41:02.3751960Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.CoreModule.dll"
+2026-09-13T14:41:02.3752495Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.CrashReportingModule.dll"
+2026-09-13T14:41:02.3753046Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.DSPGraphModule.dll"
+2026-09-13T14:41:02.3753565Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.GIModule.dll"
+2026-09-13T14:41:02.3754076Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.GameCenterModule.dll"
+2026-09-13T14:41:02.3754724Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.GraphicsStateCollectionSerializerModule.dll"
+2026-09-13T14:41:02.3755364Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.GridModule.dll"
+2026-09-13T14:41:02.3755893Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.HierarchyCoreModule.dll"
+2026-09-13T14:41:02.3756585Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.HotReloadModule.dll"
+2026-09-13T14:41:02.3757101Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.IMGUIModule.dll"
+2026-09-13T14:41:02.3757655Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.ImageConversionModule.dll"
+2026-09-13T14:41:02.3758563Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.InputForUIModule.dll"
+2026-09-13T14:41:02.3759115Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.InputLegacyModule.dll"
+2026-09-13T14:41:02.3760020Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.InputModule.dll"
+2026-09-13T14:41:02.3760578Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.JSONSerializeModule.dll"
+2026-09-13T14:41:02.3761141Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.LocalizationModule.dll"
+2026-09-13T14:41:02.3761694Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.MarshallingModule.dll"
+2026-09-13T14:41:02.3762239Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.MultiplayerModule.dll"
+2026-09-13T14:41:02.3762839Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.ParticleSystemModule.dll"
+2026-09-13T14:41:02.3763460Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.PerformanceReportingModule.dll"
+2026-09-13T14:41:02.3764046Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.PhysicsModule.dll"
+2026-09-13T14:41:02.3764592Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.PropertiesModule.dll"
+2026-09-13T14:41:02.3765278Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.RuntimeInitializeOnLoadManagerInitializerModule.dll"
+2026-09-13T14:41:02.3765994Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.ScreenCaptureModule.dll"
+2026-09-13T14:41:02.3766614Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.ShaderVariantAnalyticsModule.dll"
+2026-09-13T14:41:02.3767246Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.SharedInternalsModule.dll"
+2026-09-13T14:41:02.3767826Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.SpriteMaskModule.dll"
+2026-09-13T14:41:02.3768716Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.SpriteShapeModule.dll"
+2026-09-13T14:41:02.3769276Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.StreamingModule.dll"
+2026-09-13T14:41:02.3770136Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.SubstanceModule.dll"
+2026-09-13T14:41:02.3770845Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.TLSModule.dll"
+2026-09-13T14:41:02.3771374Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.TerrainModule.dll"
+2026-09-13T14:41:02.3772003Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.TextCoreFontEngineModule.dll"
+2026-09-13T14:41:02.3772620Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.TextCoreTextEngineModule.dll"
+2026-09-13T14:41:02.3773211Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.TextRenderingModule.dll"
+2026-09-13T14:41:02.3773771Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.UIElementsModule.dll"
+2026-09-13T14:41:02.3774296Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.UIModule.dll"
+2026-09-13T14:41:02.3774855Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.UnityAnalyticsCommonModule.dll"
+2026-09-13T14:41:02.3775462Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.UnityConnectModule.dll"
+2026-09-13T14:41:02.3789573Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.UnityCurlModule.dll"
+2026-09-13T14:41:02.3790585Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.UnityTestProtocolModule.dll"
+2026-09-13T14:41:02.3791688Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.UnityWebRequestAssetBundleModule.dll"
+2026-09-13T14:41:02.3792792Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.UnityWebRequestAudioModule.dll"
+2026-09-13T14:41:02.3793796Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.UnityWebRequestModule.dll"
+2026-09-13T14:41:02.3794810Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.UnityWebRequestTextureModule.dll"
+2026-09-13T14:41:02.3796310Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.UnityWebRequestWWWModule.dll"
+2026-09-13T14:41:02.3797336Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.VFXModule.dll"
+2026-09-13T14:41:02.3798422Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.VideoModule.dll"
+2026-09-13T14:41:02.3799350Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.VirtualTexturingModule.dll"
+2026-09-13T14:41:02.3800287Z -r:"/opt/unity/Editor/Data/Managed/UnityEngine/UnityEngine.dll"
+2026-09-13T14:41:02.3801432Z -r:"/opt/unity/Editor/Data/NetStandard/Extensions/2.0.0/System.Runtime.InteropServices.WindowsRuntime.dll"
+2026-09-13T14:41:02.3802832Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netfx/System.ComponentModel.Composition.dll"
+2026-09-13T14:41:02.3804022Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netfx/System.Core.dll"
+2026-09-13T14:41:02.3805024Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netfx/System.Data.dll"
+2026-09-13T14:41:02.3806131Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netfx/System.Drawing.dll"
+2026-09-13T14:41:02.3807373Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netfx/System.IO.Compression.FileSystem.dll"
+2026-09-13T14:41:02.3808694Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netfx/System.Net.dll"
+2026-09-13T14:41:02.3809723Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netfx/System.Numerics.dll"
+2026-09-13T14:41:02.3810853Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netfx/System.Runtime.Serialization.dll"
+2026-09-13T14:41:02.3812053Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netfx/System.ServiceModel.Web.dll"
+2026-09-13T14:41:02.3813180Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netfx/System.Transactions.dll"
+2026-09-13T14:41:02.3814203Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netfx/System.Web.dll"
+2026-09-13T14:41:02.3815168Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netfx/System.Windows.dll"
+2026-09-13T14:41:02.3815740Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netfx/System.Xml.Linq.dll"
+2026-09-13T14:41:02.3816368Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netfx/System.Xml.Serialization.dll"
+2026-09-13T14:41:02.3816982Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netfx/System.Xml.dll"
+2026-09-13T14:41:02.3817719Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netfx/System.dll"
+2026-09-13T14:41:02.3818670Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netfx/mscorlib.dll"
+2026-09-13T14:41:02.3819298Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/Microsoft.Win32.Primitives.dll"
+2026-09-13T14:41:02.3819975Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.AppContext.dll"
+2026-09-13T14:41:02.3820599Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Buffers.dll"
+2026-09-13T14:41:02.3821279Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Collections.Concurrent.dll"
+2026-09-13T14:41:02.3821992Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Collections.NonGeneric.dll"
+2026-09-13T14:41:02.3822697Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Collections.Specialized.dll"
+2026-09-13T14:41:02.3823373Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Collections.dll"
+2026-09-13T14:41:02.3824076Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.ComponentModel.EventBasedAsync.dll"
+2026-09-13T14:41:02.3824856Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.ComponentModel.Primitives.dll"
+2026-09-13T14:41:02.3825611Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.ComponentModel.TypeConverter.dll"
+2026-09-13T14:41:02.3826320Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.ComponentModel.dll"
+2026-09-13T14:41:02.3827774Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Console.dll"
+2026-09-13T14:41:02.3829109Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Data.Common.dll"
+2026-09-13T14:41:02.3830312Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Diagnostics.Contracts.dll"
+2026-09-13T14:41:02.3831525Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Diagnostics.Debug.dll"
+2026-09-13T14:41:02.3832435Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Diagnostics.FileVersionInfo.dll"
+2026-09-13T14:41:02.3833205Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Diagnostics.Process.dll"
+2026-09-13T14:41:02.3833908Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Diagnostics.StackTrace.dll"
+2026-09-13T14:41:02.3834673Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Diagnostics.TextWriterTraceListener.dll"
+2026-09-13T14:41:02.3835420Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Diagnostics.Tools.dll"
+2026-09-13T14:41:02.3836111Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Diagnostics.TraceSource.dll"
+2026-09-13T14:41:02.3836802Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Diagnostics.Tracing.dll"
+2026-09-13T14:41:02.3837468Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Drawing.Primitives.dll"
+2026-09-13T14:41:02.3838472Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Dynamic.Runtime.dll"
+2026-09-13T14:41:02.3839164Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Globalization.Calendars.dll"
+2026-09-13T14:41:02.3839875Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Globalization.Extensions.dll"
+2026-09-13T14:41:02.3840564Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Globalization.dll"
+2026-09-13T14:41:02.3841246Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.IO.Compression.ZipFile.dll"
+2026-09-13T14:41:02.3841915Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.IO.Compression.dll"
+2026-09-13T14:41:02.3842780Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.IO.FileSystem.DriveInfo.dll"
+2026-09-13T14:41:02.3843506Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.IO.FileSystem.Primitives.dll"
+2026-09-13T14:41:02.3844207Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.IO.FileSystem.Watcher.dll"
+2026-09-13T14:41:02.3844860Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.IO.FileSystem.dll"
+2026-09-13T14:41:02.3845665Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.IO.IsolatedStorage.dll"
+2026-09-13T14:41:02.3846712Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.IO.MemoryMappedFiles.dll"
+2026-09-13T14:41:02.3847372Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.IO.Pipes.dll"
+2026-09-13T14:41:02.3848302Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.IO.UnmanagedMemoryStream.dll"
+2026-09-13T14:41:02.3849514Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.IO.dll"
+2026-09-13T14:41:02.3850691Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Linq.Expressions.dll"
+2026-09-13T14:41:02.3851923Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Linq.Parallel.dll"
+2026-09-13T14:41:02.3853113Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Linq.Queryable.dll"
+2026-09-13T14:41:02.3854253Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Linq.dll"
+2026-09-13T14:41:02.3855623Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Memory.dll"
+2026-09-13T14:41:02.3856700Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Net.Http.dll"
+2026-09-13T14:41:02.3857917Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Net.NameResolution.dll"
+2026-09-13T14:41:02.3859423Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Net.NetworkInformation.dll"
+2026-09-13T14:41:02.3860667Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Net.Ping.dll"
+2026-09-13T14:41:02.3861775Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Net.Primitives.dll"
+2026-09-13T14:41:02.3862915Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Net.Requests.dll"
+2026-09-13T14:41:02.3864071Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Net.Security.dll"
+2026-09-13T14:41:02.3865194Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Net.Sockets.dll"
+2026-09-13T14:41:02.3866441Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Net.WebHeaderCollection.dll"
+2026-09-13T14:41:02.3867773Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Net.WebSockets.Client.dll"
+2026-09-13T14:41:02.3869277Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Net.WebSockets.dll"
+2026-09-13T14:41:02.3870601Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Numerics.Vectors.dll"
+2026-09-13T14:41:02.3872013Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.ObjectModel.dll"
+2026-09-13T14:41:02.3873216Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Reflection.DispatchProxy.dll"
+2026-09-13T14:41:02.3874618Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Reflection.Emit.ILGeneration.dll"
+2026-09-13T14:41:02.3876027Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Reflection.Emit.Lightweight.dll"
+2026-09-13T14:41:02.3877339Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Reflection.Emit.dll"
+2026-09-13T14:41:02.3878841Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Reflection.Extensions.dll"
+2026-09-13T14:41:02.3880477Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Reflection.Primitives.dll"
+2026-09-13T14:41:02.3881747Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Reflection.dll"
+2026-09-13T14:41:02.3883477Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Resources.Reader.dll"
+2026-09-13T14:41:02.3884778Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Resources.ResourceManager.dll"
+2026-09-13T14:41:02.3886095Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Resources.Writer.dll"
+2026-09-13T14:41:02.3887473Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Runtime.CompilerServices.VisualC.dll"
+2026-09-13T14:41:02.3889083Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Runtime.Extensions.dll"
+2026-09-13T14:41:02.3890290Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Runtime.Handles.dll"
+2026-09-13T14:41:02.3891706Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Runtime.InteropServices.RuntimeInformation.dll"
+2026-09-13T14:41:02.3893190Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Runtime.InteropServices.dll"
+2026-09-13T14:41:02.3894497Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Runtime.Numerics.dll"
+2026-09-13T14:41:02.3895800Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Runtime.Serialization.Formatters.dll"
+2026-09-13T14:41:02.3897198Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Runtime.Serialization.Json.dll"
+2026-09-13T14:41:02.3902261Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Runtime.Serialization.Primitives.dll"
+2026-09-13T14:41:02.3903722Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Runtime.Serialization.Xml.dll"
+2026-09-13T14:41:02.3904952Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Runtime.dll"
+2026-09-13T14:41:02.3906114Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Security.Claims.dll"
+2026-09-13T14:41:02.3907453Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Security.Cryptography.Algorithms.dll"
+2026-09-13T14:41:02.3909103Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Security.Cryptography.Csp.dll"
+2026-09-13T14:41:02.3910495Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Security.Cryptography.Encoding.dll"
+2026-09-13T14:41:02.3911965Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Security.Cryptography.Primitives.dll"
+2026-09-13T14:41:02.3913472Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Security.Cryptography.X509Certificates.dll"
+2026-09-13T14:41:02.3914882Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Security.Principal.dll"
+2026-09-13T14:41:02.3916162Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Security.SecureString.dll"
+2026-09-13T14:41:02.3917478Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Text.Encoding.Extensions.dll"
+2026-09-13T14:41:02.3918986Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Text.Encoding.dll"
+2026-09-13T14:41:02.3920267Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Text.RegularExpressions.dll"
+2026-09-13T14:41:02.3921582Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Threading.Overlapped.dll"
+2026-09-13T14:41:02.3922908Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Threading.Tasks.Extensions.dll"
+2026-09-13T14:41:02.3924255Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Threading.Tasks.Parallel.dll"
+2026-09-13T14:41:02.3925782Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Threading.Tasks.dll"
+2026-09-13T14:41:02.3927026Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Threading.Thread.dll"
+2026-09-13T14:41:02.3928791Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Threading.ThreadPool.dll"
+2026-09-13T14:41:02.3930064Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Threading.Timer.dll"
+2026-09-13T14:41:02.3931250Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Threading.dll"
+2026-09-13T14:41:02.3932387Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.ValueTuple.dll"
+2026-09-13T14:41:02.3933593Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Xml.ReaderWriter.dll"
+2026-09-13T14:41:02.3934790Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Xml.XDocument.dll"
+2026-09-13T14:41:02.3936008Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Xml.XPath.XDocument.dll"
+2026-09-13T14:41:02.3937249Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Xml.XPath.dll"
+2026-09-13T14:41:02.3938728Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Xml.XmlDocument.dll"
+2026-09-13T14:41:02.3939980Z -r:"/opt/unity/Editor/Data/NetStandard/compat/2.1.0/shims/netstandard/System.Xml.XmlSerializer.dll"
+2026-09-13T14:41:02.3940989Z -r:"/opt/unity/Editor/Data/NetStandard/ref/2.1.0/netstandard.dll"
+2026-09-13T14:41:02.3941881Z -r:"/opt/unity/Editor/Data/PlaybackEngines/AndroidPlayer/Unity.Android.Gradle.dll"
+2026-09-13T14:41:02.3943272Z -r:"/opt/unity/Editor/Data/PlaybackEngines/AndroidPlayer/Unity.Android.Types.dll"
+2026-09-13T14:41:02.3944430Z -r:"/opt/unity/Editor/Data/PlaybackEngines/AndroidPlayer/UnityEditor.Android.Extensions.dll"
+2026-09-13T14:41:02.3945818Z -r:"/opt/unity/Editor/Data/PlaybackEngines/LinuxStandaloneSupport/UnityEditor.LinuxStandalone.Extensions.dll"
+2026-09-13T14:41:02.3947440Z -r:"Library/PackageCache/com.unity.collections/Unity.Collections.LowLevel.ILSupport/Unity.Collections.LowLevel.ILSupport.dll"
+2026-09-13T14:41:02.3949095Z -r:"Library/PackageCache/com.unity.ext.nunit/net40/unity-custom/nunit.framework.dll"
+2026-09-13T14:41:02.3950115Z -r:"Library/PackageCache/com.unity.nuget.mono-cecil/Mono.Cecil.dll"
+2026-09-13T14:41:02.3951098Z -r:"Library/PackageCache/com.unity.nuget.newtonsoft-json/Runtime/Newtonsoft.Json.dll"
+2026-09-13T14:41:02.3952106Z -r:"Library/Bee/artifacts/2400b0aE.dag/Unity.InputSystem.ref.dll"
+2026-09-13T14:41:02.3952941Z -r:"Library/Bee/artifacts/2400b0aE.dag/Unity.Netcode.Runtime.ref.dll"
+2026-09-13T14:41:02.3953880Z -r:"Library/Bee/artifacts/2400b0aE.dag/Unity.Services.Authentication.ref.dll"
+2026-09-13T14:41:02.3954813Z -r:"Library/Bee/artifacts/2400b0aE.dag/Unity.Services.Core.ref.dll"
+2026-09-13T14:41:02.3955657Z -r:"Library/Bee/artifacts/2400b0aE.dag/Unity.Services.Relay.ref.dll"
+2026-09-13T14:41:02.3956474Z -r:"Library/Bee/artifacts/2400b0aE.dag/UnityEditor.UI.ref.dll"
+2026-09-13T14:41:02.3957265Z -r:"Library/Bee/artifacts/2400b0aE.dag/UnityEngine.UI.ref.dll"
+2026-09-13T14:41:02.3958719Z -analyzer:"/opt/unity/Editor/Data/Tools/Unity.SourceGenerators/Unity.Properties.SourceGenerator.dll"
+2026-09-13T14:41:02.3960563Z -analyzer:"/opt/unity/Editor/Data/Tools/Unity.SourceGenerators/Unity.SourceGenerators.dll"
+2026-09-13T14:41:02.3961825Z -analyzer:"/opt/unity/Editor/Data/Tools/Unity.SourceGenerators/Unity.UIToolkit.SourceGenerator.dll"
+2026-09-13T14:41:02.3963735Z -analyzer:"Library/PackageCache/com.unity.transport/Analyzers/Unity.Transport.Analyzers.dll"
+2026-09-13T14:41:02.3964679Z "Assets/Scripts/Audio/AudioEnums.cs"
+2026-09-13T14:41:02.3965212Z "Assets/Scripts/Audio/AudioManager.cs"
+2026-09-13T14:41:02.3965749Z "Assets/Scripts/Audio/ProceduralAudio.cs"
+2026-09-13T14:41:02.3966296Z "Assets/Scripts/Cam/RunnerCamera.cs"
+2026-09-13T14:41:02.3966804Z "Assets/Scripts/Collectibles/Coin.cs"
+2026-09-13T14:41:02.3967362Z "Assets/Scripts/Collectibles/CollectibleManager.cs"
+2026-09-13T14:41:02.3968506Z "Assets/Scripts/Collectibles/PowerupPickup.cs"
+2026-09-13T14:41:02.3969148Z "Assets/Scripts/Core/ConnectionGuard.cs"
+2026-09-13T14:41:02.3969710Z "Assets/Scripts/Core/DifficultyManager.cs"
+2026-09-13T14:41:02.3970335Z "Assets/Scripts/Core/GameBootstrap.cs"
+2026-09-13T14:41:02.3970883Z "Assets/Scripts/Core/GameServicesInitializer.cs"
+2026-09-13T14:41:02.3971477Z "Assets/Scripts/Core/GameStateManager.cs"
+2026-09-13T14:41:02.3972127Z "Assets/Scripts/Core/PerformanceMonitor.cs"
+2026-09-13T14:41:02.3972675Z "Assets/Scripts/Core/PoolManager.cs"
+2026-09-13T14:41:02.3973168Z "Assets/Scripts/Core/RunManager.cs"
+2026-09-13T14:41:02.3973646Z "Assets/Scripts/Data/AudioBank.cs"
+2026-09-13T14:41:02.3974121Z "Assets/Scripts/Data/CharacterStats.cs"
+2026-09-13T14:41:02.3974653Z "Assets/Scripts/Data/DifficultyCurve.cs"
+2026-09-13T14:41:02.3975170Z "Assets/Scripts/Data/GameConfig.cs"
+2026-09-13T14:41:02.3975678Z "Assets/Scripts/Data/ObstacleCatalog.cs"
+2026-09-13T14:41:02.3976216Z "Assets/Scripts/Multiplayer/LobbyState.cs"
+2026-09-13T14:41:02.3976781Z "Assets/Scripts/Multiplayer/MatchRules.cs"
+2026-09-13T14:41:02.3977353Z "Assets/Scripts/Multiplayer/MatchStateManager.cs"
+2026-09-13T14:41:02.3977984Z "Assets/Scripts/Multiplayer/MultiplayerManager.cs"
+2026-09-13T14:41:02.3978862Z "Assets/Scripts/Multiplayer/NetworkPlayerSync.cs"
+2026-09-13T14:41:02.3979467Z "Assets/Scripts/Multiplayer/RelayRoomService.cs"
+2026-09-13T14:41:02.3980040Z "Assets/Scripts/Obstacles/BarrierObstacle.cs"
+2026-09-13T14:41:02.3980574Z "Assets/Scripts/Obstacles/DecorTrain.cs"
+2026-09-13T14:41:02.3981144Z "Assets/Scripts/Obstacles/ObstacleBase.cs"
+2026-09-13T14:41:02.3981983Z "Assets/Scripts/Obstacles/ObstacleFactory.cs"
+2026-09-13T14:41:02.3982540Z "Assets/Scripts/Obstacles/ObstacleManager.cs"
+2026-09-13T14:41:02.3983081Z "Assets/Scripts/Obstacles/OverheadHazard.cs"
+2026-09-13T14:41:02.3983607Z "Assets/Scripts/Obstacles/StumbleSign.cs"
+2026-09-13T14:41:02.3984144Z "Assets/Scripts/Obstacles/TrainObstacle.cs"
+2026-09-13T14:41:02.3984695Z "Assets/Scripts/Player/CharacterSelector.cs"
+2026-09-13T14:41:02.3985242Z "Assets/Scripts/Player/PlayerController.cs"
+2026-09-13T14:41:02.3985759Z "Assets/Scripts/Player/RunnerFactory.cs"
+2026-09-13T14:41:02.3986273Z "Assets/Scripts/Player/RunnerVisualRig.cs"
+2026-09-13T14:41:02.3986795Z "Assets/Scripts/Player/SwipeInputReader.cs"
+2026-09-13T14:41:02.3987348Z "Assets/Scripts/Powerups/PowerupController.cs"
+2026-09-13T14:41:02.3987893Z "Assets/Scripts/Powerups/PowerupType.cs"
+2026-09-13T14:41:02.3988812Z "Assets/Scripts/Track/ChunkPattern.cs"
+2026-09-13T14:41:02.3989336Z "Assets/Scripts/Track/PatternGenerator.cs"
+2026-09-13T14:41:02.3989894Z "Assets/Scripts/Track/PatternValidator.cs"
+2026-09-13T14:41:02.3990452Z "Assets/Scripts/Track/RunSceneController.cs"
+2026-09-13T14:41:02.3990987Z "Assets/Scripts/Track/TrackChunk.cs"
+2026-09-13T14:41:02.3991481Z "Assets/Scripts/Track/TrackManager.cs"
+2026-09-13T14:41:02.3991968Z "Assets/Scripts/UI/MenuBackdrop.cs"
+2026-09-13T14:41:02.3992533Z "Assets/Scripts/UI/Screens/BootScreen.cs"
+2026-09-13T14:41:02.3993100Z "Assets/Scripts/UI/Screens/CharacterScreen.cs"
+2026-09-13T14:41:02.3993662Z "Assets/Scripts/UI/Screens/CountdownScreen.cs"
+2026-09-13T14:41:02.3994226Z "Assets/Scripts/UI/Screens/DisconnectScreen.cs"
+2026-09-13T14:41:02.3994772Z "Assets/Scripts/UI/Screens/HudScreen.cs"
+2026-09-13T14:41:02.3995303Z "Assets/Scripts/UI/Screens/LobbyScreen.cs"
+2026-09-13T14:41:02.3995849Z "Assets/Scripts/UI/Screens/MainMenuScreen.cs"
+2026-09-13T14:41:02.3996421Z "Assets/Scripts/UI/Screens/MultiplayerScreen.cs"
+2026-09-13T14:41:02.3996984Z "Assets/Scripts/UI/Screens/PauseScreen.cs"
+2026-09-13T14:41:02.3997531Z "Assets/Scripts/UI/Screens/ResultsScreen.cs"
+2026-09-13T14:41:02.3998350Z "Assets/Scripts/UI/Screens/SettingsScreen.cs"
+2026-09-13T14:41:02.3998892Z "Assets/Scripts/UI/ShareService.cs"
+2026-09-13T14:41:02.3999378Z "Assets/Scripts/UI/UICanvasBuilder.cs"
+2026-09-13T14:41:02.3999874Z "Assets/Scripts/UI/UIManager.cs"
+2026-09-13T14:41:02.4000325Z "Assets/Scripts/UI/UIScreen.cs"
+2026-09-13T14:41:02.4001069Z "Assets/Scripts/Utilities/Constants.cs"
+2026-09-13T14:41:02.4001597Z "Assets/Scripts/Utilities/Extensions.cs"
+2026-09-13T14:41:02.4002114Z "Assets/Scripts/Utilities/GameEvents.cs"
+2026-09-13T14:41:02.4002618Z "Assets/Scripts/Utilities/Haptics.cs"
+2026-09-13T14:41:02.4003115Z "Assets/Scripts/Utilities/ObjectPool.cs"
+2026-09-13T14:41:02.4003663Z "Assets/Scripts/Utilities/PersistentManager.cs"
+2026-09-13T14:41:02.4004244Z "Assets/Scripts/Utilities/SafeAreaFitter.cs"
+2026-09-13T14:41:02.4004774Z "Assets/Scripts/Utilities/SeededRandom.cs"
+2026-09-13T14:41:02.4005307Z "Assets/Scripts/Utilities/ServiceRegistry.cs"
+2026-09-13T14:41:02.4005855Z "Assets/Scripts/Utilities/VisualStyles.cs"
+2026-09-13T14:41:02.4006337Z -langversion:9.0
+2026-09-13T14:41:02.4006696Z /deterministic
+2026-09-13T14:41:02.4007024Z /optimize+
+2026-09-13T14:41:02.4007341Z /debug:portable
+2026-09-13T14:41:02.4007667Z /nologo
+2026-09-13T14:41:02.4008017Z /RuntimeMetadataVersion:v4.0.30319
+2026-09-13T14:41:02.4008782Z /nowarn:0169
+2026-09-13T14:41:02.4009127Z /nowarn:0649
+2026-09-13T14:41:02.4009447Z /nowarn:0282
+2026-09-13T14:41:02.4009762Z /nowarn:1701
+2026-09-13T14:41:02.4010081Z /nowarn:1702
+2026-09-13T14:41:02.4010400Z /utf8output
+2026-09-13T14:41:02.4010737Z /preferreduilang:en-US
+2026-09-13T14:41:02.4011523Z /additionalfile:"Library/Bee/artifacts/2400b0aE.dag/DummySurfer.Runtime.UnityAdditionalFile.txt"
+2026-09-13T14:41:02.4012426Z ##### Custom Environment Variables
+2026-09-13T14:41:02.4012877Z DOTNET_MULTILEVEL_LOOKUP=0
+2026-09-13T14:41:02.4013264Z ##### ExitCode
+2026-09-13T14:41:02.4013581Z 1
+2026-09-13T14:41:02.4014084Z ##### Output
+2026-09-13T14:41:02.4015362Z Assets/Scripts/Multiplayer/MultiplayerManager.cs(4,13): error CS0234: The type or namespace name 'Transport' does not exist in the namespace 'Unity' (are you missing an assembly reference?)
+2026-09-13T14:41:02.4017618Z Assets/Scripts/Multiplayer/RelayRoomService.cs(6,13): error CS0234: The type or namespace name 'Transport' does not exist in the namespace 'Unity' (are you missing an assembly reference?)
+2026-09-13T14:41:02.4020599Z Assets/Scripts/Obstacles/ObstacleBase.cs(12,16): error CS0246: The type or namespace name 'ObstacleKind' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4022822Z Assets/Scripts/Obstacles/ObstacleFactory.cs(10,42): error CS0246: The type or namespace name 'ObstacleKind' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4024928Z Assets/Scripts/UI/Screens/BootScreen.cs(11,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4026935Z Assets/Scripts/UI/Screens/BootScreen.cs(12,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4029230Z Assets/Scripts/UI/Screens/CountdownScreen.cs(11,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4031325Z Assets/Scripts/UI/Screens/CountdownScreen.cs(12,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4033432Z Assets/Scripts/UI/Screens/DisconnectScreen.cs(11,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4035496Z Assets/Scripts/UI/Screens/HudScreen.cs(15,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4037533Z Assets/Scripts/UI/Screens/LobbyScreen.cs(46,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4040023Z Assets/Scripts/UI/Screens/LobbyScreen.cs(14,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4042092Z Assets/Scripts/UI/Screens/LobbyScreen.cs(15,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4044153Z Assets/Scripts/UI/Screens/LobbyScreen.cs(16,17): error CS0246: The type or namespace name 'Button' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4046228Z Assets/Scripts/UI/Screens/LobbyScreen.cs(17,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4054181Z Assets/Scripts/UI/Screens/MainMenuScreen.cs(11,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4056336Z Assets/Scripts/UI/Screens/MainMenuScreen.cs(12,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4058731Z Assets/Scripts/UI/Screens/MultiplayerScreen.cs(15,17): error CS0246: The type or namespace name 'InputField' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4060903Z Assets/Scripts/UI/Screens/MultiplayerScreen.cs(16,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4063030Z Assets/Scripts/UI/Screens/MultiplayerScreen.cs(17,17): error CS0246: The type or namespace name 'Button' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4065404Z Assets/Scripts/UI/Screens/PauseScreen.cs(14,17): error CS0246: The type or namespace name 'Button' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4067616Z Assets/Scripts/Powerups/PowerupController.cs(21,17): error CS0246: The type or namespace name 'PlayerController' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4069840Z Assets/Scripts/UI/Screens/PauseScreen.cs(15,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4072141Z Assets/Scripts/Multiplayer/MatchRules.cs(16,41): error CS0246: The type or namespace name 'BufferSerializer<>' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4074466Z Assets/Scripts/UI/Screens/ResultsScreen.cs(15,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4076658Z Assets/Scripts/UI/Screens/ResultsScreen.cs(16,17): error CS0246: The type or namespace name 'Button' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4079808Z Assets/Scripts/UI/Screens/ResultsScreen.cs(17,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4082112Z Assets/Scripts/Multiplayer/MatchRules.cs(10,37): error CS0535: 'MatchSideResult' does not implement interface member 'INetworkSerializable.NetworkSerialize<T>(BufferSerializer<T>)'
+2026-09-13T14:41:02.4084426Z Assets/Scripts/Multiplayer/MatchRules.cs(16,83): error CS0246: The type or namespace name 'IReaderWriter' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4086122Z Assets/Scripts/UI/UICanvasBuilder.cs(64,49): error CS0100: The parameter name 'size' is a duplicate
+2026-09-13T14:41:02.4087257Z Assets/Scripts/UI/UIScreen.cs(38,21): error CS0100: The parameter name 'size' is a duplicate
+2026-09-13T14:41:02.4089294Z Assets/Scripts/UI/UIScreen.cs(37,19): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4091213Z Assets/Scripts/UI/UIScreen.cs(42,19): error CS0246: The type or namespace name 'Button' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4092976Z Assets/Scripts/UI/UIScreen.cs(46,19): error CS0246: The type or namespace name 'Image' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4094979Z Assets/Scripts/Multiplayer/RelayRoomService.cs(70,24): error CS0246: The type or namespace name 'UnityTransport' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4096494Z *** Tundra build failed (2.27 seconds), 2 items updated, 824 evaluated
+2026-09-13T14:41:02.4097495Z ## Script Compilation Error for: Csc Library/Bee/artifacts/2400b0aE.dag/DummySurfer.Runtime.dll (+2 others)
+2026-09-13T14:41:02.4099960Z ## CmdLine: "/opt/unity/Editor/Data/NetCoreRuntime/dotnet" exec "/opt/unity/Editor/Data/DotNetSdkRoslyn/csc.dll" /nostdlib /noconfig /shared "@Library/Bee/artifacts/2400b0aE.dag/DummySurfer.Runtime.rsp" "@Library/Bee/artifacts/2400b0aE.dag/DummySurfer.Runtime.rsp2"
+2026-09-13T14:41:02.4101828Z ## Output:
+2026-09-13T14:41:02.4102999Z Assets/Scripts/Multiplayer/MultiplayerManager.cs(4,13): error CS0234: The type or namespace name 'Transport' does not exist in the namespace 'Unity' (are you missing an assembly reference?)
+2026-09-13T14:41:02.4105195Z Assets/Scripts/Multiplayer/RelayRoomService.cs(6,13): error CS0234: The type or namespace name 'Transport' does not exist in the namespace 'Unity' (are you missing an assembly reference?)
+2026-09-13T14:41:02.4107583Z Assets/Scripts/Obstacles/ObstacleBase.cs(12,16): error CS0246: The type or namespace name 'ObstacleKind' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4110069Z Assets/Scripts/Obstacles/ObstacleFactory.cs(10,42): error CS0246: The type or namespace name 'ObstacleKind' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4112262Z Assets/Scripts/UI/Screens/BootScreen.cs(11,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4114269Z Assets/Scripts/UI/Screens/BootScreen.cs(12,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4116315Z Assets/Scripts/UI/Screens/CountdownScreen.cs(11,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4118628Z Assets/Scripts/UI/Screens/CountdownScreen.cs(12,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4120873Z Assets/Scripts/UI/Screens/DisconnectScreen.cs(11,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4123032Z Assets/Scripts/UI/Screens/HudScreen.cs(15,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4125143Z Assets/Scripts/UI/Screens/LobbyScreen.cs(46,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4127274Z Assets/Scripts/UI/Screens/LobbyScreen.cs(14,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4129648Z Assets/Scripts/UI/Screens/LobbyScreen.cs(15,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4132065Z Assets/Scripts/UI/Screens/LobbyScreen.cs(16,17): error CS0246: The type or namespace name 'Button' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4134242Z Assets/Scripts/UI/Screens/LobbyScreen.cs(17,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4136377Z Assets/Scripts/UI/Screens/MainMenuScreen.cs(11,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4138892Z Assets/Scripts/UI/Screens/MainMenuScreen.cs(12,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4141071Z Assets/Scripts/UI/Screens/MultiplayerScreen.cs(15,17): error CS0246: The type or namespace name 'InputField' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4143219Z Assets/Scripts/UI/Screens/MultiplayerScreen.cs(16,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4145305Z Assets/Scripts/UI/Screens/MultiplayerScreen.cs(17,17): error CS0246: The type or namespace name 'Button' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4147403Z Assets/Scripts/UI/Screens/PauseScreen.cs(14,17): error CS0246: The type or namespace name 'Button' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4149739Z Assets/Scripts/Powerups/PowerupController.cs(21,17): error CS0246: The type or namespace name 'PlayerController' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4152066Z Assets/Scripts/UI/Screens/PauseScreen.cs(15,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4154199Z Assets/Scripts/Multiplayer/MatchRules.cs(16,41): error CS0246: The type or namespace name 'BufferSerializer<>' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4156319Z Assets/Scripts/UI/Screens/ResultsScreen.cs(15,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4158595Z Assets/Scripts/UI/Screens/ResultsScreen.cs(16,17): error CS0246: The type or namespace name 'Button' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4160703Z Assets/Scripts/UI/Screens/ResultsScreen.cs(17,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4162820Z Assets/Scripts/Multiplayer/MatchRules.cs(10,37): error CS0535: 'MatchSideResult' does not implement interface member 'INetworkSerializable.NetworkSerialize<T>(BufferSerializer<T>)'
+2026-09-13T14:41:02.4165028Z Assets/Scripts/Multiplayer/MatchRules.cs(16,83): error CS0246: The type or namespace name 'IReaderWriter' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4166690Z Assets/Scripts/UI/UICanvasBuilder.cs(64,49): error CS0100: The parameter name 'size' is a duplicate
+2026-09-13T14:41:02.4167787Z Assets/Scripts/UI/UIScreen.cs(38,21): error CS0100: The parameter name 'size' is a duplicate
+2026-09-13T14:41:02.4169569Z Assets/Scripts/UI/UIScreen.cs(37,19): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4171452Z Assets/Scripts/UI/UIScreen.cs(42,19): error CS0246: The type or namespace name 'Button' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4173416Z Assets/Scripts/UI/UIScreen.cs(46,19): error CS0246: The type or namespace name 'Image' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4175715Z Assets/Scripts/Multiplayer/RelayRoomService.cs(70,24): error CS0246: The type or namespace name 'UnityTransport' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4176986Z 
+2026-09-13T14:41:02.4178353Z Assets/Scripts/Multiplayer/MultiplayerManager.cs(4,13): error CS0234: The type or namespace name 'Transport' does not exist in the namespace 'Unity' (are you missing an assembly reference?)
+2026-09-13T14:41:02.4180595Z Assets/Scripts/Multiplayer/RelayRoomService.cs(6,13): error CS0234: The type or namespace name 'Transport' does not exist in the namespace 'Unity' (are you missing an assembly reference?)
+2026-09-13T14:41:02.4182761Z Assets/Scripts/Obstacles/ObstacleBase.cs(12,16): error CS0246: The type or namespace name 'ObstacleKind' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4184941Z Assets/Scripts/Obstacles/ObstacleFactory.cs(10,42): error CS0246: The type or namespace name 'ObstacleKind' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4187045Z Assets/Scripts/UI/Screens/BootScreen.cs(11,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4189312Z Assets/Scripts/UI/Screens/BootScreen.cs(12,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4191307Z Assets/Scripts/UI/Screens/CountdownScreen.cs(11,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4193578Z Assets/Scripts/UI/Screens/CountdownScreen.cs(12,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4195161Z Assets/Scripts/UI/Screens/DisconnectScreen.cs(11,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4197238Z Assets/Scripts/UI/Screens/HudScreen.cs(15,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4199483Z Assets/Scripts/UI/Screens/LobbyScreen.cs(46,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4201486Z Assets/Scripts/UI/Screens/LobbyScreen.cs(14,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4203481Z Assets/Scripts/UI/Screens/LobbyScreen.cs(15,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4205454Z Assets/Scripts/UI/Screens/LobbyScreen.cs(16,17): error CS0246: The type or namespace name 'Button' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4207440Z Assets/Scripts/UI/Screens/LobbyScreen.cs(17,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4209678Z Assets/Scripts/UI/Screens/MainMenuScreen.cs(11,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4211156Z Assets/Scripts/UI/Screens/MainMenuScreen.cs(12,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4212364Z Assets/Scripts/UI/Screens/MultiplayerScreen.cs(15,17): error CS0246: The type or namespace name 'InputField' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4213813Z Assets/Scripts/UI/Screens/MultiplayerScreen.cs(16,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4215000Z Assets/Scripts/UI/Screens/MultiplayerScreen.cs(17,17): error CS0246: The type or namespace name 'Button' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4216175Z Assets/Scripts/UI/Screens/PauseScreen.cs(14,17): error CS0246: The type or namespace name 'Button' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4217389Z Assets/Scripts/Powerups/PowerupController.cs(21,17): error CS0246: The type or namespace name 'PlayerController' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4219287Z Assets/Scripts/UI/Screens/PauseScreen.cs(15,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4220563Z Assets/Scripts/Multiplayer/MatchRules.cs(16,41): error CS0246: The type or namespace name 'BufferSerializer<>' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4221744Z Assets/Scripts/UI/Screens/ResultsScreen.cs(15,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4222878Z Assets/Scripts/UI/Screens/ResultsScreen.cs(16,17): error CS0246: The type or namespace name 'Button' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4224189Z Assets/Scripts/UI/Screens/ResultsScreen.cs(17,17): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4225676Z Assets/Scripts/Multiplayer/MatchRules.cs(10,37): error CS0535: 'MatchSideResult' does not implement interface member 'INetworkSerializable.NetworkSerialize<T>(BufferSerializer<T>)'
+2026-09-13T14:41:02.4227183Z Assets/Scripts/Multiplayer/MatchRules.cs(16,83): error CS0246: The type or namespace name 'IReaderWriter' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4228387Z Assets/Scripts/UI/UICanvasBuilder.cs(64,49): error CS0100: The parameter name 'size' is a duplicate
+2026-09-13T14:41:02.4229016Z Assets/Scripts/UI/UIScreen.cs(38,21): error CS0100: The parameter name 'size' is a duplicate
+2026-09-13T14:41:02.4229839Z Assets/Scripts/UI/UIScreen.cs(37,19): error CS0246: The type or namespace name 'Text' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4230894Z Assets/Scripts/UI/UIScreen.cs(42,19): error CS0246: The type or namespace name 'Button' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4231938Z Assets/Scripts/UI/UIScreen.cs(46,19): error CS0246: The type or namespace name 'Image' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4233098Z Assets/Scripts/Multiplayer/RelayRoomService.cs(70,24): error CS0246: The type or namespace name 'UnityTransport' could not be found (are you missing a using directive or an assembly reference?)
+2026-09-13T14:41:02.4290674Z Total cache size 25193860
+2026-09-13T14:41:02.4292962Z AssetDatabase: script compilation time: 2.890295s
+2026-09-13T14:41:02.4352094Z Total cache size after purge 25193860, took 00:00:00.0457469
+2026-09-13T14:41:02.5117202Z Scripts have compiler errors.
+2026-09-13T14:41:02.5117940Z 
+2026-09-13T14:41:02.5118952Z Aborting batchmode due to failure:
+2026-09-13T14:41:02.5119431Z Scripts have compiler errors.
+2026-09-13T14:41:02.5119704Z 
+2026-09-13T14:41:04.5373453Z ##[error]Process completed with exit code 1.
+2026-09-13T14:41:04.5434402Z ##[group]Run ls -la "$GITHUB_WORKSPACE/build/Android" 2>/dev/null || echo "no build/Android dir"
+2026-09-13T14:41:04.5435087Z [36;1mls -la "$GITHUB_WORKSPACE/build/Android" 2>/dev/null || echo "no build/Android dir"[0m
+2026-09-13T14:41:04.5471601Z shell: /usr/bin/bash -e {0}
+2026-09-13T14:41:04.5471861Z env:
+2026-09-13T14:41:04.5472126Z   UNITY_IMAGE: unityci/editor:ubuntu-6000.0.32f1-android-3
+2026-09-13T14:41:04.5472476Z   KS_PASS: DummySurfersDebug!2024
+2026-09-13T14:41:04.5472741Z   KS_ALIAS: dummysurfers
+2026-09-13T14:41:04.5472975Z ##[endgroup]
+2026-09-13T14:41:04.5545962Z no build/Android dir
+2026-09-13T14:41:04.5575656Z ##[group]Run docker rm -f unity-build || true
+2026-09-13T14:41:04.5576038Z [36;1mdocker rm -f unity-build || true[0m
+2026-09-13T14:41:04.5613408Z shell: /usr/bin/bash -e {0}
+2026-09-13T14:41:04.5613677Z env:
+2026-09-13T14:41:04.5613947Z   UNITY_IMAGE: unityci/editor:ubuntu-6000.0.32f1-android-3
+2026-09-13T14:41:04.5614290Z   KS_PASS: DummySurfersDebug!2024
+2026-09-13T14:41:04.5614593Z   KS_ALIAS: dummysurfers
+2026-09-13T14:41:04.5614819Z ##[endgroup]
+2026-09-13T14:41:04.8339298Z unity-build
+2026-09-13T14:41:04.8574450Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-13T14:41:04.8576561Z Post job cleanup.
+2026-09-13T14:41:05.0977161Z [command]/usr/bin/git version
+2026-09-13T14:41:05.1028885Z git version 2.55.0
+2026-09-13T14:41:05.1074053Z Temporarily overriding HOME='/home/runner/work/_temp/5fcb9ab4-78a7-45ad-9d37-8ff90daac320' before making global git config changes
+2026-09-13T14:41:05.1076249Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-13T14:41:05.1081575Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/dummysurfers/dummysurfers
+2026-09-13T14:41:05.1135439Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-13T14:41:05.1177992Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-13T14:41:05.1481125Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-13T14:41:05.1519956Z http.https://github.com/.extraheader
+2026-09-13T14:41:05.1542479Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-09-13T14:41:05.1615971Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-13T14:41:05.1906619Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-13T14:41:05.1953073Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-13T14:41:05.2421651Z Cleaning up orphan processes
+2026-09-13T14:41:05.2949797Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

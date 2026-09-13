@@ -3,6 +3,7 @@ using DummySurfer.Collectibles;
 using DummySurfer.Core;
 using DummySurfer.Data;
 
+using DummySurfer.Player;
 namespace DummySurfer.Powerups
 {
     /// <summary>
