@@ -84,34 +84,38 @@ jobs:
           docker ps --filter name=unity-build
 
       # --------------------------------------------------------------
-      # Explicit login + license claim. Unity 6's editor alone does NOT
-      # grab the personal entitlement after a headless login ("no license
-      # activation found for this computer"), so we also drive the
-      # Unity.Licensing.Client CLI directly (login + activate).
+      # Personal license acquisition for Unity 6 headless:
+      #   [1] editor login (authenticates + caches access token)
+      #   [2] syncEntitlements (replicates the personal entitlement
+      #       from Unity's servers into the local license store)
+      #   [3] verify with showEntitlements + an editor license check
+      # Every call is wrapped in `timeout` so nothing can hang.
       # --------------------------------------------------------------
-      - name: Acquire Unity Personal license (login + activate)
-        timeout-minutes: 10
+      - name: Acquire Unity Personal license (login + sync entitlements)
+        timeout-minutes: 15
         run: |
           docker exec unity-build bash -c '
             set +e
-            CLIENT=$(find /opt/unity -maxdepth 7 -type f -name "Unity.Licensing.Client" 2>/dev/null | head -n1)
-            echo "=== licensing client binary: $CLIENT ==="
-            if [ -n "$CLIENT" ]; then
-              echo "=== client help ==="
-              "$CLIENT" --help 2>&1 | head -60 || true
-              echo "=== client login ==="
-              "$CLIENT" login --username "$UNITY_EMAIL" --password "$UNITY_PASSWORD" 2>&1 | tail -25 || true
-              echo "=== client activate (personal, no serial) ==="
-              "$CLIENT" activate --username "$UNITY_EMAIL" --password "$UNITY_PASSWORD" 2>&1 | tail -25 || true
-              echo "=== client list ==="
-              "$CLIENT" list 2>&1 | tail -10 || true
-            fi
-            echo "=== editor login ==="
-            unity-editor -batchmode -nographics -quit \
+            CLIENT=/opt/unity/Editor/Data/Resources/Licensing/Client/Unity.Licensing.Client
+            echo "=== full client help ==="
+            timeout 30 "$CLIENT" --help 2>&1 | head -150 || true
+            echo "=== [1] editor login (caches access token) ==="
+            timeout 240 unity-editor -batchmode -nographics -quit \
               -username "$UNITY_EMAIL" -password "$UNITY_PASSWORD" \
-              -logFile /dev/stdout
-            code=$?
-            echo "editor login exit code: $code (the prep step verifies the license)"
+              -logFile /dev/stdout 2>&1 | tail -8 || true
+            echo "=== [2] show remote entitlements (cloud) ==="
+            timeout 60 "$CLIENT" --showRemoteEntitlements 2>&1 | tail -30 || true
+            echo "=== [3] sync entitlements (claim personal license) ==="
+            timeout 90 "$CLIENT" --syncEntitlements 2>&1 | tail -30 || true
+            echo "=== [4] show local entitlements ==="
+            timeout 60 "$CLIENT" --showEntitlements 2>&1 | tail -30 || true
+            echo "=== [5] editor license check (no credentials) ==="
+            timeout 180 unity-editor -batchmode -nographics -quit \
+              -logFile /dev/stdout 2>&1 | tail -8 || true
+            echo "=== [6] force-free probe ==="
+            timeout 180 unity-editor -batchmode -nographics -quit -force-free \
+              -logFile /dev/stdout 2>&1 | tail -8 || true
+            echo "license acquisition diagnostics done"
             exit 0
           '
 
