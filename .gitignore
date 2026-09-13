@@ -1,0 +1,51 @@
+# Unity generated
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]serSettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# Asset meta should only be ignored when never committed (we DO commit meta files)
+# /[Aa]ssets/AssetImportWorkers
+
+# Visual Studio / Rider / VS Code cache
+.vs/
+.idea/
+*.csproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.pidb.meta
+
+# Unity crash reports
+sysinfo.txt
+*.stackdump
+crashlytics-build.properties
+
+# Builds — NEVER commit APKs (per project policy)
+*.apk
+*.aab
+*.unitypackage
+*.app
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Unity Addressables / obfuscation leftovers
+/[Aa]ssets/AddressableAssetsData/*/*.bin*
+/[Aa]ssets/StreamingAssets/aa.meta
+/[Aa]ssets/StreamingAssets/aa/*
