@@ -8,12 +8,17 @@ on:
 permissions:
   contents: write
 
+env:
+  UNITY_IMAGE: unityci/editor:ubuntu-6000.0.32f1-android-3
+  KS_PASS: 'DummySurfersDebug!2024'
+  KS_ALIAS: dummysurfers
+
 jobs:
   # ------------------------------------------------------------------
   # Gate: only run the (heavy) Unity build when a license is available.
-  # Unity licenses cannot be activated by CI itself — the account owner
-  # must add the UNITY_LICENSE (Personal) or UNITY_SERIAL (Pro/Plus)
-  # secret once. See docs/CI_UNITY_LICENSE_SETUP.md
+  # Supported: UNITY_LICENSE (.ulf), UNITY_SERIAL (Pro), or
+  # UNITY_EMAIL + UNITY_PASSWORD (Personal auto-activation inside CI).
+  # See docs/CI_UNITY_LICENSE_SETUP.md
   # ------------------------------------------------------------------
   license-gate:
     name: License check
@@ -42,70 +47,99 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup JDK 17 (debug keystore tooling)
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+      - name: Free disk space (Unity images are large)
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghc 2>/dev/null || true
+          df -h /
 
-      - name: Generate CI debug keystore
-        id: ks
+      # A throw-away signing keystore so the APK installs out of the box.
+      - name: Generate CI signing keystore
         run: |
           keytool -genkeypair -v \
             -keystore "$GITHUB_WORKSPACE/dummysurfers.keystore" \
-            -alias dummysurfers \
+            -alias "$KS_ALIAS" \
             -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass 'DummySurfersDebug!2024' -keypass 'DummySurfersDebug!2024' \
+            -storepass "$KS_PASS" -keypass "$KS_PASS" \
             -dname "CN=Dummy Surfer, OU=Games, O=DummySurfers, L=Web, S=Web, C=PK"
-          B64=$(base64 -w0 "$GITHUB_WORKSPACE/dummysurfers.keystore")
-          echo "b64=$B64" >> "$GITHUB_OUTPUT"
 
       # --------------------------------------------------------------
-      # Step 1 — headless project preparation:
-      # generates URP assets, quality tiers, data ScriptableObjects,
-      # the network runner prefab and all three scenes (Boot / MainMenu
-      # / Game) directly in the workspace, exactly like the in-editor
-      # "Tools → Dummy Surfer → 1. Setup Everything" wizard.
+      # ONE persistent container for login + prep + build, so the
+      # license acquired at login stays valid for the whole pipeline.
       # --------------------------------------------------------------
-      - name: Generate scenes & assets (headless Unity)
+      - name: Start Unity container
         env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
         run: |
-          docker run --rm \
+          docker run -d --name unity-build \
             -v "${{ github.workspace }}:/project" \
             -w /project \
-            -e UNITY_LICENSE -e UNITY_EMAIL -e UNITY_PASSWORD -e UNITY_SERIAL \
-            unityci/editor:ubuntu-6000.0.32f1-android-3 \
-            unity-editor \
-              -batchmode -nographics \
+            -e UNITY_EMAIL -e UNITY_PASSWORD \
+            -e CI_KEYSTORE_PATH=/project/dummysurfers.keystore \
+            -e "CI_KEYSTORE_PASS=$KS_PASS" \
+            -e "CI_KEYALIAS_NAME=$KS_ALIAS" \
+            -e "CI_KEYALIAS_PASS=$KS_PASS" \
+            "$UNITY_IMAGE" \
+            bash -c 'sleep infinity'
+          docker ps --filter name=unity-build
+
+      # --------------------------------------------------------------
+      # Explicit login — acquires the Unity Personal license for this
+      # container (GameCI's default entrypoint does NOT do this for
+      # personal email/password, so we do it ourselves).
+      # --------------------------------------------------------------
+      - name: Log in to Unity (Personal license activation)
+        timeout-minutes: 10
+        run: |
+          docker exec unity-build bash -c '
+            set -o pipefail
+            unity-editor -batchmode -nographics -quit \
+              -username "$UNITY_EMAIL" -password "$UNITY_PASSWORD" \
+              -logFile /dev/stdout
+            code=$?
+            echo "login exit code: $code (license verified in the next step)"
+            exit 0
+          '
+
+      # --------------------------------------------------------------
+      # Headless project preparation — same as the in-editor wizard:
+      # URP, quality tiers, Android settings, data assets, runner
+      # prefab, scenes (Boot / MainMenu / Game), build settings.
+      # Fails loudly here if the license was not acquired above.
+      # --------------------------------------------------------------
+      - name: Generate scenes & assets (headless Unity)
+        timeout-minutes: 20
+        run: |
+          docker exec unity-build bash -c '
+            set -o pipefail
+            unity-editor -batchmode -nographics -quit \
               -projectPath /project \
               -executeMethod DummySurfer.EditorTools.CiEntryPoint.PrepareCiBuild \
               -logFile /dev/stdout
+          '
 
       # --------------------------------------------------------------
-      # Step 2 — the real Android build (APK, signed with the debug
-      # keystore generated above so it installs out of the box).
+      # The real Android APK build (IL2CPP · ARM64 · signed).
       # --------------------------------------------------------------
       - name: Build Android APK
-        uses: game-ci/unity-builder@v4
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
-        with:
-          unityVersion: auto
-          targetPlatform: Android
-          buildName: DummySurfers
-          androidSymbolType: 'none'
-          androidKeystoreName: dummysurfers.keystore
-          androidKeystoreBase64: ${{ steps.ks.outputs.b64 }}
-          androidKeystorePass: 'DummySurfersDebug!2024'
-          androidKeyaliasName: dummysurfers
-          androidKeyaliasPass: 'DummySurfersDebug!2024'
+        timeout-minutes: 60
+        run: |
+          docker exec unity-build bash -c '
+            set -o pipefail
+            unity-editor -batchmode -nographics -quit \
+              -projectPath /project \
+              -executeMethod DummySurfer.EditorTools.CiEntryPoint.BuildAndroid \
+              -logFile /dev/stdout
+          '
+
+      - name: Show build output
+        if: always()
+        run: |
+          ls -la "$GITHUB_WORKSPACE/build/Android" 2>/dev/null || echo "no build/Android dir"
+
+      - name: Stop Unity container
+        if: always()
+        run: docker rm -f unity-build || true
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -131,8 +165,8 @@ jobs:
           files: build/Android/*.apk
 
   # ------------------------------------------------------------------
-  # Friendly guidance when the license secret is missing — the run
-  # stays green but tells you exactly what to do next.
+  # Friendly guidance when no license secret is configured yet — the
+  # run stays green and tells you exactly what to do next.
   # ------------------------------------------------------------------
   how-to-enable:
     name: Unity license needed
@@ -163,6 +197,6 @@ jobs:
             echo ""
             echo "The APK will then be attached to a new Release automatically. 🚀"
             echo ""
-            echo "Full guide: \`docs/CI_UNITY_LICENSE_SETUP.md\` in the repo."
+            echo "Full guide: \`docs/CI_UNITY_LICENSE_SETUP.md\` in the repo (Option A)."
           } >> "$GITHUB_STEP_SUMMARY"
           echo "License secret missing — see the run summary + docs/CI_UNITY_LICENSE_SETUP.md"
