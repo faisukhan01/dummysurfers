@@ -137,20 +137,26 @@ namespace DummySurfer.Utilities
             }
         }
 
-        /// <summary>Shared MeshRenderer creation helper for runtime-built primitives.</summary>
+        /// <summary>Shared MeshRenderer creation helper for runtime-built primitives.
+        /// NOTE: primitives created via GameObject.CreatePrimitive already carry a
+        /// MeshRenderer — AddComponent on top of that returns null, so always
+        /// GetComponent first.</summary>
         public static MeshRenderer AddMesh(GameObject go, Color color, bool unlit = false)
         {
-            var r = go.AddComponent<MeshRenderer>();
+            if (go == null) return null;
+            var r = go.GetComponent<MeshRenderer>();
+            if (r == null) r = go.AddComponent<MeshRenderer>();
+            if (r == null) return null;
             var mat = unlit ? Unlit(color) : Lit(color);
             if (mat != null) r.sharedMaterial = mat;
-            // NOTE: renderer shadow flags intentionally skipped — setting them
-            // can throw inside headless -nographics batchmode.
             return r;
         }
 
         public static MeshFilter AddMeshFilter(GameObject go, PrimitiveType type)
         {
-            var filter = go.AddComponent<MeshFilter>();
+            var filter = go.GetComponent<MeshFilter>();
+            if (filter == null) filter = go.AddComponent<MeshFilter>();
+            if (filter == null) return filter;
             switch (type)
             {
                 case PrimitiveType.Cube: filter.sharedMesh = CubeMesh; break;
