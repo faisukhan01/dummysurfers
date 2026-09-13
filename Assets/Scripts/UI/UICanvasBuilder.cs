@@ -172,7 +172,7 @@ namespace DummySurfer.UI
             field.textComponent = text;
             field.placeholder = ph;
             field.characterLimit = charLimit;
-            field.contentType = UnityEngine.UI.InputField.ContentType.UpperCase;
+            field.contentType = UnityEngine.UI.InputField.ContentType.Alphanumeric;
             field.onValueChanged.AddListener(onChanged);
             return field;
         }
