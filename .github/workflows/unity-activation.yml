@@ -1,0 +1,51 @@
+name: Unity Activation File (one-time license setup)
+
+# Generates Unity's official manual-activation file (.alf) WITHOUT any license.
+# This is step 1 of Unity's documented offline activation flow:
+#
+#   .alf artifact  →  upload at https://license.unity3d.com/manual  →
+#   download Unity_v1.x.ulf  →  store as the UNITY_LICENSE secret
+#
+# See docs/CI_UNITY_LICENSE_SETUP.md (Option A — no Unity install needed).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  request-activation-file:
+    name: Generate Unity .alf activation file
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create manual activation file (no license required)
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/project" \
+            -w /project \
+            unityci/editor:ubuntu-6000.0.32f1-base-3 \
+              unity-editor \
+                -batchmode -nographics \
+                -createManualActivationFile \
+                -logFile /dev/stdout || echo "note: unity exit code ignored — verifying file…"
+
+      - name: Locate activation file
+        id: alf
+        run: |
+          FILE=$(ls -1 "${{ github.workspace }}"/Unity_*.alf 2>/dev/null | head -n1 || true)
+          if [ -z "$FILE" ]; then
+            echo "No Unity_*.alf in workspace root — dumping workspace:"
+            ls -la "${{ github.workspace }}"
+            exit 1
+          fi
+          echo "path=$FILE" >> "$GITHUB_OUTPUT"
+          echo "name=$(basename "$FILE")" >> "$GITHUB_OUTPUT"
+          echo "✅ Activation file created: $(basename "$FILE")"
+
+      - name: Upload activation file as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Unity_Activation_File
+          path: ${{ steps.alf.outputs.path }}
+          if-no-files-found: error

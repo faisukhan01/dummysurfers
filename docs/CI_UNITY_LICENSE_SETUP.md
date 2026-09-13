@@ -10,13 +10,37 @@ activated by the account owner — this is a one-time, ~5 minute manual step.
 
 ---
 
-## Option A — Unity Personal (free) ✅ recommended
+## Option A — Unity Personal (free), NO Unity install needed ✅ easiest
 
-1. **Install Unity on your own PC**
-   - Unity Hub → Installs → Install **6000.0.32f1** (the exact version in
-     `ProjectSettings/ProjectVersion.txt`).
-   - Open the Hub's **Preferences → Licenses → Add → Get a free personal license**
-     (or inside the editor: *Help → Licensing Management*).
+Uses Unity's official **manual activation** flow. You never install Unity, never share your
+password, and only touch **two small files**.
+
+1. **Create a free Unity ID** (skip if you already have one)
+   - Open <https://id.unity.com> → **Create account** → e-mail + password (or Google).
+   - Click the verification link Unity e-mails you. Done — no payment, nothing to install.
+2. **Download the activation file from GitHub**
+   - Repo → **Actions** → **Unity Activation File (one-time license setup)** → *Run workflow*.
+   - When the run finishes (≈3–5 min), open the run → **Artifacts** → download
+     **Unity_Activation_File** → unzip → you get a small `Unity_….alf` file.
+3. **Turn it into your license file**
+   - Open <https://license.unity3d.com/manual> → sign in with your Unity ID.
+   - Upload the `.alf` file → choose **Unity Personal Edition** (free) → answer the two
+     short eligibility questions → download **`Unity_v1.x.ulf`**.
+4. **Give the license to the repo** (either way works)
+   - **Easiest:** send the `.ulf` file to the person managing your repo (they can add it as
+     an encrypted secret for you), **or**
+   - **Do it yourself:** open the `.ulf` in a text editor, copy **everything**, then repo →
+     *Settings → Secrets and variables → Actions → New repository secret* →
+     Name: `UNITY_LICENSE` · Value: the full file contents.
+5. **Re-run the build** — Repo → *Actions → Build Unity Android APK (Dummy Surfer 3D)* →
+   **Run workflow** → `main`. ≈ 20–40 min later a new **Release** appears with
+   `DummySurfers.apk` attached. 🎉
+
+## Option B — Unity Personal via Unity Hub on your own PC
+
+1. **Install Unity Hub** → *Preferences → Licenses → Add → Get a free personal license*
+   (or inside the editor: *Help → Licensing Management*). No editor install required just
+   to obtain the license, but Hub itself must be installed and you must sign in.
 2. **Locate your license file** (created right after activation):
 
    | OS | Path |
@@ -26,19 +50,12 @@ activated by the account owner — this is a one-time, ~5 minute manual step.
    | Linux | `~/.local/share/unity3d/Unity/Unity_lic.ulf` |
 
    (`ProgramData` is hidden — paste the path into Explorer.)
-3. **Open the `.ulf` file with a text editor** and copy **everything** (it's a small XML file).
-4. **Add it to GitHub**
-   - Repo → *Settings → Secrets and variables → Actions*
-   - **New repository secret**
-   - Name: `UNITY_LICENSE`
-   - Secret: paste the full XML contents → *Add secret*
-5. **Re-run the workflow**
-   - Repo → *Actions → Build Unity Android APK (Dummy Surfer 3D)* → **Run workflow** → `main`.
-   - ≈ 20–40 min later: a new **Release** appears with `DummySurfers.apk` attached. 🎉
+3. Continue with steps 4–5 from **Option A** (add the file contents as the
+   `UNITY_LICENSE` secret, re-run the workflow).
 
-## Option B — Unity Pro / Plus / Industry
+## Option C — Unity Pro / Plus / Industry (paid seat)
 
-If you have a paid seat, skip the `.ulf` and add these three secrets instead:
+Add these three secrets instead (no `.ulf` needed):
 
 | Secret | Value |
 |---|---|
@@ -47,12 +64,14 @@ If you have a paid seat, skip the `.ulf` and add these three secrets instead:
 | `UNITY_SERIAL` | your license serial (Unity → Settings → Licenses) |
 
 The workflow detects the serial automatically and activates the Pro license in CI.
+(A Personal-license auto-activation with just `UNITY_EMAIL` + `UNITY_PASSWORD` is also
+attempted by the pipeline when those two secrets are set without a serial.)
 
 ---
 
 ## What the CI pipeline does
 
-1. **License gate** — checks for `UNITY_LICENSE` / `UNITY_SERIAL` secrets.
+1. **License gate** — checks for `UNITY_LICENSE` / `UNITY_SERIAL` / `UNITY_EMAIL`+`UNITY_PASSWORD` secrets.
 2. **Debug keystore** — generates a throw-away signing keystore so the APK installs out of the box.
 3. **Headless project preparation** — runs
    `DummySurfer.EditorTools.CiEntryPoint.PrepareCiBuild` inside the official
@@ -69,7 +88,7 @@ The workflow detects the serial automatically and activates the Pro license in C
 
 | Symptom | Fix |
 |---|---|
-| `No valid Unity license` in the build log | Re-copy the `.ulf` **after** activating exactly version `6000.0.32f1`; old-version ulf files are sometimes rejected. Re-activate, re-copy, re-run. |
+| `No valid Unity license` in the build log | Re-download the `.alf`, re-activate, and make sure the `.ulf` secret contains the **whole file** (it starts with `< infusedLicense>` XML). Old/partial files get rejected. |
 | Docker image pull fails for `6000.0.32f1` | Wait a bit (images are built per Unity release) or temporarily pin `unityVersion:` in the workflow to another 6000.0.x patch you have a license file for. |
 | `FATAL — no scenes in EditorBuildSettings` | The headless preparation step failed earlier — check its log output for the first red error. |
 | Build succeeds but APK is unsigned | Ensure the keystore step ran (it always does in this workflow); check `androidKeystore*` inputs were not modified. |

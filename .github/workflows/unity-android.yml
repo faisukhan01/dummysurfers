@@ -25,8 +25,9 @@ jobs:
         env:
           HAS_ULF: ${{ secrets.UNITY_LICENSE != '' }}
           HAS_SERIAL: ${{ secrets.UNITY_SERIAL != '' }}
+          HAS_EMAIL_PW: ${{ secrets.UNITY_EMAIL != '' && secrets.UNITY_PASSWORD != '' }}
         run: |
-          if [ "$HAS_ULF" = "true" ] || [ "$HAS_SERIAL" = "true" ]; then
+          if [ "$HAS_ULF" = "true" ] || [ "$HAS_SERIAL" = "true" ] || [ "$HAS_EMAIL_PW" = "true" ]; then
             echo "licensed=true"  >> "$GITHUB_OUTPUT"
           else
             echo "licensed=false" >> "$GITHUB_OUTPUT"
@@ -147,16 +148,18 @@ jobs:
             echo "Unity builds **require a Unity license**, and Unity only lets the"
             echo "account owner activate it — GitHub (or me) cannot do that for you."
             echo ""
-            echo "### Do this once (≈5 minutes):"
+            echo "### Easiest way — no Unity install needed (about 5 minutes):"
             echo ""
-            echo "1. Install **Unity Hub** + Unity **6000.0.32f1** on your PC and activate the free **Personal** license (Help → Licensing Management)."
-            echo "2. Copy your license file contents:"
-            echo "   - **Windows:** \`C:\\ProgramData\\Unity\\Unity_lic.ulf\`"
-            echo "   - **macOS:** \`/Library/Application Support/Unity/Unity_lic.ulf\`"
-            echo "   - **Linux:** \`~/.local/share/unity3d/Unity/Unity_lic.ulf\`"
-            echo "3. GitHub repo → **Settings → Secrets and variables → Actions → New repository secret**"
-            echo "   - Name: \`UNITY_LICENSE\` · Value: the **full XML contents** of that file"
-            echo "4. Re-run this workflow (**Actions → Build Unity Android APK → Run workflow**)."
+            echo "1. Actions tab → run **Unity Activation File (one-time license setup)**"
+            echo "   → download its **Unity_Activation_File** artifact → unzip it:"
+            echo "   you get a small .alf file."
+            echo "2. Open **https://license.unity3d.com/manual** in your browser and sign in"
+            echo "   with your Unity ID (create one free at https://id.unity.com if needed)."
+            echo "3. Upload the .alf file → choose **Unity Personal Edition** (free) →"
+            echo "   answer the 2 short questions → download **Unity_v1.x.ulf**."
+            echo "4. Repo → **Settings → Secrets and variables → Actions → New repository secret**"
+            echo "   - Name: UNITY_LICENSE · Value: the **full contents** of the .ulf file"
+            echo "5. Re-run this workflow (**Actions → Build Unity Android APK → Run workflow**)."
             echo ""
             echo "The APK will then be attached to a new Release automatically. 🚀"
             echo ""

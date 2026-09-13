@@ -15,8 +15,10 @@ The repo ships with a complete CI pipeline (`.github/workflows/unity-android.yml
 prepares all scenes/assets headlessly, builds the **Unity 6 URP** Android APK, signs it and
 publishes it to **Releases** on every push to `main`.
 
-Unity requires a **one-time license secret** that only you (the account owner) can add —
-the exact 5-minute steps are in **[docs/CI_UNITY_LICENSE_SETUP.md](docs/CI_UNITY_LICENSE_SETUP.md)**.
+Unity requires a **one-time license secret** that only you (the account owner) can add.
+**Easiest path (no Unity install needed):** run **Actions → Unity Activation File
+(one-time license setup)** → download its artifact → follow
+**[docs/CI_UNITY_LICENSE_SETUP.md](docs/CI_UNITY_LICENSE_SETUP.md) (Option A)**.
 After that, your download link is always:
 
 ```
