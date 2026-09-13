@@ -50,8 +50,3 @@ Thumbs.db
 /[Aa]ssets/StreamingAssets/aa.meta
 /[Aa]ssets/StreamingAssets/aa/*
 
-# Android (native) build outputs
-.gradle/
-app/build/
-local.properties
-*.iml

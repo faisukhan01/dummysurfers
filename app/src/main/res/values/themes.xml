@@ -1,6 +1,0 @@
-<resources>
-    <style name="Theme.DummySurfers" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:windowBackground">@color/sky_top</item>
-        <item name="android:windowFullscreen">true</item>
-    </style>
-</resources>

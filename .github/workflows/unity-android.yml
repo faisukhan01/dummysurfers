@@ -1,0 +1,165 @@
+name: Build Unity Android APK (Dummy Surfer 3D)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # ------------------------------------------------------------------
+  # Gate: only run the (heavy) Unity build when a license is available.
+  # Unity licenses cannot be activated by CI itself — the account owner
+  # must add the UNITY_LICENSE (Personal) or UNITY_SERIAL (Pro/Plus)
+  # secret once. See docs/CI_UNITY_LICENSE_SETUP.md
+  # ------------------------------------------------------------------
+  license-gate:
+    name: License check
+    runs-on: ubuntu-latest
+    outputs:
+      licensed: ${{ steps.gate.outputs.licensed }}
+    steps:
+      - id: gate
+        env:
+          HAS_ULF: ${{ secrets.UNITY_LICENSE != '' }}
+          HAS_SERIAL: ${{ secrets.UNITY_SERIAL != '' }}
+        run: |
+          if [ "$HAS_ULF" = "true" ] || [ "$HAS_SERIAL" = "true" ]; then
+            echo "licensed=true"  >> "$GITHUB_OUTPUT"
+          else
+            echo "licensed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    name: Unity 6 → Android APK
+    needs: license-gate
+    if: needs.license-gate.outputs.licensed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17 (debug keystore tooling)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Generate CI debug keystore
+        id: ks
+        run: |
+          keytool -genkeypair -v \
+            -keystore "$GITHUB_WORKSPACE/dummysurfers.keystore" \
+            -alias dummysurfers \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass 'DummySurfersDebug!2024' -keypass 'DummySurfersDebug!2024' \
+            -dname "CN=Dummy Surfer, OU=Games, O=DummySurfers, L=Web, S=Web, C=PK"
+          B64=$(base64 -w0 "$GITHUB_WORKSPACE/dummysurfers.keystore")
+          echo "b64=$B64" >> "$GITHUB_OUTPUT"
+
+      # --------------------------------------------------------------
+      # Step 1 — headless project preparation:
+      # generates URP assets, quality tiers, data ScriptableObjects,
+      # the network runner prefab and all three scenes (Boot / MainMenu
+      # / Game) directly in the workspace, exactly like the in-editor
+      # "Tools → Dummy Surfer → 1. Setup Everything" wizard.
+      # --------------------------------------------------------------
+      - name: Generate scenes & assets (headless Unity)
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/project" \
+            -w /project \
+            -e UNITY_LICENSE -e UNITY_EMAIL -e UNITY_PASSWORD -e UNITY_SERIAL \
+            unityci/editor:ubuntu-6000.0.32f1-android-3 \
+            unity-editor \
+              -batchmode -nographics \
+              -projectPath /project \
+              -executeMethod DummySurfer.EditorTools.CiEntryPoint.PrepareCiBuild \
+              -logFile /dev/stdout
+
+      # --------------------------------------------------------------
+      # Step 2 — the real Android build (APK, signed with the debug
+      # keystore generated above so it installs out of the box).
+      # --------------------------------------------------------------
+      - name: Build Android APK
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          unityVersion: auto
+          targetPlatform: Android
+          buildName: DummySurfers
+          androidSymbolType: 'none'
+          androidKeystoreName: dummysurfers.keystore
+          androidKeystoreBase64: ${{ steps.ks.outputs.b64 }}
+          androidKeystorePass: 'DummySurfersDebug!2024'
+          androidKeyaliasName: dummysurfers
+          androidKeyaliasPass: 'DummySurfersDebug!2024'
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DummySurfers-Android-APK
+          path: build/Android/*.apk
+          if-no-files-found: error
+
+      - name: Publish GitHub Release with APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: unity-v1.0.${{ github.run_number }}
+          name: Dummy Surfer 3D — Android build v1.0.${{ github.run_number }}
+          body: |
+            ## 🎮 Dummy Surfer — Unity 6 · URP · 3D Endless Runner (Android CI build)
+
+            Built automatically from commit `${{ github.sha }}` on `main`.
+
+            **Install:** download the `.apk` below → allow *"Install unknown apps"* → install.
+
+            * APK is signed with a CI debug keystore (fine for testing).
+            * Spec: Extreme Visual Fidelity Master Prompt (Unity 6 · C# · URP · Netcode).
+          files: build/Android/*.apk
+
+  # ------------------------------------------------------------------
+  # Friendly guidance when the license secret is missing — the run
+  # stays green but tells you exactly what to do next.
+  # ------------------------------------------------------------------
+  how-to-enable:
+    name: Unity license needed
+    needs: license-gate
+    if: needs.license-gate.outputs.licensed != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print activation guide
+        run: |
+          {
+            echo "## 🔒 One step left before I can build your APK"
+            echo ""
+            echo "Unity builds **require a Unity license**, and Unity only lets the"
+            echo "account owner activate it — GitHub (or me) cannot do that for you."
+            echo ""
+            echo "### Do this once (≈5 minutes):"
+            echo ""
+            echo "1. Install **Unity Hub** + Unity **6000.0.32f1** on your PC and activate the free **Personal** license (Help → Licensing Management)."
+            echo "2. Copy your license file contents:"
+            echo "   - **Windows:** \`C:\\ProgramData\\Unity\\Unity_lic.ulf\`"
+            echo "   - **macOS:** \`/Library/Application Support/Unity/Unity_lic.ulf\`"
+            echo "   - **Linux:** \`~/.local/share/unity3d/Unity/Unity_lic.ulf\`"
+            echo "3. GitHub repo → **Settings → Secrets and variables → Actions → New repository secret**"
+            echo "   - Name: \`UNITY_LICENSE\` · Value: the **full XML contents** of that file"
+            echo "4. Re-run this workflow (**Actions → Build Unity Android APK → Run workflow**)."
+            echo ""
+            echo "The APK will then be attached to a new Release automatically. 🚀"
+            echo ""
+            echo "Full guide: \`docs/CI_UNITY_LICENSE_SETUP.md\` in the repo."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "License secret missing — see the run summary + docs/CI_UNITY_LICENSE_SETUP.md"
