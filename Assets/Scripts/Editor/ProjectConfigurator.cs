@@ -1,6 +1,7 @@
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace DummySurfer.EditorTools
 {
@@ -79,7 +80,7 @@ namespace DummySurfer.EditorTools
             PlayerSettings.productName = "Dummy Surfer";
             PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, "com.dummysurfer.university");
             PlayerSettings.colorSpace = ColorSpace.Linear;
-            PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingBackend.IL2CPP);
+            PlayerSettings.SetScriptingImplementation(BuildTargetGroup.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
             PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel24;
             PlayerSettings.Android.forceInternetPermission = true;   // Relay requires internet

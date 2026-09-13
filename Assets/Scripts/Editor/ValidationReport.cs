@@ -2,6 +2,7 @@ using System.IO;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 using DummySurfer.Data;
 
 namespace DummySurfer.EditorTools
