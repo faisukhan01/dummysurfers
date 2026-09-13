@@ -135,8 +135,8 @@ namespace DummySurfer.Utilities
             var r = go.AddComponent<MeshRenderer>();
             var mat = unlit ? Unlit(color) : Lit(color);
             if (mat != null) r.sharedMaterial = mat;
-            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            r.receiveShadows = false;
+            // NOTE: renderer shadow flags intentionally skipped — setting them
+            // can throw inside headless -nographics batchmode.
             return r;
         }
 

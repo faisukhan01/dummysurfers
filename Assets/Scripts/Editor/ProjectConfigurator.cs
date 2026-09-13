@@ -32,7 +32,7 @@ namespace DummySurfer.EditorTools
                     return;
                 }
 
-                var rendererData = ScriptableObject.CreateInstance("UniversalRendererData");
+                var rendererData = ScriptableObject.CreateInstance<UnityEngine.Rendering.Universal.UniversalRendererData>();
                 if (rendererData == null)
                 {
                     Warn("URP types not found — project will run on the Built-in Render Pipeline. " +
@@ -41,9 +41,7 @@ namespace DummySurfer.EditorTools
                 }
 
                 AssetDatabase.CreateAsset(rendererData, "Assets/Settings/DS-Mobile-Renderer.asset");
-                var createMethod = typeof(UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset)
-                    .GetMethod("Create", new[] { rendererData.GetType() });
-                var pipeline = createMethod?.Invoke(null, new object[] { rendererData }) as RenderPipelineAsset;
+                var pipeline = UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset.Create(rendererData);
 
                 if (pipeline == null)
                 {
