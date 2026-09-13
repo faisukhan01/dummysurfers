@@ -45,15 +45,24 @@ namespace DummySurfer.Utilities
         private static Shader _lit, _unlit;
         private static readonly Dictionary<int, Material> MatCache = new Dictionary<int, Material>(32);
 
-        /// <summary>Lit shader that works under URP or BiRP (defensive: templates may differ).</summary>
+        /// <summary>Lit shader that works under URP or BiRP (defensive: templates may differ).
+        /// Also survives headless -nographics batchmode where Shader.Find can miss URP names.</summary>
         public static Shader LitShader()
         {
             if (_lit == null)
             {
-                if (GraphicsSettings.currentRenderPipeline != null)
+                var rp = GraphicsSettings.currentRenderPipeline;
+                if (rp != null)
+                {
                     _lit = Shader.Find("Universal Render Pipeline/Simple Lit");
-                if (_lit == null)
-                    _lit = Shader.Find("Legacy Shaders/Diffuse");
+                    if (_lit == null) _lit = Shader.Find("Universal Render Pipeline/Lit");
+                    if (_lit == null) _lit = rp.defaultShader;
+                }
+                if (_lit == null) _lit = Shader.Find("Legacy Shaders/Diffuse");
+                if (_lit == null) _lit = Shader.Find("Sprites/Default");
+                if (_lit == null) _lit = Shader.Find("UI/Default");
+                if (_lit == null) Debug.LogWarning("[VisualStyles] No lit shader could be resolved headlessly.");
+                else Debug.Log("[VisualStyles] LitShader resolved: " + _lit.name);
             }
             return _lit;
         }
@@ -62,10 +71,17 @@ namespace DummySurfer.Utilities
         {
             if (_unlit == null)
             {
-                if (GraphicsSettings.currentRenderPipeline != null)
+                var rp = GraphicsSettings.currentRenderPipeline;
+                if (rp != null)
+                {
                     _unlit = Shader.Find("Universal Render Pipeline/Unlit");
-                if (_unlit == null)
-                    _unlit = Shader.Find("Unlit/Color");
+                    if (_unlit == null) _unlit = rp.defaultShader;
+                }
+                if (_unlit == null) _unlit = Shader.Find("Unlit/Color");
+                if (_unlit == null) _unlit = Shader.Find("Sprites/Default");
+                if (_unlit == null) _unlit = Shader.Find("UI/Default");
+                if (_unlit == null) Debug.LogWarning("[VisualStyles] No unlit shader could be resolved headlessly.");
+                else Debug.Log("[VisualStyles] UnlitShader resolved: " + _unlit.name);
             }
             return _unlit;
         }
@@ -75,7 +91,9 @@ namespace DummySurfer.Utilities
         {
             int key = Hash(c, true);
             if (MatCache.TryGetValue(key, out var m)) return m;
-            m = new Material(LitShader());
+            var shader = LitShader();
+            if (shader == null) return null;
+            m = new Material(shader);
             if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", c);
             if (m.HasProperty("_Color")) m.SetColor("_Color", c);
             if (m.HasProperty("_Smoothness")) m.SetFloat("_Smoothness", 0.05f);
@@ -89,7 +107,9 @@ namespace DummySurfer.Utilities
         {
             int key = Hash(c, false);
             if (MatCache.TryGetValue(key, out var m)) return m;
-            m = new Material(UnlitShader());
+            var shader = UnlitShader();
+            if (shader == null) return null;
+            m = new Material(shader);
             if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", c);
             if (m.HasProperty("_Color")) m.SetColor("_Color", c);
             MatCache[key] = m;
@@ -113,7 +133,8 @@ namespace DummySurfer.Utilities
         public static MeshRenderer AddMesh(GameObject go, Color color, bool unlit = false)
         {
             var r = go.AddComponent<MeshRenderer>();
-            r.sharedMaterial = unlit ? Unlit(color) : Lit(color);
+            var mat = unlit ? Unlit(color) : Lit(color);
+            if (mat != null) r.sharedMaterial = mat;
             r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             r.receiveShadows = false;
             return r;
