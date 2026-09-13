@@ -128,7 +128,7 @@ jobs:
         run: |
           docker exec unity-build bash -c '
             set -o pipefail
-            unity-editor -batchmode -nographics -quit \
+            xvfb-run -a unity-editor -batchmode -quit \
               -projectPath /project \
               -executeMethod DummySurfer.EditorTools.CiEntryPoint.PrepareCiBuild \
               -logFile /dev/stdout
@@ -142,7 +142,7 @@ jobs:
         run: |
           docker exec unity-build bash -c '
             set -o pipefail
-            unity-editor -batchmode -nographics -quit \
+            xvfb-run -a unity-editor -batchmode -quit \
               -projectPath /project \
               -executeMethod DummySurfer.EditorTools.CiEntryPoint.BuildAndroid \
               -logFile /dev/stdout
