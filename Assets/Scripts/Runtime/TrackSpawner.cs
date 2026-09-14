@@ -154,11 +154,11 @@ namespace DummySurfer
                     int col = rnd.Next(8);
                     float w = 6f + rnd.Next(3);
                     float h = new[] { 9f, 13f, 18f, 22f }[rnd.Next(4)];
-                    float d = 7f + rnd.Next(4);
+                    float bd = 7f + rnd.Next(4);
                     float bz = z0 + 4f + b * (Seg / nB) + (float)rnd.NextDouble() * 6f;
-                    float bx = sx * (12.5f + (float)rnd.NextDouble() * 5f + d * 0.4f);
+                    float bx = sx * (12.5f + (float)rnd.NextDouble() * 5f + bd * 0.4f);
                     var bl = Spawn("bld" + col + "_" + (int)w + "_" + (int)h + (rnd.Next(3) == 0 ? "_bb" : ""),
-                        () => WorldFactory.Building(col, w, h, d, seed: col * 31 + (int)w * 7, billboard: rnd.Next(3) == 0),
+                        () => WorldFactory.Building(col, w, h, bd, seed: col * 31 + (int)w * 7, billboard: rnd.Next(3) == 0),
                         new Vector3(bx, 0f, bz));
                     bl.transform.rotation = Quaternion.Euler(0, sx > 0 ? -90f : 90f, 0);
                     seg.objs.Add(bl);
@@ -263,7 +263,7 @@ namespace DummySurfer
                 case 6: // moving train!
                 {
                     int ml = rnd.Next(3) - 1;
-                    var mt = Train(ml, pz + 215f, WorldFactory.TrainLens[1], false, true);
+                    var mt = Train(ml, PlayerController.I.z + 215f, WorldFactory.TrainLens[1], false, true);
                     mt.GetComponent<MovingTrain>().Init(this);
                     seg.objs.Add(mt);
                     int cl = ml == 0 ? rnd.Next(2) * 2 - 1 : 0;

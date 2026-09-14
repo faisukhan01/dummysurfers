@@ -175,7 +175,7 @@ namespace DummySurfer
             if (lifeCoins - snapCoins >= 0 && lifeCoins % need == 0)
             {
                 lettersOn++;
-                if (UiScreens.I != null) UiScreens.I.OnLetter();
+            if (UiScreens.I != null) UiScreens.I.OnLetter();
                 if (lettersOn >= wordLen)
                 {
                     bank += 500;

@@ -117,7 +117,7 @@ namespace DummySurfer
                 var bc = root.AddComponent<BoxCollider>();
                 bc.center = new Vector3(0, 0.5f, 0);
                 bc.size = new Vector3(2.05f, 1.0f, 0.34f);
-                SetLayer(root, Fx.LObstacle);
+                SetLayerRecursive(root, Fx.LObstacle);
                 var oc = root.AddComponent<ObstacleComp>();
                 oc.type = ObstacleComp.T.Low; oc.topY = 1.0f; oc.halfW = 1.02f;
             }
@@ -131,7 +131,7 @@ namespace DummySurfer
                 var bc = root.AddComponent<BoxCollider>();
                 bc.center = new Vector3(0, 1.85f, 0);
                 bc.size = new Vector3(2.05f, 1.5f, 0.34f);
-                SetLayer(root, Fx.LObstacle);
+                SetLayerRecursive(root, Fx.LObstacle);
                 var oc = root.AddComponent<ObstacleComp>();
                 oc.type = ObstacleComp.T.High; oc.topY = 2.6f; oc.halfW = 1.02f;
             }
@@ -153,7 +153,7 @@ namespace DummySurfer
             var sc = root.AddComponent<SphereCollider>();
             sc.isTrigger = true;
             sc.radius = 0.55f;
-            SetLayer(root, Fx.LCoin);
+            SetLayerRecursive(root, Fx.LCoin);
             root.AddComponent<CoinComp>();
             return root;
         }
@@ -185,7 +185,7 @@ namespace DummySurfer
             var sc = root.AddComponent<SphereCollider>();
             sc.isTrigger = true;
             sc.radius = 0.85f;
-            SetLayer(root, Fx.LPower);
+            SetLayerRecursive(root, Fx.LPower);
             var pc = root.AddComponent<PowerComp>();
             pc.kind = kind;
             return root;

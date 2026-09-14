@@ -361,7 +361,7 @@ namespace DummySurfer
                     else if (kind == "tv")
                     {
                         float body = SdRound(x, y, w / 2f, w * 0.45f, w * 0.28f, w * 0.20f, w * 0.05f);
-                        float tri = x > w * 0.44f && x < w * 0.60f && y > w * 0.34f && y < w * 0.56f && (x - w * 0.44f) > (y - w * 0.34f) * 0.7f;
+                        bool tri = x > w * 0.44f && x < w * 0.60f && y > w * 0.34f && y < w * 0.56f && (x - w * 0.44f) > (y - w * 0.34f) * 0.7f;
                         if (body < 0) { a = 255; rr = 255; gg = 255; bb = 255; }
                         if (tri) { rr = 40; gg = 160; bb = 80; }
                         // antennas
@@ -709,7 +709,14 @@ namespace DummySurfer
         }
 
         static bool Get(string k, out Sprite s) { return Sprites.TryGetValue(k, out s) && s != null; }
-        static bool GetTex(string k, out Texture2D t) { return Sprites.TryGetValue(k, out var s) && s != null && (t = s.texture) != null; }
+        static bool GetTex(string k, out Texture2D t)
+        {
+            t = null;
+            Sprite s;
+            if (!Sprites.TryGetValue(k, out s) || s == null) return false;
+            t = s.texture;
+            return t != null;
+        }
 
         public static Color32 C(int r, int g, int b) { return new Color32((byte)r, (byte)g, (byte)b, 255); }
 

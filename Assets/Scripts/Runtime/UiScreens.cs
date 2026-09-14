@@ -625,6 +625,14 @@ namespace DummySurfer
         }
         public void CloseGear() { modalOpen = false; cGear.gameObject.SetActive(false); }
 
+        public void OnLetter()
+        {
+            Fx.Play("letter", 0.9f);
+            var g = GameManager.I;
+            string word = GameManager.Words[g.wordIdx % GameManager.Words.Length];
+            if (g.lettersOn <= word.Length) Toast("LETTER  " + word[g.lettersOn - 1] + "!", GameManager.C.blueBright);
+        }
+
         // ================================================= ROUTING
         void Route(GameManager.St st)
         {
@@ -689,18 +697,18 @@ namespace DummySurfer
         void Update()
         {
             t0 += Time.unscaledDeltaTime;
-            if (cSplash.activeSelf && logoBig != null)
+            if (cSplash.gameObject.activeSelf && logoBig != null)
                 logoBig.localScale = Vector3.one * (1.12f + Mathf.Sin(t0 * 2.2f) * 0.015f);
-            if (cMenu.activeSelf && tapPlay != null)
+            if (cMenu.gameObject.activeSelf && tapPlay != null)
                 tapPlay.transform.localScale = Vector3.one * (1f + Mathf.Sin(t0 * 4.2f) * 0.05f);
-            if (cHigh.activeSelf && raysImg != null)
+            if (cHigh.gameObject.activeSelf && raysImg != null)
                 raysImg.localRotation = Quaternion.Euler(0, 0, t0 * 8f);
-            if (cLoad.activeSelf)
+            if (cLoad.gameObject.activeSelf)
             {
                 logoSmall.localScale = Vector3.one * (0.72f + Mathf.Sin(t0 * 2.4f) * 0.012f);
             }
 
-            if (cHud.activeSelf)
+            if (cHud.gameObject.activeSelf)
             {
                 var g = GameManager.I;
                 scoreT.text = Mathf.Clamp(g.runScore, 0, 999999).ToString("D5");

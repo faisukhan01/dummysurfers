@@ -79,9 +79,9 @@ namespace DummySurfer
             Part(rig.armL, PrimitiveType.Sphere, new Vector3(0, -0.38f, 0), new Vector3(0.16f, 0.16f, 0.16f), skin, "handL");
             rig.armR = Pivot(rig.body, "armR", new Vector3(0.31f, 1.44f, 0));
             Part(rig.armR, PrimitiveType.Capsule, new Vector3(0, -0.18f, 0), new Vector3(0.16f, 0.14f, 0.16f), hoodie, "armuR");
-            rig.handR = Part(rig.armR, PrimitiveType.Sphere, new Vector3(0, -0.38f, 0), new Vector3(0.16f, 0.16f, 0.16f), skin, "handR");
+            rig.handR = Part(rig.armR, PrimitiveType.Sphere, new Vector3(0, -0.38f, 0), new Vector3(0.16f, 0.16f, 0.16f), skin, "handR").transform;
             // spray can in hand (visible in menu spray pose)
-            rig.bag = Part(rig.armR, PrimitiveType.Cylinder, new Vector3(0, -0.44f, 0.06f), new Vector3(0.10f, 0.08f, 0.10f), Fx.Mat(GMC(0xFF, 0x8A, 0x3D)), "spraycan");
+            rig.bag = Part(rig.armR, PrimitiveType.Cylinder, new Vector3(0, -0.44f, 0.06f), new Vector3(0.10f, 0.08f, 0.10f), Fx.Mat(GMC(0xFF, 0x8A, 0x3D)), "spraycan").transform;
             rig.bag.gameObject.SetActive(false);
 
             // head
@@ -110,8 +110,8 @@ namespace DummySurfer
             rig.jet.SetParent(rig.body, false);
             Part(rig.jet, PrimitiveType.Cylinder, new Vector3(-0.15f, 1.28f, -0.28f), new Vector3(0.18f, 0.16f, 0.18f), Fx.Mat(GMC(0xB8, 0xC2, 0xCC)), "tank1");
             Part(rig.jet, PrimitiveType.Cylinder, new Vector3(0.15f, 1.28f, -0.28f), new Vector3(0.18f, 0.16f, 0.18f), Fx.Mat(GMC(0xB8, 0xC2, 0xCC)), "tank2");
-            rig.flameL = Part(rig.jet, PrimitiveType.Sphere, new Vector3(-0.15f, 1.05f, -0.28f), new Vector3(0.20f, 0.5f, 0.20f), Fx.MatGlow(GMC(0xFF, 0x8A, 0x3D)), "fl1");
-            rig.flameR = Part(rig.jet, PrimitiveType.Sphere, new Vector3(0.15f, 1.05f, -0.28f), new Vector3(0.20f, 0.5f, 0.20f), Fx.MatGlow(GMC(0xFF, 0xD2, 0x3E)), "fl2");
+            rig.flameL = Part(rig.jet, PrimitiveType.Sphere, new Vector3(-0.15f, 1.05f, -0.28f), new Vector3(0.20f, 0.5f, 0.20f), Fx.MatGlow(GMC(0xFF, 0x8A, 0x3D)), "fl1").transform;
+            rig.flameR = Part(rig.jet, PrimitiveType.Sphere, new Vector3(0.15f, 1.05f, -0.28f), new Vector3(0.20f, 0.5f, 0.20f), Fx.MatGlow(GMC(0xFF, 0xD2, 0x3E)), "fl2").transform;
             rig.jet.gameObject.SetActive(false);
 
             return rig;
