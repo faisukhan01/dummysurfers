@@ -76,7 +76,7 @@ namespace DummySurfer
             active.Clear();
             runSeed = UnityEngine.Random.Range(1, 999999);
             segIdx = 0;
-            nextZ = 0f;
+            nextZ = -Seg;   // start one segment BEHIND the player so the camera never sees the void
             powerNextZ = 130f;
             jetRowZ = 40f;
             if (clouds.Count == 0)

@@ -102,10 +102,18 @@ namespace DummySurfer.EditorTools
             Directory.CreateDirectory("Assets/Resources/Mats");
 
             SaveMat("Assets/Resources/Mats/anchor_lit.mat", FindUrpLit() ?? Shader.Find("Unlit/Texture"));
+            SaveMat("Assets/Resources/Mats/anchor_urpunlit.mat", FindUrpUnlit() ?? Shader.Find("Unlit/Texture"));
             SaveMat("Assets/Resources/Mats/anchor_unlitcolor.mat", Shader.Find("Unlit/Color"));
             SaveMat("Assets/Resources/Mats/anchor_unlittex.mat", Shader.Find("Unlit/Texture"));
             SaveMat("Assets/Resources/Mats/anchor_unlitalpha.mat", Shader.Find("Unlit/Transparent"));
             AssetDatabase.SaveAssets();
+        }
+
+        static Shader FindUrpUnlit()
+        {
+            var s = AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.unity.render-pipelines.universal/Shaders/Unlit.shader");
+            if (s != null) return s;
+            return Shader.Find("Universal Render Pipeline/Unlit");
         }
 
         static void SaveMat(string path, Shader shader)
@@ -219,7 +227,7 @@ namespace DummySurfer.EditorTools
             try
             {
                 // ---------- world ----------
-                for (int i = 0; i < 3; i++)
+                for (int i = -1; i < 3; i++)
                 {
                     var ch = DummySurfer.WorldFactory.TrackChunk(48f);
                     ch.transform.position = new Vector3(0, 0, i * 48f + 24f);
@@ -278,8 +286,8 @@ namespace DummySurfer.EditorTools
                 // ---------- shot A: gameplay view ----------
                 var rt = new RenderTexture(720, 1520, 24, RenderTextureFormat.ARGB32);
                 cam.targetTexture = rt;
-                cam.transform.position = new Vector3(0f, 3.55f, -6.6f);
-                cam.transform.rotation = Quaternion.LookRotation(new Vector3(0f, 1.55f, 9f) - cam.transform.position);
+                cam.transform.position = new Vector3(0f, 3.75f, -6.6f);
+                cam.transform.rotation = Quaternion.LookRotation(new Vector3(0f, 1.72f, 9f) - cam.transform.position);
                 cam.Render();
                 SavePng(rt, "build/previews/gameplay.png");
 

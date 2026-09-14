@@ -19,7 +19,8 @@ namespace DummySurfer
 
         // ------------------------------------------------------- fonts / shaders
         public static Font Font;
-        public static Shader LitShader;      // URP Lit (or Unlit fallback)
+        public static Shader LitShader;      // URP Lit (kept for compatibility)
+        public static Shader UnlitUrpShader; // URP Unlit — fog + texture + tint, NO lighting dependency
         public static Shader ColorShader;    // flat color, always works
         public static Shader TexShader;      // unlit textured, always works
         public static Shader AlphaShader;    // unlit transparent, always works
@@ -27,6 +28,7 @@ namespace DummySurfer
         // ------------------------------------------------------- caches
         static readonly Dictionary<string, Material> Mats = new Dictionary<string, Material>();
         static readonly Dictionary<string, Sprite> Sprites = new Dictionary<string, Sprite>();
+        static readonly Dictionary<string, Texture2D> TexCache = new Dictionary<string, Texture2D>();
         static readonly Dictionary<string, AudioClip> Clips = new Dictionary<string, AudioClip>();
         public static AudioSource Sfx;
         public static bool Sound = true;
@@ -46,9 +48,11 @@ namespace DummySurfer
             Material anchorUc = Resources.Load<Material>("Mats/anchor_unlitcolor");
             Material anchorTx = Resources.Load<Material>("Mats/anchor_unlittex");
             Material anchorAl = Resources.Load<Material>("Mats/anchor_unlitalpha");
+            Material anchorUu = Resources.Load<Material>("Mats/anchor_urpunlit");
 
             LitShader = anchor != null ? anchor.shader : null;
-            if (LitShader == null || LitShader.name.Contains("Unlit")) { /* keep, still valid */ }
+            UnlitUrpShader = anchorUu != null ? anchorUu.shader : null;
+            if (UnlitUrpShader == null) UnlitUrpShader = Shader.Find("Universal Render Pipeline/Unlit");
             ColorShader = anchorUc != null ? anchorUc.shader : null;
             TexShader = anchorTx != null ? anchorTx.shader : null;
             AlphaShader = anchorAl != null ? anchorAl.shader : null;
@@ -64,30 +68,60 @@ namespace DummySurfer
         }
 
         // ===================================================== MATERIALS
-        public static Material Mat(Color c)
+        /// <summary>Baked-shading texture: vertical gradient (bright top → dark bottom)
+        /// tinted with the given color — the Subway-Surfers flat-shaded look,
+        /// 100% deterministic (no lighting system dependency).</summary>
+        static Texture2D GradTex(Color c, float top, float bot)
         {
-            string key = "c" + ColorKey(c);
-            Material m;
-            if (Mats.TryGetValue(key, out m) && m != null) return m;
-            Shader sh = LitShader;
-            if (sh != null && sh.name.Contains("Lit")) m = new Material(sh);
-            else m = new Material(ColorShader);
-            SetColor(m, c);
-            Try(() => { m.SetFloat("_Smoothness", 0.35f); m.SetFloat("_Metallic", 0f); });
-            Mats[key] = m;
+            string key = "g" + ColorUtility.ToHtmlStringRGBA(c) + "|" + top.ToString("0.00") + "|" + bot.ToString("0.00");
+            Texture2D t;
+            if (TexCache.TryGetValue(key, out t) && t != null) return t;
+            int w = 4, h = 64;
+            t = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            t.name = key;
+            t.wrapMode = TextureWrapMode.Clamp;
+            var px = new Color32[w * h];
+            Color32 topC = c * top;
+            Color32 botC = c * bot;
+            for (int y = 0; y < h; y++)
+            {
+                float f = Mathf.Pow(y / (h - 1f), 0.85f);
+                Color32 cc = Color32.Lerp(botC, topC, f);
+                for (int x = 0; x < w; x++) px[y * w + x] = cc;
+            }
+            t.SetPixels32(px);
+            t.Apply(false, false);
+            TexCache[key] = t;
+            return t;
+        }
+
+        static Material UnlitMat(Texture2D tex)
+        {
+            var m = new Material(UnlitUrpShader != null ? UnlitUrpShader : TexShader);
+            m.mainTexture = tex;
+            Try(() => m.SetFloat("_Smoothness", 0f));
             return m;
         }
 
+        /// <summary>Flat-color 3D material with baked vertical shading (SS style).</summary>
+        public static Material Mat(Color c)
+        {
+            return ShadedMat(c, 1.22f, 0.55f);
+        }
+
+        /// <summary>Bright self-lit look for coins / lamps / glows.</summary>
         public static Material MatGlow(Color c)
         {
-            string key = "g" + ColorKey(c);
+            return ShadedMat(c, 1.55f, 1.02f);
+        }
+
+        public static Material ShadedMat(Color c, float top, float bot)
+        {
+            string key = "s" + ColorUtility.ToHtmlStringRGBA(c) + "|" + top.ToString("0.00") + "|" + bot.ToString("0.00");
             Material m;
             if (Mats.TryGetValue(key, out m) && m != null) return m;
-            Shader sh = LitShader;
-            m = (sh != null && sh.name.Contains("Lit")) ? new Material(sh) : new Material(ColorShader);
-            SetColor(m, c);
-            Try(() => m.SetFloat("_Smoothness", 0.8f));
-            Try(() => { m.EnableKeyword("_EMISSION"); m.SetColor("_EmissionColor", c * 0.6f); });
+            m = UnlitMat(GradTex(c, top, bot));
+            m.name = "shaded_" + key;
             Mats[key] = m;
             return m;
         }
@@ -103,10 +137,9 @@ namespace DummySurfer
             }
             else
             {
-                // LIT textured material — surfaces respond to sun + receive shadows.
-                m = (LitShader != null && LitShader.name.Contains("Lit")) ? new Material(LitShader) : new Material(TexShader);
-                Try(() => m.SetFloat("_Smoothness", 0.07f));
-                Try(() => m.SetFloat("_Metallic", 0f));
+                // URP Unlit: deterministic unlit with FOG support (shading is baked into the textures)
+                m = UnlitUrpShader != null ? new Material(UnlitUrpShader) : new Material(TexShader);
+                Try(() => m.SetFloat("_Smoothness", 0f));
             }
             m.mainTexture = tex;
             if (Mathf.Abs(tx - 1f) > 0.01f || Mathf.Abs(ty - 1f) > 0.01f) m.mainTextureScale = new Vector2(tx, ty);
@@ -250,6 +283,26 @@ namespace DummySurfer
             Blit(t, px);
             var sp = Sprite.Create(t, new Rect(0, 0, w, w), new Vector2(0.5f, 0.5f), 100f);
             Sprites["coin"] = sp; return sp;
+        }
+
+        // ---- soft radial blob shadow (under the runner)
+        public static Sprite SprShadowBlob()
+        {
+            Sprite s; if (Get("sblob", out s)) return s;
+            int w = 128; float R = w * 0.5f;
+            var t = Tex("sblob", w, w);
+            var px = new Color32[w * w];
+            for (int y = 0; y < w; y++)
+                for (int x = 0; x < w; x++)
+                {
+                    float dx = x + 0.5f - w / 2f, dy = y + 0.5f - w / 2f;
+                    float len = Mathf.Sqrt(dx * dx + dy * dy) / R;
+                    float a = Mathf.Pow(Mathf.Clamp01(1f - len), 1.7f) * 0.5f;
+                    px[y * w + x] = new Color32(10, 14, 22, (byte)(255 * a));
+                }
+            Blit(t, px);
+            var sp = Sprite.Create(t, new Rect(0, 0, w, w), new Vector2(0.5f, 0.5f), 100f);
+            Sprites["sblob"] = sp; return sp;
         }
 
         // ---- soft radial glow
@@ -454,16 +507,14 @@ namespace DummySurfer
             t.wrapMode = TextureWrapMode.Repeat;
             var px = new Color32[w * h];
 
-            var shoulder = C(0xC2, 0xC7, 0xCE);   // outer concrete shoulder
-            var shoulderD = C(0xAE, 0xB4, 0xBC);
-            var between = C(0x99, 0x91, 0x84);    // gravel between lanes
-            var ballast = C(0xAD, 0xA4, 0x94);    // lane ballast
-            var sleep = C(0x74, 0x56, 0x3A);      // sleepers
-            var sleep2 = C(0x63, 0x48, 0x2F);
-            var rail = C(0x45, 0x47, 0x4E);       // steel rail
+            var shoulder = C(0xB7, 0xBC, 0xC4);   // outer concrete shoulder
+            var between = C(0x8E, 0x86, 0x79);    // gravel between lanes
+            var ballast = C(0x9E, 0x94, 0x83);    // lane ballast
+            var sleep = C(0x6A, 0x4E, 0x33);      // sleepers
+            var sleep2 = C(0x59, 0x40, 0x2A);
+            var rail = C(0x3E, 0x40, 0x47);       // steel rail
             var railHi = C(0x9A, 0xA1, 0xAC);     // rail shine
 
-            float uPerM = w / 8.4f;               // px per metre horizontally
             float vPerM = h / 3.2f;               // px per metre vertically
 
             for (int y = 0; y < h; y++)
@@ -497,10 +548,18 @@ namespace DummySurfer
                         else c = between;
                     }
 
+                    // bake AO: darken toward the outer edges of the bed
+                    float ao = 1f;
+                    float am = Mathf.Abs(m);
+                    if (am > 3.2f) ao = 0.84f;
+                    else if (am > 2.9f) ao = 0.93f;
+
                     // subtle speckle
                     int n = (x * 7 + y * 13) % 211;
-                    if (n < 5) c = Color32.Lerp(c, C(0xFF, 0xFF, 0xFF), 0.10f);
-                    else if (n > 204) c = Color32.Lerp(c, C(0x30, 0x2A, 0x22), 0.10f);
+                    if (n < 5) ao *= 1.10f;
+                    else if (n > 204) ao *= 0.90f;
+
+                    c = Color32.Lerp(Color32.black, c, ao);
                     px[y * w + x] = c;
                 }
             Blit(t, px);
@@ -593,15 +652,16 @@ namespace DummySurfer
                             }
                 }
 
-            // ground floor: shopfront + awning
-            for (int y = 0; y < 26; y++)
+            // bake vertical AO: darker at street level, brighter at top
+            for (int y = 0; y < h; y++)
+            {
+                float ao = 0.78f + 0.30f * (y / (float)(h - 1));
                 for (int x = 0; x < w; x++)
                 {
-                    var ac = (x / 20) % 2 == 0 ? C(0xE8, 0x5D, 0x4B) : C(0xFF, 0xF3, 0xE0);
-                    px[y * w + x] = ac;
+                    var c0 = px[y * w + x];
+                    px[y * w + x] = Color32.Lerp(Color32.black, c0, ao);
                 }
-            for (int y = 26; y < 30; y++)
-                for (int x = 0; x < w; x++) px[y * w + x] = frame;
+            }
             Blit(t, px);
             return t;
         }
@@ -655,6 +715,16 @@ namespace DummySurfer
                     if (y == 62 && x % 24 < 2) c = lite;
                     px[y * w + x] = c;
                 }
+            // bake vertical shading: brighter roofline, darker skirt
+            for (int y = 0; y < h; y++)
+            {
+                float ao = 0.72f + 0.42f * (y / (float)(h - 1));
+                for (int x = 0; x < w; x++)
+                {
+                    var c0 = px[y * w + x];
+                    px[y * w + x] = Color32.Lerp(Color32.black, c0, ao);
+                }
+            }
             Blit(t, px);
             return t;
         }

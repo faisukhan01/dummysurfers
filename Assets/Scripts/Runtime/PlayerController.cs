@@ -20,6 +20,7 @@ namespace DummySurfer
         float rollT;
         float stumbleAnimT;
         bool jetWasOn;
+        GameObject blob;   // SS-style blob shadow
 
         static readonly Collider[] buf = new Collider[12];
         static readonly Collider[] pbuf = new Collider[12];
@@ -35,7 +36,21 @@ namespace DummySurfer
 
         void Awake() { I = this; }
 
-        public void Attach(CharacterRig r) { rig = r; rig.transform.SetParent(transform, false); rig.transform.localPosition = Vector3.zero; }
+        public void Attach(CharacterRig r)
+        {
+            rig = r; rig.transform.SetParent(transform, false); rig.transform.localPosition = Vector3.zero;
+            // blob shadow quad (always under the runner, scales with height)
+            blob = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            Object.Destroy(blob.GetComponent<Collider>());
+            blob.name = "~BlobShadow";
+            var mr = blob.GetComponent<MeshRenderer>();
+            mr.sharedMaterial = Fx.MatTex(Fx.SprShadowBlob().texture, true);
+            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            mr.receiveShadows = false;
+            blob.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+            blob.transform.localScale = new Vector3(1.1f, 1.1f, 1f);
+            blob.transform.position = new Vector3(0f, 0.045f, 0f);
+        }
 
         // ============================================== INPUT ENTRY POINTS
         public void OnLane(int dir)
@@ -108,6 +123,17 @@ namespace DummySurfer
             var g = GameManager.I;
             if (g == null || rig == null) return;
             float dt = Time.deltaTime;
+
+            // ---- blob shadow follows the ground under the runner
+            if (blob != null)
+            {
+                bool show = g.st == GameManager.St.Run || g.st == GameManager.St.Dying || g.st == GameManager.St.Menu;
+                blob.SetActive(show);
+                blob.transform.position = new Vector3(x, groundY + 0.045f, z);
+                float air = Mathf.Max(0f, y - groundY);
+                float sc = Mathf.Clamp(1.15f - air * 0.12f, 0.45f, 1.15f);
+                blob.transform.localScale = new Vector3(sc, sc, 1f);
+            }
 
             if (g.st == GameManager.St.Menu || g.st == GameManager.St.Splash || g.st == GameManager.St.Loading
                 || g.st == GameManager.St.High || g.st == GameManager.St.Results || g.st == GameManager.St.Missions)

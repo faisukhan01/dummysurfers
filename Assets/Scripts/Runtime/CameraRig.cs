@@ -52,8 +52,8 @@ namespace DummySurfer
             else
             {
                 // SS-style: low behind, tight follow, character low in frame
-                tp = new Vector3(p.x * 0.55f, 3.55f + p.y * 0.34f, p.z - 6.6f);
-                tl = new Vector3(p.x * 0.75f, 1.55f + p.y * 0.6f, p.z + 9.0f);
+                tp = new Vector3(p.x * 0.55f, 3.75f + p.y * 0.34f, p.z - 6.6f);
+                tl = new Vector3(p.x * 0.75f, 1.72f + p.y * 0.6f, p.z + 9.0f);
                 lerp = 8.5f;
             }
 
