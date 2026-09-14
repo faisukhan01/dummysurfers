@@ -15,14 +15,14 @@ namespace DummySurfer
         int runSeed;
         float powerNextZ = 130f;
         float jetRowZ;
-        List<Seg> active = new List<Seg>();
 
-        class Seg { public float endZ; public List<GameObject> objs = new List<GameObject>(); }
+        class SegRec { public float endZ; public List<GameObject> objs = new List<GameObject>(); }
 
         Dictionary<string, GameObject> prefabs = new Dictionary<string, GameObject>();
         Dictionary<string, Queue<GameObject>> pools = new Dictionary<string, Queue<GameObject>>();
         Dictionary<GameObject, string> keyOf = new Dictionary<GameObject, string>();
         List<GameObject> clouds = new List<GameObject>();
+        List<SegRec> active = new List<SegRec>();
 
         void Awake() { I = this; }
 
@@ -135,7 +135,7 @@ namespace DummySurfer
         // ============================================== SEGMENTS
         void SpawnSegment(float z0)
         {
-            var seg = new Seg { endZ = z0 + Seg };
+            var seg = new SegRec { endZ = z0 + Seg };
             active.Add(seg);
             var rnd = new System.Random(runSeed + segIdx * 7919);
             int si = segIdx;

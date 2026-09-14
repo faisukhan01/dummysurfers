@@ -53,13 +53,13 @@ namespace DummySurfer
         }
 
         public static Text Txt(Transform parent, string s, int size, Color col, TextAnchor align,
-            int outlineW = 0, Color? outlineCol = null, FontStyle style = FontStyle.Bold, Vector2? pos = null, Vector2? size = null)
+            int outlineW = 0, Color? outlineCol = null, FontStyle style = FontStyle.Bold, Vector2? pos = null, Vector2? dims = null)
         {
             var go = new GameObject("t_" + s, typeof(RectTransform));
             go.transform.SetParent(parent, false);
             var rt = (RectTransform)go.transform;
             if (pos != null) { rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f); rt.anchoredPosition = pos.Value; }
-            if (size != null) rt.sizeDelta = size.Value;
+            if (dims != null) rt.sizeDelta = dims.Value;
             var t = go.AddComponent<Text>();
             try { t.font = Fx.Font != null ? Fx.Font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"); } catch { }
             t.text = s;
