@@ -129,6 +129,19 @@ namespace DummySurfer.EditorTools
             EditorUserBuildSettings.buildAppBundle = false;
             EditorUserBuildSettings.exportAsGoogleAndroidProject = false;
 
+            // Stamp the release version into the APK so the phone shows the
+            // same version as the GitHub release tag (unity-v1.0.<run_number>).
+            var verName = System.Environment.GetEnvironmentVariable("CI_VERSION_NAME");
+            if (string.IsNullOrEmpty(verName)) verName = "1.0";
+            PlayerSettings.bundleVersion = verName;
+
+            var verCode = 1;
+            var verCodeRaw = System.Environment.GetEnvironmentVariable("CI_VERSION_CODE");
+            if (!string.IsNullOrEmpty(verCodeRaw)) int.TryParse(verCodeRaw, out verCode);
+            if (verCode < 1) verCode = 1;
+            PlayerSettings.Android.bundleVersionCode = verCode;
+            Debug.Log($"[CiEntryPoint] APK version: name={verName} code={verCode}");
+
             var ksPath = System.Environment.GetEnvironmentVariable("CI_KEYSTORE_PATH");
             if (!string.IsNullOrEmpty(ksPath) && File.Exists(ksPath))
             {

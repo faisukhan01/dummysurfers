@@ -79,6 +79,8 @@ jobs:
             -e "CI_KEYSTORE_PASS=$KS_PASS" \
             -e "CI_KEYALIAS_NAME=$KS_ALIAS" \
             -e "CI_KEYALIAS_PASS=$KS_PASS" \
+            -e "CI_VERSION_NAME=1.0.${{ github.run_number }}" \
+            -e "CI_VERSION_CODE=${{ github.run_number }}" \
             "$UNITY_IMAGE" \
             bash -c 'sleep infinity'
           docker ps --filter name=unity-build

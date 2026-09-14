@@ -284,6 +284,10 @@ namespace DummySurfer
             tapPlay = UiKit.Txt(cMenu.transform, "Tap to Play", 92, Color.white, TextAnchor.MiddleCenter, 12, GameManager.C.navy, FontStyle.Bold, new Vector2(0, -760));
             UiKit.Txt(cMenu.transform, "swipe to steer  ·  up = jump  ·  down = roll", 30, new Color(1, 1, 1, 0.92f), TextAnchor.MiddleCenter, 4, GameManager.C.navy2, FontStyle.Normal, new Vector2(0, -852));
 
+            // version tag (bottom-right, matches GitHub release: unity-v1.0.<n> → 1.0.<n>)
+            var verM = UiKit.Node(cMenu.transform, "verTag", new Vector2(1f, 0f), new Vector2(300, 40), new Vector2(-190, 60));
+            UiKit.Txt(verM, "v" + Application.version, 26, new Color(1f, 1f, 1f, 0.75f), TextAnchor.MiddleRight, 0, null, FontStyle.Bold);
+
             cMenu.gameObject.SetActive(false);
         }
 
@@ -542,6 +546,10 @@ namespace DummySurfer
                 () => { Fx.Play("click"); ShowMissions(); }, 0.56f);
             UiKit.Btn(UiKit.Node(nav.transform, "play", new Vector2(0.5f, 0.5f), new Vector2(440, 130), new Vector2(150, 0)),
                 GameManager.C.green, "PLAY", 60, () => { Fx.Play("click"); GameRoot.I.FromResultsPlay(); });
+
+            // version tag (bottom-left, matches GitHub release: unity-v1.0.<n> → 1.0.<n>)
+            var ver = UiKit.Node(cResults.transform, "verTag", new Vector2(0f, 0f), new Vector2(300, 40), new Vector2(180, 262));
+            UiKit.Txt(ver, "v" + Application.version, 26, GameManager.C.Hex(0x8A93A6), TextAnchor.MiddleLeft, 0, null, FontStyle.Bold);
 
             cResults.gameObject.SetActive(false);
         }
