@@ -150,6 +150,13 @@ namespace DummySurfer.Multiplayer
             SetStatus(MpStatus.Idle, "");
         }
 
+        /// <summary>Best-effort session teardown for offline entry points — never throws.</summary>
+        public static void ShutdownQuietly()
+        {
+            try { Instance?.ShutdownSession(); }
+            catch (System.Exception e) { Debug.LogWarning($"[Multiplayer] quiet shutdown: {e.Message}"); }
+        }
+
         /// <summary>Called by ConnectionGuard after an unexpected transport drop.</summary>
         public void HandleUnexpectedDisconnect()
         {

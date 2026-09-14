@@ -58,6 +58,8 @@ namespace DummySurfer.Track
                 float x = side * 5.1f;
                 Box(go.transform, "Platform", new Vector3(x, 0.25f, len * 0.5f), new Vector3(2.6f, 0.5f, len), VisualStyles.Concrete);
                 Box(go.transform, "EdgeStripe", new Vector3(x - side * 1.2f, 0.51f, len * 0.5f), new Vector3(0.18f, 0.03f, len), VisualStyles.HazardYellow, unlit: true);
+                // Sunny grass verge outside the platform — bright subway-park framing
+                Box(go.transform, "Grass", new Vector3(side * 8.2f, 0.06f, len * 0.5f), new Vector3(3.6f, 0.12f, len), VisualStyles.GrassGreen);
 
                 // Pillars + crossbeams + cables
                 for (float z = 7.5f; z < len; z += 15f)

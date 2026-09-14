@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using DummySurfer.Core;
 using DummySurfer.Multiplayer;
 using DummySurfer.Utilities;
@@ -54,7 +55,9 @@ namespace DummySurfer.UI
 
         private void OnPlay()
         {
-            MultiplayerManager.LaunchOffline();
+            // Straight into the subway run — no services, no lobby, no waiting.
+            MultiplayerManager.ShutdownQuietly();
+            SceneManager.LoadScene(Constants.SceneGame);
         }
     }
 }

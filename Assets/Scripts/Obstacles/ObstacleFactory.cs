@@ -60,11 +60,17 @@ namespace DummySurfer.Obstacles
             ob.Kind = ObstacleKind.Train;
             ob.Lethal = true;
 
-            Part(root.transform, "Body", PrimitiveType.Cube, new Vector3(0f, 1.45f, 0f), Vector3.one, VisualStyles.TrainRed);
-            Part(root.transform, "Roof", PrimitiveType.Cube, new Vector3(0f, 2.85f, 0f), new Vector3(1.7f, 0.22f, 1f), VisualStyles.TrainBlue);
+            // Colorful subway liveries — picked once per pooled instance, so the track varies.
+            float r = Random.value;
+            Color body = r < 0.34f ? VisualStyles.TrainRed : (r < 0.67f ? VisualStyles.TrainBlue : VisualStyles.TrainYellow);
+
+            Part(root.transform, "Body", PrimitiveType.Cube, new Vector3(0f, 1.45f, 0f), Vector3.one, body);
+            Part(root.transform, "Roof", PrimitiveType.Cube, new Vector3(0f, 2.85f, 0f), new Vector3(1.7f, 0.22f, 1f), VisualStyles.Concrete);
             Part(root.transform, "Skirt", PrimitiveType.Cube, new Vector3(0f, 0.22f, 0f), new Vector3(1.8f, 0.44f, 1f), VisualStyles.Sleeper);
-            Part(root.transform, "Windows", PrimitiveType.Cube, new Vector3(0f, 1.9f, 0f), new Vector3(1.94f, 0.5f, 1f), VisualStyles.SkylineFar, unlit: true);
-            Part(root.transform, "Face", PrimitiveType.Cube, new Vector3(0f, 1.5f, 0.52f), new Vector3(1.94f, 2.2f, 0.08f), VisualStyles.TrainBlue);
+            Part(root.transform, "Windows", PrimitiveType.Cube, new Vector3(0f, 1.9f, 0f), new Vector3(1.94f, 0.5f, 1f), new Color(0.92f, 0.97f, 1f), unlit: true);
+            Part(root.transform, "Stripe", PrimitiveType.Cube, new Vector3(0f, 1.52f, 0f), new Vector3(1.96f, 0.16f, 1f), VisualStyles.HazardYellow, unlit: true);
+            Part(root.transform, "Face", PrimitiveType.Cube, new Vector3(0f, 1.5f, 0.52f), new Vector3(1.94f, 2.2f, 0.08f), VisualStyles.SignWhite);
+            Part(root.transform, "FaceGlass", PrimitiveType.Cube, new Vector3(0f, 1.95f, 0.57f), new Vector3(1.5f, 0.6f, 0.02f), new Color(0.25f, 0.55f, 0.75f), unlit: true);
 
             AddTrigger(root, new Vector3(0f, 1.5f, 0f), new Vector3(1.9f, 3f, 1f));
             return ob;

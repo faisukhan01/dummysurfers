@@ -39,8 +39,8 @@ namespace DummySurfer.UI
             RenderSettings.fogMode = FogMode.Linear;
             RenderSettings.fogColor = VisualStyles.FogColor;
             RenderSettings.fogStartDistance = 24f;
-            RenderSettings.fogEndDistance = 70f;
-            RenderSettings.ambientLight = new Color(0.45f, 0.5f, 0.6f);
+            RenderSettings.fogEndDistance = 90f;
+            RenderSettings.ambientLight = new Color(0.62f, 0.72f, 0.82f);
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
 
             if (FindObjectsByType<Light>(FindObjectsSortMode.None).Length == 0)
@@ -48,8 +48,8 @@ namespace DummySurfer.UI
                 var sunGo = new GameObject("Sun");
                 var sun = sunGo.AddComponent<Light>();
                 sun.type = LightType.Directional;
-                sun.color = new Color(1f, 0.9f, 0.78f);
-                sun.intensity = 1.1f;
+                sun.color = new Color(1f, 0.96f, 0.88f);
+                sun.intensity = 1.25f;
                 sunGo.transform.rotation = Quaternion.Euler(50f, -25f, 0f);
             }
 
@@ -86,9 +86,9 @@ namespace DummySurfer.UI
             go.name = "MenuRunner";
             go.transform.position = new Vector3(0f, 0f, 0f);
             var pc = go.GetComponent<PlayerController>();
-            pc.enabled = false;   // pure visual idle
+            pc.enabled = false;   // pure visual jog
             _rig = go.GetComponent<RunnerVisualRig>();
-            _rig.Play(RunnerAnimState.Idle);
+            _rig.Play(RunnerAnimState.Run);   // alive: jogging in place, not frozen
 
             // A small platform strip under the runner for grounding.
             var strip = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -107,7 +107,7 @@ namespace DummySurfer.UI
                 _cam.transform.position = new Vector3(Mathf.Sin(_t * 0.12f) * 0.6f, 3.4f + Mathf.Sin(_t * 0.2f) * 0.12f, -8.5f);
                 _cam.transform.rotation = Quaternion.Euler(4f, Mathf.Sin(_t * 0.08f) * 2.5f, 0f);
             }
-            if (_rig != null) _rig.Tick(0.12f, Time.unscaledDeltaTime);
+            if (_rig != null) _rig.Tick(0.16f, Time.unscaledDeltaTime);
         }
     }
 }

@@ -171,7 +171,7 @@ namespace DummySurfer.Player
                 return;
             }
             CurrentLane = target;
-            AudioManager.Instance.PlaySfx(SfxId.SlideWhoosh, 0.5f);
+            var amLane = AudioManager.Instance; if (amLane != null) amLane.PlaySfx(SfxId.SlideWhoosh, 0.5f);
         }
 
         public void RequestJump()
@@ -182,7 +182,7 @@ namespace DummySurfer.Player
             {
                 _vy = _cfg.jumpVelocity * _stats.jumpMult;
                 _rig?.Play(RunnerAnimState.Jump);
-                AudioManager.Instance.PlaySfx(SfxId.Jump);
+                var amJump = AudioManager.Instance; if (amJump != null) amJump.PlaySfx(SfxId.Jump);
             }
             else Buffer(1);
         }
@@ -225,7 +225,7 @@ namespace DummySurfer.Player
             _slideTimer = _cfg.slideDuration * _stats.slideMult;
             SetSlidePose(true);
             _rig?.Play(RunnerAnimState.Slide);
-            AudioManager.Instance.PlaySfx(SfxId.SlideWhoosh);
+            var amSlide = AudioManager.Instance; if (amSlide != null) amSlide.PlaySfx(SfxId.SlideWhoosh);
         }
 
         private void SetSlidePose(bool on)
@@ -268,7 +268,7 @@ namespace DummySurfer.Player
             _stumbleTimer = _cfg.stumbleDuration;
             _invulnTimer = Mathf.Max(_invulnTimer, _cfg.stumbleInvulnerability);
             _rig?.Play(RunnerAnimState.Stumble);
-            AudioManager.Instance.PlaySfx(SfxId.Stumble);
+            var amStumble = AudioManager.Instance; if (amStumble != null) amStumble.PlaySfx(SfxId.Stumble);
             Haptics.Impact();
             Stumbled?.Invoke();
             GameEvents.PublishPlayerStumbled();
@@ -280,7 +280,7 @@ namespace DummySurfer.Player
             SimEnabled = false;
             Speed = 0f;
             _rig?.Play(RunnerAnimState.Dead);
-            AudioManager.Instance.PlaySfx(SfxId.Crash);
+            var amCrash = AudioManager.Instance; if (amCrash != null) amCrash.PlaySfx(SfxId.Crash);
             Haptics.Impact();
             var cam = Cam.RunnerCamera.Main;
             if (cam != null) cam.Shake(0.35f, 0.4f);
@@ -293,7 +293,7 @@ namespace DummySurfer.Player
             if (!IsAlive) return;
             int multiplier = Powerups != null ? Powerups.CurrentMultiplier : 1;
             RunManager.Instance?.AddCoins(value * multiplier);
-            AudioManager.Instance.PlaySfx(SfxId.Coin);
+            var amCoin = AudioManager.Instance; if (amCoin != null) amCoin.PlaySfx(SfxId.Coin);
         }
 
         public void CollectPowerup(PowerupType type)

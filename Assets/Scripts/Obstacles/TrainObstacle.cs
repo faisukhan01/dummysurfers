@@ -34,8 +34,17 @@ namespace DummySurfer.Obstacles
                 windows.localScale = new Vector3(1.94f, 0.5f, length * 0.86f);
                 windows.localPosition = new Vector3(0f, 1.9f, length * 0.5f);
             }
+            var stripe = transform.Find("Stripe");
+            if (stripe != null)
+            {
+                stripe.localScale = new Vector3(1.96f, 0.16f, length * 0.86f);
+                stripe.localPosition = new Vector3(0f, 1.52f, length * 0.5f);
+            }
             var face = transform.Find("Face");
             if (face != null) face.localPosition = new Vector3(0f, 1.5f, length + 0.04f);
+
+            var glass = transform.Find("FaceGlass");
+            if (glass != null) glass.localPosition = new Vector3(0f, 1.95f, length + 0.09f);
 
             var col = GetComponent<BoxCollider>();
             if (col != null)
