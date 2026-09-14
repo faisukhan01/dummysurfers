@@ -57,8 +57,8 @@ namespace DummySurfer
             var hairM = Fx.Mat(GMC(0x6B, 0x4A, 0x2F));
             var white = Fx.Mat(GMC(0xFC, 0xFC, 0xFC));
             var red = Fx.Mat(GMC(0xE8, 0x40, 0x40));
-            var pack = Fx.Mat(GMC(0xC8, 0xCD, 0xD6));
-            var packD = Fx.Mat(GMC(0x9E, 0xA5, 0xB0));
+            var pack = Fx.Mat(GMC(0xE8, 0x56, 0x3F));
+            var packD = Fx.Mat(GMC(0xC2, 0x43, 0x34));
             var dark = Fx.Mat(GMC(0x26, 0x2C, 0x3C));
             var smile = Fx.Mat(GMC(0x7A, 0x3A, 0x2A));
 

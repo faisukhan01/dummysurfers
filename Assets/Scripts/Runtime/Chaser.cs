@@ -39,7 +39,8 @@ namespace DummySurfer
             if (g.st == GameManager.St.Run)
             {
                 if (!whistleDone && p.z > 1f) { whistleDone = true; Fx.Play("whistle", 0.8f); }
-                target = p.z < 55f ? 5.4f : (g.tStumble > 0f ? 4.4f : 30f);
+                // visible sprint at the start, close in on stumble, drop back when clean
+                target = p.z < 40f ? 8.2f : (g.tStumble > 0f ? 5.5f : 30f);
             }
             else if (g.st == GameManager.St.Dying) target = 1.15f;
             else { transform.position = new Vector3(0, 0, p.z - 60f); return; }
@@ -48,9 +49,9 @@ namespace DummySurfer
             xCur = Mathf.Lerp(xCur, p.x, Time.deltaTime * 3.5f);
             float gz = p.z - gap;
 
-            bool vis = gap < 27f;
+            bool vis = gap < 12.5f;
             guard.gameObject.SetActive(vis);
-            if (dog != null) dog.gameObject.SetActive(vis && gap < 24f);
+            if (dog != null) dog.gameObject.SetActive(vis && gap < 9.5f);
             transform.position = new Vector3(xCur, 0f, gz);
 
             string mode = g.st == GameManager.St.Dying ? "grab" : "run";

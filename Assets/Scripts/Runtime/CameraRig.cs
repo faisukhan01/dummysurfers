@@ -39,8 +39,8 @@ namespace DummySurfer
             if (mode == CamMode.Menu)
             {
                 float sway = Mathf.Sin(menuT * 0.32f) * 0.4f;
-                tp = new Vector3(-3.6f + sway, 1.85f + Mathf.Sin(menuT * 0.45f) * 0.08f, -3.3f);
-                tl = new Vector3(0.3f, 1.3f, 1.3f);
+                tp = new Vector3(-3.2f + sway, 1.95f + Mathf.Sin(menuT * 0.45f) * 0.08f, -3.1f);
+                tl = new Vector3(-0.2f, 1.35f, 1.1f);
                 lerp = 2f;
             }
             else if (mode == CamMode.Death)

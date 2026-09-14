@@ -508,8 +508,8 @@ namespace DummySurfer
             var px = new Color32[w * h];
 
             var shoulder = C(0xB7, 0xBC, 0xC4);   // outer concrete shoulder
-            var between = C(0x8E, 0x86, 0x79);    // gravel between lanes
-            var ballast = C(0x9E, 0x94, 0x83);    // lane ballast
+            var between = C(0x93, 0x89, 0x7C);    // gravel between lanes
+            var ballast = C(0xA8, 0x9C, 0x88);    // lane ballast
             var sleep = C(0x6A, 0x4E, 0x33);      // sleepers
             var sleep2 = C(0x59, 0x40, 0x2A);
             var rail = C(0x3E, 0x40, 0x47);       // steel rail
@@ -678,8 +678,8 @@ namespace DummySurfer
             var body = (Color32)col;
             var dark = Color32.Lerp(body, new Color32(10, 12, 20, 255), 0.45f);
             var lite = Color32.Lerp(body, new Color32(255, 255, 255, 255), 0.30f);
-            var glass = C(0xBF, 0xE9, 0xFF);
-            var glass2 = C(0x8F, 0xC4, 0xE8);
+            var glass = C(0x8F, 0xC2, 0xE0);
+            var glass2 = C(0x64, 0x9E, 0xC2);
             var stripe = C(0xFF, 0xFF, 0xFF);
 
             for (int y = 0; y < h; y++)
@@ -784,11 +784,11 @@ namespace DummySurfer
                     px[y * w + x] = Color32.Lerp(wall, Color32.Lerp(wall, new Color32(0, 0, 0, 255), 0.12f), n / 8f);
                 }
             var sys = new System.Random(seed);
-            Color32[] cols = { C(0x35, 0xC4, 0xB6), C(0xFF, 0x8A, 0x3D), C(0x9B, 0x59, 0xD0), C(0xFF, 0xD2, 0x3E), C(0x4A, 0x90, 0xD9), C(0xFF, 0x6B, 0x8E) };
-            for (int b = 0; b < 7; b++)
+            Color32[] cols = { C(0x35, 0xC4, 0xB6), C(0xFF, 0x8A, 0x3D), C(0x9B, 0x59, 0xD0), C(0xFF, 0xD2, 0x3E), C(0x4A, 0x90, 0xD9), C(0xFF, 0x6B, 0x8E), C(0x7E, 0xD9, 0x54) };
+            for (int b = 0; b < 11; b++)
             {
-                float cx = (float)(sys.NextDouble() * w), cy = 30 + (float)sys.NextDouble() * (h - 55);
-                float rw = 18 + (float)sys.NextDouble() * 26, rh = 12 + (float)sys.NextDouble() * 16;
+                float cx = (float)(sys.NextDouble() * w), cy = 24 + (float)sys.NextDouble() * (h - 48);
+                float rw = 16 + (float)sys.NextDouble() * 30, rh = 11 + (float)sys.NextDouble() * 17;
                 var fill = cols[sys.Next(cols.Length)];
                 // outline
                 for (int y = 0; y < h; y++)

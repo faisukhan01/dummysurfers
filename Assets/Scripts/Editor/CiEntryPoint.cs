@@ -297,8 +297,8 @@ namespace DummySurfer.EditorTools
                 var wall = DummySurfer.WorldFactory.GraffitiPanel(15f, 6.4f, new Color32(0xB7, 0xBE, 0xC9, 255), 3);
                 wall.transform.position = new Vector3(4.9f, 3.0f, 14f);
                 wall.transform.rotation = Quaternion.Euler(0, -90f, 0);
-                cam.transform.position = new Vector3(-3.6f, 1.85f, -3.3f);
-                cam.transform.rotation = Quaternion.LookRotation(new Vector3(0.3f, 1.3f, 1.3f) - cam.transform.position);
+                cam.transform.position = new Vector3(-3.2f, 1.95f, -3.1f);
+                cam.transform.rotation = Quaternion.LookRotation(new Vector3(-0.2f, 1.35f, 1.1f) - cam.transform.position);
                 cam.Render();
                 SavePng(rt, "build/previews/menu.png");
 

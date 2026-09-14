@@ -157,14 +157,14 @@ namespace DummySurfer
         public static GameObject Coin()
         {
             var root = new GameObject("coin");
-            var gold = Fx.MatGlow(C(0xFF, 0xC9, 0x3C));
-            var disc = Part(root.transform, PrimitiveType.Cylinder, Vector3.zero, new Vector3(0.84f, 0.018f, 0.84f), gold, "disc");
+            var gold = Fx.MatGlow(C(0xF7, 0xB9, 0x2B));
+            var disc = Part(root.transform, PrimitiveType.Cylinder, Vector3.zero, new Vector3(0.80f, 0.012f, 0.80f), gold, "disc");
             disc.transform.localRotation = Quaternion.Euler(90f, 0, 0);
             var coinTex = Fx.SprCoin().texture;
             var cm = Fx.MatTex(coinTex, true);
-            var qf = Part(root.transform, PrimitiveType.Quad, new Vector3(0, 0, 0.014f), new Vector3(0.84f, 0.84f, 1), cm, "cf");
+            var qf = Part(root.transform, PrimitiveType.Quad, new Vector3(0, 0, 0.012f), new Vector3(0.86f, 0.86f, 1), cm, "cf");
             qf.transform.localRotation = Quaternion.Euler(0, 180, 0);
-            Part(root.transform, PrimitiveType.Quad, new Vector3(0, 0, -0.014f), new Vector3(0.84f, 0.84f, 1), cm, "cb");
+            Part(root.transform, PrimitiveType.Quad, new Vector3(0, 0, -0.012f), new Vector3(0.86f, 0.86f, 1), cm, "cb");
             var sc = root.AddComponent<SphereCollider>();
             sc.isTrigger = true;
             sc.radius = 0.55f;
@@ -291,9 +291,9 @@ namespace DummySurfer
             Part(root.transform, PrimitiveType.Cube, new Vector3(-TrackW / 2f + 0.16f, 0.09f, 0), new Vector3(0.32f, 0.38f, len), curbM, "curbL");
             Part(root.transform, PrimitiveType.Cube, new Vector3(TrackW / 2f - 0.16f, 0.09f, 0), new Vector3(0.32f, 0.38f, len), curbM, "curbR");
 
-            // graffiti walls (close, SS-tunnel feel)
+            // graffiti walls (close, SS-tunnel feel) — texture repeats every 4m
             var wallM = Fx.Mat(C(0xC3, 0xC9, 0xD4));
-            var grafM = TexMat(Fx.TexGraffiti(C(0xC3, 0xC9, 0xD4), 9), 3f, 1f, false);
+            var grafM = TexMat(Fx.TexGraffiti(C(0xC3, 0xC9, 0xD4), 9), len / 4f, 1f, false);
             for (int s = 0; s < 2; s++)
             {
                 float sx = s == 0 ? -1f : 1f;
