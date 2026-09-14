@@ -15,7 +15,7 @@ namespace DummySurfer.UI
     /// </summary>
     public sealed class SubwayHud : MonoBehaviour
     {
-        public Func<bool> StartTapped;        // full-screen tap catcher (start state)
+        public Action StartTapped;           // full-screen tap catcher (start state)
         public Action RestartRequested;
         public Action ResumeRequested;
         public Action MenuRequested;

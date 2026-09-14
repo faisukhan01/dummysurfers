@@ -76,7 +76,7 @@ namespace DummySurfer.Core
             {
                 _hud = SubwayHud.Create();
                 _hud.StartTapped = () => { if (_mode == Mode.Ready) BeginStartSequence(); };
-                _hud.PauseRequested = TogglePause;
+                _hud.PauseRequested = Pause;
                 _hud.ResumeRequested = Resume;
                 _hud.RestartRequested = Restart;
                 _hud.MenuRequested = GoToMenu;

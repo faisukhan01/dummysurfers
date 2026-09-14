@@ -58,10 +58,10 @@ namespace DummySurfer.Player
             // ---- Inspector ----
             var body = Part("GuardBody", PrimitiveType.Capsule, new Vector3(0f, 0.95f, 0f), new Vector3(0.62f, 0.5f, 0.5f), VisualStyles.GuardNavy);
             Part("GuardBelly", PrimitiveType.Cube, new Vector3(0f, 0.78f, 0.24f), new Vector3(0.5f, 0.5f, 0.24f), VisualStyles.GuardNavy);
-            Part("GuardBelt", PrimitiveType.Cube, new Vector3(0f, 0.62f, 0f), new Vector3(0.56f, 0.12f, 0.46f), VisualStyles.HazardYellow, unlit: true);
+            Part("GuardBelt", PrimitiveType.Cube, new Vector3(0f, 0.62f, 0f), new Vector3(0.56f, 0.12f, 0.46f), VisualStyles.HazardYellow);
             var head = Part("GuardHead", PrimitiveType.Sphere, new Vector3(0f, 1.62f, 0f), new Vector3(0.34f, 0.32f, 0.32f), new Color(0.93f, 0.74f, 0.58f));
-            Part("GuardCap", PrimitiveType.Cylinder, head.transform, new Vector3(0f, 0.16f, 0f), new Vector3(0.4f, 0.08f, 0.4f), VisualStyles.GuardNavy);
-            Part("GuardCapPeak", PrimitiveType.Cube, head.transform, new Vector3(0f, 0.13f, 0.2f), new Vector3(0.32f, 0.04f, 0.2f), VisualStyles.GuardNavy);
+            Part("GuardCap", PrimitiveType.Cylinder, new Vector3(0f, 0.16f, 0f), new Vector3(0.4f, 0.08f, 0.4f), VisualStyles.GuardNavy, parent: head.transform);
+            Part("GuardCapPeak", PrimitiveType.Cube, new Vector3(0f, 0.13f, 0.2f), new Vector3(0.32f, 0.04f, 0.2f), VisualStyles.GuardNavy, parent: head.transform);
 
             _gArmL = Pivot("GuardArmL", new Vector3(-0.36f, 1.28f, 0f), new Vector3(0.16f, 0.4f, 0.16f), new Vector3(0f, -0.3f, 0f), VisualStyles.GuardNavy);
             _gArmR = Pivot("GuardArmR", new Vector3(0.36f, 1.28f, 0f), new Vector3(0.16f, 0.4f, 0.16f), new Vector3(0f, -0.3f, 0f), VisualStyles.GuardNavy);
