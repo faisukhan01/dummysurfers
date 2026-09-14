@@ -200,6 +200,7 @@ namespace DummySurfer
             var grey = Fx.Mat(GMC(0x9A, 0xA0, 0xA8));
             var gold = Fx.MatGlow(GMC(0xFF, 0xD2, 0x3E));
             var dark = Fx.Mat(GMC(0x26, 0x2C, 0x3C));
+            var white = Fx.Mat(GMC(0xFA, 0xFA, 0xFA));
 
             rig.body = Pivot(root.transform, "body", Vector3.zero);
 
