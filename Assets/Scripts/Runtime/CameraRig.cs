@@ -7,6 +7,7 @@ namespace DummySurfer
     {
         public enum CamMode { Menu, Follow, Death }
         public static CameraRig I;
+        public static Transform Sky;          // gradient sky dome follows camera x/z
         public CamMode mode = CamMode.Menu;
 
         Camera cam;
@@ -19,7 +20,7 @@ namespace DummySurfer
             I = this;
             cam = GetComponent<Camera>();
             pos = transform.position;
-            look = new Vector3(0.4f, 1.4f, 1.4f);
+            look = new Vector3(0.3f, 1.35f, 1.2f);
         }
 
         public void Shake(float s) { shake = Mathf.Max(shake, s); }
@@ -37,22 +38,23 @@ namespace DummySurfer
 
             if (mode == CamMode.Menu)
             {
-                float sway = Mathf.Sin(menuT * 0.35f) * 0.35f;
-                tp = new Vector3(-3.9f + sway, 1.95f + Mathf.Sin(menuT * 0.5f) * 0.1f, -3.2f);
-                tl = new Vector3(0.35f, 1.35f, 1.6f);
+                float sway = Mathf.Sin(menuT * 0.32f) * 0.4f;
+                tp = new Vector3(-3.6f + sway, 1.85f + Mathf.Sin(menuT * 0.45f) * 0.08f, -3.3f);
+                tl = new Vector3(0.3f, 1.3f, 1.3f);
                 lerp = 2f;
             }
             else if (mode == CamMode.Death)
             {
-                tp = new Vector3(p.x + 2.9f, 1.9f, p.z - 3.2f);
+                tp = new Vector3(p.x + 2.6f, 1.8f, p.z - 3.0f);
                 tl = new Vector3(p.x, 1.0f, p.z + 0.2f);
                 lerp = 5f;
             }
             else
             {
-                tp = new Vector3(p.x * 0.42f, 4.35f + p.y * 0.32f, p.z - 7.8f);
-                tl = new Vector3(p.x * 0.62f, 1.85f + p.y * 0.55f, p.z + 9.5f);
-                lerp = 8f;
+                // SS-style: low behind, tight follow, character low in frame
+                tp = new Vector3(p.x * 0.55f, 3.55f + p.y * 0.34f, p.z - 6.6f);
+                tl = new Vector3(p.x * 0.75f, 1.55f + p.y * 0.6f, p.z + 9.0f);
+                lerp = 8.5f;
             }
 
             pos = Vector3.Lerp(pos, tp, Mathf.Min(1f, dt * lerp));
@@ -61,7 +63,11 @@ namespace DummySurfer
             transform.LookAt(look);
             if (shake > 0f) shake = Mathf.Max(0f, shake - dt * 1.6f);
 
-            float fovT = mode == CamMode.Menu ? 48f : 64f;
+            if (Sky != null)
+                Sky.position = new Vector3(transform.position.x, 8f, transform.position.z);
+
+            float speedF = p != null ? Mathf.Clamp01(p.EffSpeed / 27f) : 0.5f;
+            float fovT = mode == CamMode.Menu ? 46f : (mode == CamMode.Death ? 52f : Mathf.Lerp(55f, 61f, speedF));
             cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, fovT, dt * 3f);
         }
     }

@@ -162,7 +162,7 @@ namespace DummySurfer
             Image pf;
             UiKit.ProgressBar(cLoad.transform, new Vector2(0.5f, 0.5f), new Vector2(0, -560), new Vector2(720, 70), GameManager.C.navy, GameManager.C.orange, out loadFill, out loadPct);
 
-            UiKit.Txt(cLoad.transform, "1.0.0", 24, new Color(1, 1, 1, 0.8f), TextAnchor.MiddleLeft, 0, null, FontStyle.Normal, new Vector2(-470, -880), new Vector2(300, 40));
+            UiKit.Txt(cLoad.transform, "v" + Application.version, 24, new Color(1, 1, 1, 0.8f), TextAnchor.MiddleLeft, 0, null, FontStyle.Normal, new Vector2(-470, -880), new Vector2(300, 40));
             UiKit.Txt(cLoad.transform, "DummySurfers", 24, new Color(1, 1, 1, 0.8f), TextAnchor.MiddleRight, 0, null, FontStyle.Normal, new Vector2(470, -880), new Vector2(300, 40));
             cLoad.gameObject.SetActive(false);
         }
@@ -189,23 +189,35 @@ namespace DummySurfer
             SafeArea.Apply(safe, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             hudRoot = (RectTransform)safe.transform;
 
-            // pause button (blue rounded + white bars)
-            UiKit.IconButton(hudRoot, "pause", GameManager.C.blueBright, new Vector2(0.045f, 0.955f), new Vector2(112, 112), Vector2.zero,
-                () => { Fx.Play("click"); PauseGame(); }, 0.52f);
+            // pause button (circular glossy blue + white bars) — fully inside safe area
+            var pauseGo = UiKit.Node(hudRoot, "pauseWrap", new Vector2(0f, 1f), new Vector2(116, 116), new Vector2(70, -70));
+            UiKit.Img(pauseGo, Fx.SprCircle(), Color.white);
+            var pauseIn = UiKit.Node(pauseGo, "in", new Vector2(0.5f, 0.5f), new Vector2(102, 102), Vector2.zero);
+            var pauseImg = UiKit.Img(pauseIn, Fx.SprCircle(), GameManager.C.blueBright);
+            pauseImg.raycastTarget = true;
+            var pauseGl = UiKit.Node(pauseIn, "gl", new Vector2(0.5f, 1f), new Vector2(72, 34), new Vector2(0, -22));
+            UiKit.Img(pauseGl, Fx.SprCircle(), new Color(1f, 1f, 1f, 0.30f));
+            var pauseIc = UiKit.Node(pauseGo, "g", new Vector2(0.5f, 0.5f), new Vector2(52, 52), Vector2.zero);
+            UiKit.Img(pauseIc, Fx.SprIcon("pause"), Color.white);
+            var pauseBtn = pauseGo.gameObject.AddComponent<Button>();
+            pauseBtn.targetGraphic = pauseImg;
+            pauseBtn.onClick.AddListener(() => { Fx.Play("click"); PauseGame(); });
 
-            // score panel (navy + star + x + score)
-            var sp = UiKit.Node(hudRoot, "scoreP", new Vector2(0.955f, 0.955f), new Vector2(360, 96), Vector2.zero);
+            // score panel — right-aligned INSIDE the safe area (was cut off at the edge)
+            var sp = UiKit.Node(hudRoot, "scoreP", new Vector2(1f, 1f), new Vector2(430, 96), new Vector2(-247, -72));
             UiKit.Img(sp, Fx.SprPanel(), GameManager.C.navy, Image.Type.Sliced);
-            var stIc = UiKit.Node(sp, "star", new Vector2(0.5f, 0.5f), new Vector2(56, 56), new Vector2(-138, 0));
+            var spIn = UiKit.Node(sp, "in", new Vector2(0.5f, 0.5f), new Vector2(414, 82), Vector2.zero);
+            UiKit.Img(spIn, Fx.SprPanel(), new Color(0.10f, 0.16f, 0.30f, 1f), Image.Type.Sliced);
+            var stIc = UiKit.Node(sp, "star", new Vector2(0.5f, 0.5f), new Vector2(58, 58), new Vector2(-152, 0));
             UiKit.Img(stIc, Fx.SprStar(), GameManager.C.gold);
-            multT = UiKit.Txt(sp, "x1", 42, Color.white, TextAnchor.MiddleCenter, 4, GameManager.C.navy2, FontStyle.Bold, new Vector2(-80, 0));
-            scoreT = UiKit.Txt(sp, "00000", 56, Color.white, TextAnchor.MiddleRight, 4, GameManager.C.navy2, FontStyle.Bold, new Vector2(36, 2));
+            multT = UiKit.Txt(sp, "x1", 42, Color.white, TextAnchor.MiddleCenter, 4, GameManager.C.navy2, FontStyle.Bold, new Vector2(-92, 0));
+            scoreT = UiKit.Txt(sp, "00000", 58, Color.white, TextAnchor.MiddleRight, 4, GameManager.C.navy2, FontStyle.Bold, new Vector2(52, 2));
             var srt = (RectTransform)scoreT.transform;
-            srt.sizeDelta = new Vector2(210, 60);
+            srt.sizeDelta = new Vector2(220, 60);
 
-            // coin pill under score
+            // coin pill under score (right-aligned, same margin)
             Text cT;
-            UiKit.CoinPill(hudRoot, out cT, new Vector2(0.955f, 0.885f), Vector2.zero, new Vector2(250, 82));
+            UiKit.CoinPill(hudRoot, out cT, new Vector2(1f, 1f), new Vector2(-156, -170), new Vector2(264, 80));
             coinT = cT;
 
             // GET READY
@@ -213,16 +225,16 @@ namespace DummySurfer
             readyT = UiKit.Txt(readyGo, "GO!", 96, GameManager.C.gold, TextAnchor.MiddleCenter, 10, GameManager.C.navy);
             readyGo.gameObject.SetActive(false);
 
-            // powerup stock buttons (bottom-left)
-            boardBtn = UiKit.IconButton(hudRoot, "board", new Color(0.10f, 0.16f, 0.32f, 0.85f), new Vector2(0.10f, 0.145f), new Vector2(120, 120), Vector2.zero,
-                () => { PlayerController.I.ActivateBoard(); Fx.Play("click"); }, 0.58f);
-            var bb = UiKit.Node(boardBtn.transform as RectTransform, "n", new Vector2(1f, 1f), new Vector2(48, 48), new Vector2(-6, -6));
+            // powerup stock buttons (bottom-left, circular SS-style)
+            boardBtn = CircleBtn(hudRoot, "board", GameManager.C.green, new Vector2(0.10f, 0.145f), new Vector2(122, 122),
+                () => { PlayerController.I.ActivateBoard(); Fx.Play("click"); });
+            var bb = UiKit.Node(boardBtn.transform as RectTransform, "n", new Vector2(1f, 1f), new Vector2(48, 48), new Vector2(-8, -8));
             UiKit.Img(bb, Fx.SprCircle(), GameManager.C.gold);
             boardN = UiKit.Txt(bb, "2", 30, GameManager.C.navy, TextAnchor.MiddleCenter, 0, null, FontStyle.Bold);
 
-            boostBtn = UiKit.IconButton(hudRoot, "rocket", new Color(0.10f, 0.16f, 0.32f, 0.85f), new Vector2(0.10f, 0.245f), new Vector2(120, 120), Vector2.zero,
-                () => { PlayerController.I.HeadStart(); Fx.Play("click"); }, 0.58f);
-            var gb = UiKit.Node(boostBtn.transform as RectTransform, "n", new Vector2(1f, 1f), new Vector2(48, 48), new Vector2(-6, -6));
+            boostBtn = CircleBtn(hudRoot, "rocket", GameManager.C.orange, new Vector2(0.10f, 0.245f), new Vector2(122, 122),
+                () => { PlayerController.I.HeadStart(); Fx.Play("click"); });
+            var gb = UiKit.Node(boostBtn.transform as RectTransform, "n", new Vector2(1f, 1f), new Vector2(48, 48), new Vector2(-8, -8));
             UiKit.Img(gb, Fx.SprCircle(), GameManager.C.gold);
             boostN = UiKit.Txt(gb, "1", 30, GameManager.C.navy, TextAnchor.MiddleCenter, 0, null, FontStyle.Bold);
 
@@ -237,19 +249,37 @@ namespace DummySurfer
 
         RectTransform TimerRow(Vector2 anchor, string icon, Color col, out Image fill)
         {
-            var row = UiKit.Node(hudRoot, "timer_" + icon, anchor, new Vector2(240, 56), Vector2.zero);
-            UiKit.Img(row, Fx.SprPanel(), new Color(0.10f, 0.16f, 0.32f, 0.85f), Image.Type.Sliced);
-            var ic = UiKit.Node(row, "ic", new Vector2(0.5f, 0.5f), new Vector2(42, 42), new Vector2(-88, 0));
+            var row = UiKit.Node(hudRoot, "timer_" + icon, anchor, new Vector2(224, 52), Vector2.zero);
+            UiKit.Img(row, Fx.SprPanel(), new Color(0.10f, 0.16f, 0.32f, 0.88f), Image.Type.Sliced);
+            var ic = UiKit.Node(row, "ic", new Vector2(0.5f, 0.5f), new Vector2(38, 38), new Vector2(-82, 0));
             UiKit.Img(ic, Fx.SprIcon(icon), Color.white);
-            var tr = UiKit.Node(row, "tr", new Vector2(0.5f, 0.5f), new Vector2(120, 16), new Vector2(18, 0));
+            var tr = UiKit.Node(row, "tr", new Vector2(0.5f, 0.5f), new Vector2(116, 14), new Vector2(22, 0));
             UiKit.Img(tr, Fx.SprPanel(), GameManager.C.navy2, Image.Type.Sliced);
-            var fr = UiKit.Node(tr, "f", new Vector2(0f, 0.5f), new Vector2(112, 12), Vector2.zero);
+            var fr = UiKit.Node(tr, "f", new Vector2(0f, 0.5f), new Vector2(108, 10), Vector2.zero);
             fr.pivot = new Vector2(0, 0.5f);
             fr.anchorMin = new Vector2(0, 0.5f); fr.anchorMax = new Vector2(0, 0.5f);
             fr.anchoredPosition = new Vector2(4, 0);
             fill = UiKit.FillImg(fr, Fx.SprPanel(), col);
             row.gameObject.SetActive(false);
             return row;
+        }
+
+        /// <summary>Circular glossy button with white ring + glyph.</summary>
+        Button CircleBtn(Transform parent, string glyph, Color col, Vector2 anchor, Vector2 size, UnityEngine.Events.UnityAction onClick)
+        {
+            var rt = UiKit.Node(parent, "cb_" + glyph, anchor, size, Vector2.zero);
+            UiKit.Img(rt, Fx.SprCircle(), Color.white);
+            var inner = UiKit.Node(rt, "in", new Vector2(0.5f, 0.5f), size * 0.85f, Vector2.zero);
+            var img = UiKit.Img(inner, Fx.SprCircle(), col);
+            img.raycastTarget = true;
+            var gl = UiKit.Node(inner, "gl", new Vector2(0.5f, 1f), new Vector2(size.x * 0.56f, size.y * 0.30f), new Vector2(0, -size.y * 0.20f));
+            UiKit.Img(gl, Fx.SprCircle(), new Color(1f, 1f, 1f, 0.28f));
+            var g = UiKit.Node(rt, "g", new Vector2(0.5f, 0.5f), size * 0.47f, Vector2.zero);
+            UiKit.Img(g, Fx.SprIcon(glyph), Color.white);
+            var b = rt.gameObject.AddComponent<Button>();
+            b.targetGraphic = img;
+            b.onClick.AddListener(onClick);
+            return b;
         }
 
         void PauseGame()

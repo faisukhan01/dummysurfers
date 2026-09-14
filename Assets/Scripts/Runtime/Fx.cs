@@ -97,7 +97,17 @@ namespace DummySurfer
             string key = (transparent ? "t" : "x") + tex.name + "_" + tx.ToString("0.##") + "_" + ty.ToString("0.##");
             Material m;
             if (Mats.TryGetValue(key, out m) && m != null) return m;
-            m = new Material(transparent ? AlphaShader : TexShader);
+            if (transparent)
+            {
+                m = new Material(AlphaShader);
+            }
+            else
+            {
+                // LIT textured material — surfaces respond to sun + receive shadows.
+                m = (LitShader != null && LitShader.name.Contains("Lit")) ? new Material(LitShader) : new Material(TexShader);
+                Try(() => m.SetFloat("_Smoothness", 0.07f));
+                Try(() => m.SetFloat("_Metallic", 0f));
+            }
             m.mainTexture = tex;
             if (Mathf.Abs(tx - 1f) > 0.01f || Mathf.Abs(ty - 1f) > 0.01f) m.mainTextureScale = new Vector2(tx, ty);
             Mats[key] = m;
@@ -435,149 +445,252 @@ namespace DummySurfer
             return t;
         }
 
-        // ---- track tile: gravel + ballast lanes + sleepers (tiles 8m x 4m)
+        // ---- track tile: 1:1 full-width map (512px = 8.4m, 256px = 3.2m along track)
         public static Texture2D TexTrack()
         {
-            Texture2D t; if (GetTex("track", out t)) return t;
-            int w = 256, h = 256;
-            t = Tex("track", w, h);
+            Texture2D t; if (GetTex("track2", out t)) return t;
+            int w = 512, h = 256;
+            t = Tex("track2", w, h);
             t.wrapMode = TextureWrapMode.Repeat;
             var px = new Color32[w * h];
-            var gravel = C(0x8f, 0x8a, 0x7c);
-            var ballast = C(0xa5, 0x9e, 0x8d);
-            var sleep = C(0x5d, 0x48, 0x33);
-            var sleep2 = C(0x51, 0x3e, 0x2b);
-            var rail = C(0x4a, 0x4a, 0x50);
+
+            var shoulder = C(0xC2, 0xC7, 0xCE);   // outer concrete shoulder
+            var shoulderD = C(0xAE, 0xB4, 0xBC);
+            var between = C(0x99, 0x91, 0x84);    // gravel between lanes
+            var ballast = C(0xAD, 0xA4, 0x94);    // lane ballast
+            var sleep = C(0x74, 0x56, 0x3A);      // sleepers
+            var sleep2 = C(0x63, 0x48, 0x2F);
+            var rail = C(0x45, 0x47, 0x4E);       // steel rail
+            var railHi = C(0x9A, 0xA1, 0xAC);     // rail shine
+
+            float uPerM = w / 8.4f;               // px per metre horizontally
+            float vPerM = h / 3.2f;               // px per metre vertically
+
             for (int y = 0; y < h; y++)
                 for (int x = 0; x < w; x++)
                 {
-                    float fx = x / (float)w;
-                    Color32 c = gravel;
-                    // 3 lanes centered at 1/6,3/6,5/6
-                    float lane = -1f;
-                    for (int i = 0; i < 3; i++)
+                    float u = x / (float)w * 8.4f;    // metres from left edge (-4.2..+4.2)
+                    float m = u - 4.2f;
+                    Color32 c;
+
+                    if (Mathf.Abs(m) > 3.7f) c = shoulder;
+                    else
                     {
-                        float lc = (i * 2f + 1f) / 6f;
-                        if (Mathf.Abs(fx - lc) < 0.145f) lane = fx - lc;
+                        // nearest lane centre (-2.2, 0, 2.2)
+                        float lane = Mathf.Round(m / 2.2f) * 2.2f;
+                        float dl = m - lane;
+                        if (Mathf.Abs(dl) < 1.05f)
+                        {
+                            c = ballast;
+                            // sleepers: rows every 0.65m, 0.28m thick, span ballast width
+                            float sv = Mathf.Repeat(y / vPerM, 0.65f);
+                            if (sv < 0.28f && Mathf.Abs(dl) < 0.95f)
+                            {
+                                bool edge = sv < 0.045f || sv > 0.235f;
+                                c = edge ? sleep2 : sleep;
+                            }
+                            // rails at ±0.72m with shine
+                            float dr = Mathf.Abs(Mathf.Abs(dl) - 0.72f);
+                            if (dr < 0.075f) c = rail;
+                            else if (dr < 0.095f) c = railHi;
+                        }
+                        else c = between;
                     }
-                    if (lane >= -1f)
-                    {
-                        c = ballast;
-                        // sleepers every 42px
-                        int band = (y + (int)(lane * 6)) % 42;
-                        if (band < 13) c = (band % 3 == 0) ? sleep2 : sleep;
-                        // rail shadows
-                        if (Mathf.Abs(Mathf.Abs(lane) - 0.058f) < 0.012f) c = rail;
-                    }
-                    // speckle
-                    int n = (x * 7 + y * 13) % 97;
-                    if (n < 4) c = Color32.Lerp(c, new Color32(255, 255, 255, 255), 0.08f);
+
+                    // subtle speckle
+                    int n = (x * 7 + y * 13) % 211;
+                    if (n < 5) c = Color32.Lerp(c, C(0xFF, 0xFF, 0xFF), 0.10f);
+                    else if (n > 204) c = Color32.Lerp(c, C(0x30, 0x2A, 0x22), 0.10f);
                     px[y * w + x] = c;
                 }
             Blit(t, px);
             return t;
         }
 
-        // ---- building windows (per base color)
+        // ---- vertical sky gradient for the sky dome
+        public static Texture2D TexSky()
+        {
+            Texture2D t; if (GetTex("skydome", out t)) return t;
+            int w = 32, h = 256;
+            t = Tex("skydome", w, h);
+            var px = new Color32[w * h];
+            var top = C(0x1E, 0x93, 0xE4);
+            var mid = C(0x64, 0xC2, 0xF2);
+            var hor = C(0xDA, 0xF0, 0xFE);
+            for (int y = 0; y < h; y++)
+            {
+                float f = y / (float)(h - 1);          // 0 bottom → 1 top
+                Color32 c;
+                if (f < 0.5f) c = Color32.Lerp(hor, mid, f * 2f);
+                else c = Color32.Lerp(mid, top, (f - 0.5f) * 2f);
+                for (int x = 0; x < w; x++) px[y * w + x] = c;
+            }
+            Blit(t, px);
+            return t;
+        }
+
+        // ---- building wall: clean facade with aligned window grid + ground floor
         public static Texture2D TexWindows(Color baseCol, int seed)
         {
-            string key = "win" + ColorUtility.ToHtmlStringRGB(baseCol) + seed;
+            string key = "win2" + ColorUtility.ToHtmlStringRGB(baseCol) + seed;
             Texture2D t;
             if (GetTex(key, out t)) return t;
-            int w = 128, h = 256;
+            int w = 256, h = 256;
             t = Tex(key, w, h);
             t.wrapMode = TextureWrapMode.Repeat;
             var px = new Color32[w * h];
             var wall = (Color32)baseCol;
-            var dark = Color32.Lerp(wall, new Color32(20, 24, 40, 255), 0.35f);
-            var lit = C(0xFF, 0xEE, 0xB0); var off = C(0x2a, 0x36, 0x54);
-            var sys = new System.Random(seed);
+            var sys = new System.Random(seed * 17 + 3);
+
+            // subtle vertical panel shading
+            var shade = Color32.Lerp(wall, new Color32(30, 34, 48, 255), 0.10f);
+            var lite = Color32.Lerp(wall, new Color32(255, 255, 255, 255), 0.14f);
+            var glassDay = C(0x6F, 0x9E, 0xC8);
+            var glassLit = C(0xFF, 0xE2, 0x9E);
+            var glassDark = C(0x3A, 0x4A, 0x66);
+            var frame = Color32.Lerp(wall, new Color32(20, 24, 36, 255), 0.45f);
+
             for (int y = 0; y < h; y++)
                 for (int x = 0; x < w; x++)
                 {
-                    Color32 c = ((x / 8 + y / 8) % 2 == 0) ? wall : Color32.Lerp(wall, dark, 0.25f);
+                    Color32 c = wall;
+                    if (x < 6 || x > w - 7) c = shade;                 // side pilasters
+                    else if (x < 12 || x > w - 13) c = lite;
+                    // floor seams every 32px
+                    if (y % 32 < 3) c = shade;
                     px[y * w + x] = c;
                 }
+
+            // windows: 4 columns × 7 rows, aligned
             for (int r = 0; r < 7; r++)
-                for (int col = 0; col < 3; col++)
+                for (int col = 0; col < 4; col++)
                 {
-                    int x0 = 14 + col * 38, y0 = 20 + r * 34;
-                    bool on = sys.NextDouble() < 0.55;
-                    var wc = on ? lit : off;
-                    for (int yy = 0; yy < 22; yy++)
-                        for (int xx = 0; xx < 26; xx++)
+                    int x0 = 20 + col * 58, y0 = 14 + r * 32 + 5;
+                    int ww = 34, wh = 20;
+                    double pick = sys.NextDouble();
+                    var glass = pick < 0.42 ? glassLit : (pick < 0.8 ? glassDay : glassDark);
+                    for (int yy = -2; yy <= wh + 1; yy++)
+                        for (int xx = -2; xx <= ww + 1; xx++)
                         {
                             int X = x0 + xx, Y = y0 + yy;
                             if (X < 0 || X >= w || Y < 0 || Y >= h) continue;
-                            bool edge = xx == 0 || yy == 0 || xx == 25 || yy == 21;
-                            px[Y * w + X] = edge ? dark : wc;
+                            bool framePx = xx < 0 || yy < 0 || xx >= ww || yy >= wh;
+                            px[Y * w + X] = framePx ? frame : glass;
                         }
+                    // sill
+                    for (int xx = -3; xx <= ww + 2; xx++)
+                    {
+                        int X = x0 + xx, Y = y0 - 3;
+                        if (X >= 0 && X < w && Y >= 0 && Y < h) px[Y * w + X] = lite;
+                    }
+                    // occasional AC box
+                    if (sys.NextDouble() < 0.22)
+                        for (int yy = 0; yy < 5; yy++)
+                            for (int xx = 0; xx < 12; xx++)
+                            {
+                                int X = x0 + xx, Y = y0 - 8 + yy;
+                                if (X >= 0 && X < w && Y >= 0 && Y < h) px[Y * w + X] = C(0xB9, 0xC0, 0xC8);
+                            }
                 }
-            // awning strip at bottom
-            for (int y = 0; y < 18; y++)
+
+            // ground floor: shopfront + awning
+            for (int y = 0; y < 26; y++)
                 for (int x = 0; x < w; x++)
                 {
-                    var ac = (x / 16) % 2 == 0 ? C(0xE8, 0x4B, 0x4B) : C(0xFF, 0xF1, 0xDD);
+                    var ac = (x / 20) % 2 == 0 ? C(0xE8, 0x5D, 0x4B) : C(0xFF, 0xF3, 0xE0);
                     px[y * w + x] = ac;
                 }
+            for (int y = 26; y < 30; y++)
+                for (int x = 0; x < w; x++) px[y * w + x] = frame;
             Blit(t, px);
             return t;
         }
 
-        // ---- train side texture (per color)
+        // ---- train side texture (per color) — 512px = 4m segment
         public static Texture2D TexTrainSide(Color col)
         {
-            string key = "trn" + ColorUtility.ToHtmlStringRGB(col);
+            string key = "trn2" + ColorUtility.ToHtmlStringRGB(col);
             Texture2D t; if (GetTex(key, out t)) return t;
-            int w = 256, h = 128;
+            int w = 512, h = 160;
             t = Tex(key, w, h);
             t.wrapMode = TextureWrapMode.Repeat;
             var px = new Color32[w * h];
             var body = (Color32)col;
-            var dark = Color32.Lerp(body, new Color32(10, 12, 20, 255), 0.4f);
-            var lite = Color32.Lerp(body, new Color32(255, 255, 255, 255), 0.25f);
+            var dark = Color32.Lerp(body, new Color32(10, 12, 20, 255), 0.45f);
+            var lite = Color32.Lerp(body, new Color32(255, 255, 255, 255), 0.30f);
             var glass = C(0xBF, 0xE9, 0xFF);
+            var glass2 = C(0x8F, 0xC4, 0xE8);
+            var stripe = C(0xFF, 0xFF, 0xFF);
+
             for (int y = 0; y < h; y++)
                 for (int x = 0; x < w; x++)
                 {
                     Color32 c = body;
-                    if (y < 10) c = dark;                 // skirt
-                    else if (y > h - 8) c = dark;         // roof edge
-                    else if (y > h - 14) c = lite;
-                    // window band
-                    if (y > 62 && y < 100)
+                    if (y < 16) c = dark;                     // skirt
+                    else if (y > h - 10) c = lite;            // roof edge
+                    else if (y > h - 16) c = dark;
+                    // white accent stripe
+                    if (y > 30 && y < 42) c = stripe;
+                    if (y == 30 || y == 42) c = dark;
+                    // window band with frames
+                    if (y > 74 && y < 126)
                     {
-                        int m = x % 44;
-                        if (m > 6 && m < 38) c = glass;
-                        if (y > 94) c = Color32.Lerp(glass, body, 0.4f);
+                        int m = x % 128;
+                        bool win = m > 14 && m < 56;
+                        if (win)
+                        {
+                            c = (y < 80 || y > 120) ? dark : (x % 4 < 2 ? glass : glass2);
+                        }
+                        // door pair every 256px
+                        int d2 = x % 256;
+                        if (d2 > 120 && d2 < 152 && y > 20 && y < 126)
+                        {
+                            c = Color32.Lerp(body, dark, 0.25f);
+                            if (d2 == 120 || d2 == 151 || d2 == 135 || d2 == 136) c = dark;
+                            if (y > 74 && y < 116 && d2 > 124 && d2 < 130) c = glass2;
+                            if (y > 74 && y < 116 && d2 > 142 && d2 < 148) c = glass2;
+                        }
                     }
-                    // yellow stripe
-                    if (y > 26 && y < 34) c = C(0xFF, 0xD2, 0x3E);
+                    // rivet row
+                    if (y == 62 && x % 24 < 2) c = lite;
                     px[y * w + x] = c;
                 }
             Blit(t, px);
             return t;
         }
 
-        // ---- train front
+        // ---- train front — 256px = 2.05m wide, 160px = 2.7m tall
         public static Texture2D TexTrainFront(Color col)
         {
-            string key = "trf" + ColorUtility.ToHtmlStringRGB(col);
+            string key = "trf2" + ColorUtility.ToHtmlStringRGB(col);
             Texture2D t; if (GetTex(key, out t)) return t;
-            int w = 128, h = 128;
+            int w = 256, h = 160;
             t = Tex(key, w, h);
             var px = new Color32[w * h];
             var body = (Color32)col;
-            var glass = C(0x9f, 0xd8, 0xf2);
+            var dark = Color32.Lerp(body, new Color32(10, 10, 16, 255), 0.5f);
+            var glass = C(0xA8, 0xDE, 0xF5);
+            var glassHi = C(0xE2, 0xF6, 0xFF);
             for (int y = 0; y < h; y++)
                 for (int x = 0; x < w; x++)
                 {
                     Color32 c = body;
-                    if (y > 60 && y < 112 && x > 14 && x < 114) c = glass;
-                    if (y < 12) c = Color32.Lerp(body, new Color32(10, 10, 16, 255), 0.5f);
-                    if (y > 20 && y < 28) c = C(0xFF, 0xD2, 0x3E);
+                    // windshield (rounded)
+                    float wx = (x - w / 2f) / (w * 0.40f), wy = (y - 108f) / 42f;
+                    float wd = wx * wx + wy * wy;
+                    if (y > 66 && y < 150 && wd < 1f)
+                    {
+                        c = glass;
+                        if (wx < -0.15f && wy > 0.1f) c = glassHi;   // glass glare
+                    }
+                    if (y > 148 || y < 14) c = dark;                 // roof cap + bumper
+                    // accent band
+                    if (y > 34 && y < 46) c = Color.white;
+                    if (y == 34 || y == 46) c = dark;
                     // headlights
-                    if (SdCircle(x, y, 22, 16, 7) < 0 || SdCircle(x, y, 106, 16, 7) < 0) c = C(0xFF, 0xF3, 0xB0);
+                    if (SdCircle(x, y, 42, 26, 11) < 0 || SdCircle(x, y, w - 42, 26, 11) < 0) c = C(0xFF, 0xF3, 0xB0);
+                    // coupler
+                    if (y < 22 && Mathf.Abs(x - w / 2f) < 16) c = C(0x2A, 0x2C, 0x34);
                     px[y * w + x] = c;
                 }
             Blit(t, px);

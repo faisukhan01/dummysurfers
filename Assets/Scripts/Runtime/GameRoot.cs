@@ -22,7 +22,7 @@ namespace DummySurfer
             var ggo = new GameObject("~Game");
             ggo.AddComponent<GameManager>();
 
-            BuildSceneBasics();
+            BuildSceneLook();
 
             var sp = new GameObject("~Spawner");
             sp.AddComponent<TrackSpawner>();
@@ -52,35 +52,56 @@ namespace DummySurfer
             StartCoroutine(Boot());
         }
 
-        void BuildSceneBasics()
+        /// <summary>Shared scene look: camera, sky dome, sun, fog, ambient.
+        /// Static so the CI preview renderer can reuse it 1:1.</summary>
+        public static void BuildSceneLook()
         {
             var camGo = new GameObject("MainCam", typeof(Camera), typeof(AudioListener), typeof(CameraRig));
             camGo.tag = "MainCamera";
             var cam = camGo.GetComponent<Camera>();
             cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = GameManager.C.Hex(0x35B9F1);
+            cam.backgroundColor = GameManager.C.Hex(0x64C2F2);
             cam.nearClipPlane = 0.3f;
-            cam.farClipPlane = 420f;
-            cam.fieldOfView = 60f;
-            cam.transform.position = new Vector3(-3.9f, 1.95f, -3.2f);
-            cam.transform.rotation = Quaternion.LookRotation(new Vector3(0.35f, 1.35f, 1.6f) - cam.transform.position);
+            cam.farClipPlane = 600f;
+            cam.fieldOfView = 55f;
+            cam.transform.position = new Vector3(-3.9f, 1.9f, -3.4f);
+            cam.transform.rotation = Quaternion.LookRotation(new Vector3(0.3f, 1.35f, 1.2f) - cam.transform.position);
+
+            // ---- gradient sky dome (unlit, fog-free, follows camera)
+            var skyGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            Object.Destroy(skyGo.GetComponent<Collider>());
+            skyGo.name = "~SkyDome";
+            var skyM = new Material(Fx.TexShader);
+            skyM.name = "skymat";
+            skyM.mainTexture = Fx.TexSky();
+            var skyMr = skyGo.GetComponent<MeshRenderer>();
+            skyMr.sharedMaterial = skyM;
+            skyMr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            skyMr.receiveShadows = false;
+            skyGo.transform.localScale = new Vector3(-300f, 300f, 300f); // inverted → visible from inside
+            skyGo.transform.position = new Vector3(0f, 8f, 0f);
+            CameraRig.Sky = skyGo.transform;
 
             var sun = new GameObject("Sun");
             var l = sun.AddComponent<Light>();
             l.type = LightType.Directional;
-            sun.transform.rotation = Quaternion.Euler(46f, -32f, 0f);
-            l.intensity = 1.12f;
+            sun.transform.rotation = Quaternion.Euler(46f, -35f, 0f);
+            l.intensity = 1.18f;
             l.shadows = LightShadows.Soft;
-            l.shadowStrength = 0.72f;
-            l.color = new Color(1f, 0.96f, 0.88f);
+            l.shadowStrength = 0.78f;
+            l.shadowBias = 0.6f;
+            l.color = new Color(1f, 0.965f, 0.9f);
+            RenderSettings.sun = l;
 
             RenderSettings.fog = true;
-            RenderSettings.fogColor = GameManager.C.Hex(0xBFE3F7);
+            RenderSettings.fogColor = GameManager.C.Hex(0xC6E8F8);
             RenderSettings.fogMode = FogMode.Linear;
-            RenderSettings.fogStartDistance = 60f;
-            RenderSettings.fogEndDistance = 200f;
-            RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.72f, 0.82f, 0.92f);
+            RenderSettings.fogStartDistance = 75f;
+            RenderSettings.fogEndDistance = 250f;
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
+            RenderSettings.ambientSkyColor = new Color(0.78f, 0.88f, 0.98f);
+            RenderSettings.ambientEquatorColor = new Color(0.84f, 0.88f, 0.94f);
+            RenderSettings.ambientGroundColor = new Color(0.58f, 0.64f, 0.55f);
         }
 
         void BuildMenuDressing()
@@ -101,7 +122,7 @@ namespace DummySurfer
 
             var wall = WorldFactory.GraffitiPanel(15f, 6.4f, GameManager.C.Hex(0xB7BEC9), 3);
             wall.transform.SetParent(root);
-            wall.transform.position = new Vector3(9.45f, 3.1f, 18f);
+            wall.transform.position = new Vector3(4.9f, 3.0f, 18f);
             wall.transform.rotation = Quaternion.Euler(0, -90f, 0);
 
             // spray bag + cans near the boy

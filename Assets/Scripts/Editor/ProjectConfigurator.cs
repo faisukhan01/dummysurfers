@@ -48,10 +48,26 @@ namespace DummySurfer.EditorTools
 
                 AssetDatabase.CreateAsset(pipeline, "Assets/Settings/DS-Mobile-Pipeline.asset");
 
-                SetProp(pipeline, "shadowDistance", 50f);
-                SetProp(pipeline, "msaaSampleCount", 2);
+                SetProp(pipeline, "shadowDistance", 90f);
+                SetProp(pipeline, "msaaSampleCount", 4);
                 SetProp(pipeline, "renderScale", 1f);
                 SetProp(pipeline, "supportsHDR", false);
+
+                // deeper shadow config (property names vary per URP version — best effort)
+                try
+                {
+                    var so = new SerializedObject(pipeline);
+                    var sd = so.FindProperty("m_ShadowDistance");
+                    if (sd != null) sd.floatValue = 90f;
+                    var cc = so.FindProperty("m_CascadeCount");
+                    if (cc != null) cc.intValue = 2;
+                    var ms = so.FindProperty("m_MainLightShadowsSupported");
+                    if (ms != null) ms.boolValue = true;
+                    var as2 = so.FindProperty("m_Cascade2Split");
+                    if (as2 != null) as2.floatValue = 0.35f;
+                    so.ApplyModifiedProperties();
+                }
+                catch { Debug.LogWarning("[DummySurfer] URP deep shadow props not set (names differ)."); }
 
                 GraphicsSettings.defaultRenderPipeline = pipeline;
                 AssetDatabase.SaveAssets();

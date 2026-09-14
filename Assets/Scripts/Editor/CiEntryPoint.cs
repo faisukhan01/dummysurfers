@@ -194,5 +194,126 @@ namespace DummySurfer.EditorTools
                       " (" + (summary.totalSize / (1024 * 1024)) + " MB)");
             EditorApplication.Exit(0);
         }
+
+        // ------------------------------------------------------- visual previews
+        /// <summary>
+        /// Renders the actual game world with the actual character/camera code to PNGs,
+        /// uploaded as a CI artifact. Used to self-review visual quality without a device.
+        /// </summary>
+        public static void CapturePreviews()
+        {
+            Debug.Log("[Preview] Building preview scene…");
+            try { Directory.CreateDirectory("build/previews"); } catch { }
+
+            DummySurfer.Fx.Init(null);
+            DummySurfer.GameRoot.BuildSceneLook();
+
+            var cam = Camera.main;
+            if (cam == null)
+            {
+                Debug.LogError("[Preview] no camera after BuildSceneLook");
+                EditorApplication.Exit(3);
+                return;
+            }
+
+            try
+            {
+                // ---------- world ----------
+                for (int i = 0; i < 3; i++)
+                {
+                    var ch = DummySurfer.WorldFactory.TrackChunk(48f);
+                    ch.transform.position = new Vector3(0, 0, i * 48f + 24f);
+                }
+                // gameplay props
+                var tr1 = DummySurfer.WorldFactory.Train(0, 18f, false, false);
+                tr1.transform.position = new Vector3(2.2f, 0f, 34f);
+                var tr2 = DummySurfer.WorldFactory.Train(2, 12f, true, false);
+                tr2.transform.position = new Vector3(-2.2f, 0f, 62f);
+                var bar = DummySurfer.WorldFactory.Barrier(false);
+                bar.transform.position = new Vector3(0f, 0f, 21f);
+                for (int i = 0; i < 7; i++)
+                {
+                    var c = DummySurfer.WorldFactory.Coin();
+                    c.transform.position = new Vector3(0f, 1.1f, 9f + i * 2.3f);
+                }
+                var pw = DummySurfer.WorldFactory.Power(DummySurfer.PowerComp.K.Magnet);
+                pw.transform.position = new Vector3(-2.2f, 1.35f, 28f);
+                // décor
+                var sys = new System.Random(5);
+                for (int i = 0; i < 6; i++)
+                {
+                    float z = 6f + i * 16f;
+                    int col = sys.Next(8);
+                    float h = new[] { 10f, 14f, 19f, 23f }[sys.Next(4)];
+                    var bl = DummySurfer.WorldFactory.Building(col, 7f + sys.Next(3), h, 8f, seed: col * 31 + i, billboard: sys.Next(3) == 0);
+                    bl.transform.position = new Vector3(-13.5f - (float)sys.NextDouble() * 3f, 0f, z);
+                    bl.transform.rotation = Quaternion.Euler(0, 90f, 0);
+                    int col2 = sys.Next(8);
+                    float h2 = new[] { 10f, 14f, 19f, 23f }[sys.Next(4)];
+                    var b2 = DummySurfer.WorldFactory.Building(col2, 7f + sys.Next(3), h2, 8f, seed: col2 * 17 + i, billboard: false);
+                    b2.transform.position = new Vector3(13.5f + (float)sys.NextDouble() * 3f, 0f, z + 8f);
+                    b2.transform.rotation = Quaternion.Euler(0, -90f, 0);
+                    var pole = DummySurfer.WorldFactory.Pole();
+                    pole.transform.position = new Vector3(sys.Next(2) == 0 ? -8.6f : 8.6f, 0f, z + 4f);
+                }
+                var cl = DummySurfer.WorldFactory.Cloud();
+                cl.transform.position = new Vector3(-6f, 14f, 40f);
+                var cl2 = DummySurfer.WorldFactory.Cloud();
+                cl2.transform.position = new Vector3(7f, 17f, 70f);
+
+                // ---------- characters ----------
+                var boy = DummySurfer.CharacterRig.BuildBoy(null);
+                boy.Pose("run", 0f, 1f);
+                boy.phase = 2.15f;
+                var guard = DummySurfer.CharacterRig.BuildInspector(null);
+                guard.transform.position = new Vector3(0.4f, 0f, -2.7f);
+                guard.transform.rotation = Quaternion.Euler(0, 8f, 0);
+                guard.Pose("run", 0f, 1f);
+                guard.phase = 1.1f;
+                var dog = DummySurfer.CharacterRig.BuildDog(null);
+                dog.transform.position = new Vector3(-0.9f, 0f, -2.2f);
+                dog.Pose("run", 0f, 1f);
+                dog.phase = 0.4f;
+
+                // ---------- shot A: gameplay view ----------
+                var rt = new RenderTexture(720, 1520, 24, RenderTextureFormat.ARGB32);
+                cam.targetTexture = rt;
+                cam.transform.position = new Vector3(0f, 3.55f, -6.6f);
+                cam.transform.rotation = Quaternion.LookRotation(new Vector3(0f, 1.55f, 9f) - cam.transform.position);
+                cam.Render();
+                SavePng(rt, "build/previews/gameplay.png");
+
+                // ---------- shot B: menu view (spray pose + graffiti wall) ----------
+                boy.transform.rotation = Quaternion.Euler(0, 152f, 0);
+                boy.Pose("spray", 1.5f, 0f);
+                var wall = DummySurfer.WorldFactory.GraffitiPanel(15f, 6.4f, new Color32(0xB7, 0xBE, 0xC9, 255), 3);
+                wall.transform.position = new Vector3(4.9f, 3.0f, 14f);
+                wall.transform.rotation = Quaternion.Euler(0, -90f, 0);
+                cam.transform.position = new Vector3(-3.6f, 1.85f, -3.3f);
+                cam.transform.rotation = Quaternion.LookRotation(new Vector3(0.3f, 1.3f, 1.3f) - cam.transform.position);
+                cam.Render();
+                SavePng(rt, "build/previews/menu.png");
+
+                rt.Release();
+                Debug.Log("[Preview] done");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError("[Preview] failed (non-fatal): " + e);
+            }
+            EditorApplication.Exit(0);
+        }
+
+        static void SavePng(RenderTexture rt, string path)
+        {
+            RenderTexture.active = rt;
+            var tex = new Texture2D(rt.width, rt.height, TextureFormat.RGBA32, false);
+            tex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+            tex.Apply();
+            RenderTexture.active = null;
+            File.WriteAllBytes(path, tex.EncodeToPNG());
+            Object.DestroyImmediate(tex);
+            Debug.Log("[Preview] saved " + path);
+        }
     }
 }

@@ -137,6 +137,29 @@ jobs:
           '
 
       # --------------------------------------------------------------
+      # Renders the real game world to PNGs (gameplay + menu camera).
+      # Artifact "game-previews" lets us self-review visual quality.
+      # --------------------------------------------------------------
+      - name: Capture visual previews (self-review)
+        timeout-minutes: 10
+        run: |
+          docker exec unity-build bash -c '
+            set +e
+            xvfb-run -a unity-editor -batchmode -quit \
+              -projectPath /project \
+              -executeMethod DummySurfer.EditorTools.CiEntryPoint.CapturePreviews \
+              -logFile /dev/stdout
+            exit 0
+          '
+
+      - name: Upload preview screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-previews
+          path: build/previews
+          if-no-files-found: ignore
+
+      # --------------------------------------------------------------
       # The real Android APK build (IL2CPP · ARM64 · signed).
       # --------------------------------------------------------------
       - name: Build Android APK

@@ -9,13 +9,13 @@ namespace DummySurfer
     {
         public static readonly Color[] TrainCols =
         {
-            C(0xE8, 0x4B, 0x4B), C(0x4A, 0x7B, 0xD0), C(0xF2, 0xB2, 0x33), C(0x9B, 0x59, 0xD0)
+            C(0xE8, 0x48, 0x48), C(0x4A, 0x7B, 0xD0), C(0xF2, 0xB2, 0x33), C(0x2F, 0xB8, 0xB0), C(0x9B, 0x59, 0xD0)
         };
 
         public static readonly Color[] BuildingCols =
         {
-            C(0xFF, 0x7A, 0x6B), C(0xFF, 0xB8, 0x4D), C(0x2E, 0xC4, 0xB6), C(0x5A, 0xB1, 0xF0),
-            C(0xB2, 0x8D, 0xF2), C(0xFF, 0xE8, 0xA3), C(0x7B, 0xD8, 0xA0), C(0xF2, 0x78, 0x9F)
+            C(0xF2, 0xD3, 0xA2), C(0xE8, 0x87, 0x5F), C(0x7F, 0xC8, 0xA9), C(0x8F, 0xB7, 0xE0),
+            C(0xE8, 0xB4, 0xC8), C(0xF2, 0xE4, 0xC8), C(0x9A, 0x8F, 0xD0), C(0xD9, 0xA0, 0x5B)
         };
 
         public static readonly float[] TrainLens = { 12f, 18f, 24f };
@@ -53,37 +53,52 @@ namespace DummySurfer
             var col = TrainCols[colIdx % TrainCols.Length];
             var root = new GameObject("train");
             var bodyM = Fx.Mat(col);
-            var roofM = Fx.Mat(Darker(col, 0.35f));
+            var roofM = Fx.Mat(Darker(col, 0.32f));
             var sideTex = Fx.TexTrainSide(col);
             var frontTex = Fx.TexTrainFront(col);
 
-            var body = Part(root.transform, PrimitiveType.Cube, new Vector3(0, 1.5f, 0), new Vector3(2.05f, 3.0f, len), bodyM, "body", true);
+            var body = Part(root.transform, PrimitiveType.Cube, new Vector3(0, 1.6f, 0), new Vector3(2.05f, 2.9f, len), bodyM, "body", true);
             body.layer = Fx.LTrain;
-            Part(root.transform, PrimitiveType.Cube, new Vector3(0, 3.06f, 0), new Vector3(2.14f, 0.16f, len * 0.99f), roofM, "roof");
-            // roof rim
-            Part(root.transform, PrimitiveType.Cube, new Vector3(0, 2.97f, 0), new Vector3(2.20f, 0.06f, len * 0.99f), Fx.Mat(Darker(col, 0.15f)), "rim");
+            Part(root.transform, PrimitiveType.Cube, new Vector3(0, 3.12f, 0), new Vector3(2.14f, 0.16f, len * 0.99f), roofM, "roof");
 
-            // textured sides
-            var sideM = TexMat(sideTex, Mathf.Max(1f, len / 5f), 1f, false);
-            var sl = Part(root.transform, PrimitiveType.Quad, new Vector3(-1.032f, 1.55f, 0), new Vector3(len, 2.7f, 1), sideM, "sideL");
+            // textured sides (512px = 4m)
+            var sideM = TexMat(sideTex, Mathf.Max(1f, len / 4f), 1f, false);
+            var sl = Part(root.transform, PrimitiveType.Quad, new Vector3(-1.033f, 1.6f, 0), new Vector3(len, 2.9f, 1), sideM, "sideL");
             sl.transform.localRotation = Quaternion.Euler(0, -90, 0);
-            var sr = Part(root.transform, PrimitiveType.Quad, new Vector3(1.032f, 1.55f, 0), new Vector3(len, 2.7f, 1), sideM, "sideR");
+            var sr = Part(root.transform, PrimitiveType.Quad, new Vector3(1.033f, 1.6f, 0), new Vector3(len, 2.9f, 1), sideM, "sideR");
             sr.transform.localRotation = Quaternion.Euler(0, 90, 0);
 
-            // front (toward player: -z) and back
+            // textured ends (both ends get a face — SS style)
             var frontM = Fx.MatTex(frontTex, false);
-            var fr = Part(root.transform, PrimitiveType.Quad, new Vector3(0, 1.55f, -len / 2f - 0.012f), new Vector3(2.05f, 3.0f, 1), frontM, "front");
+            var fr = Part(root.transform, PrimitiveType.Quad, new Vector3(0, 1.6f, -len / 2f - 0.012f), new Vector3(2.05f, 2.9f, 1), frontM, "front");
             fr.transform.localRotation = Quaternion.Euler(0, 180, 0);
-            var bk = Part(root.transform, PrimitiveType.Quad, new Vector3(0, 1.55f, len / 2f + 0.012f), new Vector3(2.05f, 3.0f, 1), sideM, "back");
+            var bk = Part(root.transform, PrimitiveType.Quad, new Vector3(0, 1.6f, len / 2f + 0.012f), new Vector3(2.05f, 2.9f, 1), frontM, "back");
+
+            // bogies (dark wheel skirts)
+            var bogieM = Fx.Mat(C(0x2E, 0x31, 0x3A));
+            Part(root.transform, PrimitiveType.Cube, new Vector3(0, 0.26f, -len / 2f + 1.7f), new Vector3(1.7f, 0.52f, 2.6f), bogieM, "bogF");
+            Part(root.transform, PrimitiveType.Cube, new Vector3(0, 0.26f, len / 2f - 1.7f), new Vector3(1.7f, 0.52f, 2.6f), bogieM, "bogB");
+
+            // roof AC units
+            var acM = Fx.Mat(C(0xB6, 0xBD, 0xC6));
+            int nAc = Mathf.Max(1, Mathf.FloorToInt(len / 8f));
+            for (int i = 0; i < nAc; i++)
+            {
+                float az = -len / 2f + (i + 0.5f) * (len / nAc);
+                Part(root.transform, PrimitiveType.Cube, new Vector3(0, 3.28f, az), new Vector3(1.1f, 0.24f, 1.7f), acM, "ac" + i);
+            }
 
             if (ramp)
             {
-                float ang = Mathf.Atan2(3.05f, 4.4f) * Mathf.Rad2Deg;
+                float ang = Mathf.Atan2(3.16f, 4.4f) * Mathf.Rad2Deg;
                 var rm = Fx.Mat(Darker(col, 0.5f));
-                var wedge = Part(root.transform, PrimitiveType.Cube, new Vector3(0, 1.52f, -len / 2f - 2.2f), new Vector3(2.05f, 0.24f, 5.4f), rm, "ramp", true);
+                var wedge = Part(root.transform, PrimitiveType.Cube, new Vector3(0, 1.58f, -len / 2f - 2.2f), new Vector3(2.05f, 0.24f, 5.4f), rm, "ramp", true);
                 wedge.transform.localRotation = Quaternion.Euler(-ang, 0, 0);
                 wedge.layer = Fx.LGround; // walkable slope: ground ray rides it, front-hit check ignores it
                 Part(root.transform, PrimitiveType.Cube, new Vector3(0, 0.9f, -len / 2f - 4.15f), new Vector3(1.9f, 1.8f, 0.25f), rm, "support");
+                // chevron stripes on the ramp nose
+                var ch = Part(root.transform, PrimitiveType.Quad, new Vector3(0, 1.62f, -len / 2f - 4.86f), new Vector3(2.05f, 0.5f, 1), TexMat(Fx.TexStripes(), 2f, 0.5f, false), "chev");
+                ch.transform.localRotation = Quaternion.Euler(0, 180, 0);
             }
 
             var oc = root.AddComponent<ObstacleComp>();
@@ -196,15 +211,28 @@ namespace DummySurfer
         {
             var col = BuildingCols[colIdx % BuildingCols.Length];
             var root = new GameObject("bld");
-            var winM = TexMat(Fx.TexWindows(col, seed), Mathf.Max(1f, w / 4f), Mathf.Max(1f, h / 5f), false);
+            var winM = TexMat(Fx.TexWindows(col, seed), Mathf.Max(1f, w / 6f), Mathf.Max(1f, h / 6f), false);
             Part(root.transform, PrimitiveType.Cube, new Vector3(0, h / 2f, 0), new Vector3(w, h, d), winM, "body");
             Part(root.transform, PrimitiveType.Cube, new Vector3(0, h + 0.15f, 0), new Vector3(w + 0.4f, 0.3f, d + 0.4f), Fx.Mat(Darker(col, 0.45f)), "roof");
+
+            var sys = new System.Random(seed * 977 + (int)h);
+            // rooftop water tank
+            if (sys.NextDouble() < 0.45)
+            {
+                var tankM = Fx.Mat(C(0x8E, 0x97, 0xA6));
+                var tank = Part(root.transform, PrimitiveType.Cylinder, new Vector3(w * 0.22f, h + 0.75f, d * 0.2f), new Vector3(0.9f, 0.5f, 0.9f), tankM, "tank");
+                Part(root.transform, PrimitiveType.Cylinder, new Vector3(w * 0.22f, h + 1.15f, d * 0.2f), new Vector3(0.12f, 0.3f, 0.12f), tankM, "tankleg");
+            }
+            // rooftop AC box
+            if (sys.NextDouble() < 0.6)
+                Part(root.transform, PrimitiveType.Cube, new Vector3(-w * 0.2f, h + 0.5f, -d * 0.15f), new Vector3(1.3f, 0.5f, 1.0f), Fx.Mat(C(0xB9, 0xC0, 0xC8)), "ac");
+
             if (billboard)
             {
                 var bbM = Fx.MatTex(Fx.SprIcon("x2").texture, true);
-                var bb = Part(root.transform, PrimitiveType.Quad, new Vector3(0, h + 1.2f, -d / 2f - 0.06f), new Vector3(Mathf.Min(w * 0.7f, 4f), 2.4f, 1), bbM, "bill");
+                var bb = Part(root.transform, PrimitiveType.Quad, new Vector3(0, h + 1.4f, -d / 2f - 0.06f), new Vector3(Mathf.Min(w * 0.7f, 4f), 2.4f, 1), bbM, "bill");
                 bb.transform.localRotation = Quaternion.Euler(0, 180, 0);
-                Part(root.transform, PrimitiveType.Cube, new Vector3(0, h + 0.45f, -d / 2f + 0.1f), new Vector3(0.15f, 1.2f, 0.15f), Fx.Mat(C(0x8A, 0x93, 0xA6)), "pole");
+                Part(root.transform, PrimitiveType.Cube, new Vector3(0, h + 0.5f, -d / 2f + 0.1f), new Vector3(0.15f, 1.4f, 0.15f), Fx.Mat(C(0x8A, 0x93, 0xA6)), "pole");
             }
             return root;
         }
@@ -247,33 +275,43 @@ namespace DummySurfer
         }
 
         // ================================================= TRACK CHUNK
+        public const float TrackW = 8.4f;
+
         public static GameObject TrackChunk(float len)
         {
             var root = new GameObject("chunk");
-            var trackM = TexMat(Fx.TexTrack(), 10.6f / 4f, len / 4f, false);
-            var gravel = Part(root.transform, PrimitiveType.Cube, new Vector3(0, -0.06f, 0), new Vector3(10.6f, 0.12f, len), trackM, "gravel", true);
-            gravel.layer = Fx.LGround;
 
-            var railM = Fx.Mat(C(0x77, 0x7D, 0x88));
-            for (int l = -1; l <= 1; l++)
+            // ballast bed — texture IS the rails + sleepers (1:1 map, no repeat-x)
+            var trackM = TexMat(Fx.TexTrack(), 1f, len / 3.2f, false);
+            var bed = Part(root.transform, PrimitiveType.Cube, new Vector3(0, -0.05f, 0), new Vector3(TrackW, 0.1f, len), trackM, "bed", true);
+            bed.layer = Fx.LGround;
+
+            // raised concrete curbs at bed edges
+            var curbM = Fx.Mat(C(0xCF, 0xD4, 0xDA));
+            Part(root.transform, PrimitiveType.Cube, new Vector3(-TrackW / 2f + 0.16f, 0.09f, 0), new Vector3(0.32f, 0.38f, len), curbM, "curbL");
+            Part(root.transform, PrimitiveType.Cube, new Vector3(TrackW / 2f - 0.16f, 0.09f, 0), new Vector3(0.32f, 0.38f, len), curbM, "curbR");
+
+            // graffiti walls (close, SS-tunnel feel)
+            var wallM = Fx.Mat(C(0xC3, 0xC9, 0xD4));
+            var grafM = TexMat(Fx.TexGraffiti(C(0xC3, 0xC9, 0xD4), 9), 3f, 1f, false);
+            for (int s = 0; s < 2; s++)
             {
-                float lx = l * PlayerController.LaneW;
-                Part(root.transform, PrimitiveType.Cube, new Vector3(lx - 0.72f, 0.08f, 0), new Vector3(0.09f, 0.13f, len), railM, "rail");
-                Part(root.transform, PrimitiveType.Cube, new Vector3(lx + 0.72f, 0.08f, 0), new Vector3(0.09f, 0.13f, len), railM, "rail");
+                float sx = s == 0 ? -1f : 1f;
+                var wall = Part(root.transform, PrimitiveType.Cube, new Vector3(sx * 5.15f, 1.3f, 0), new Vector3(0.4f, 2.6f, len), wallM, "wall" + s);
+                var q = Part(root.transform, PrimitiveType.Quad, new Vector3(sx * 4.93f, 1.25f, 0), new Vector3(len, 2.2f, 1), grafM, "graf" + s);
+                q.transform.localRotation = Quaternion.Euler(0, sx > 0 ? -90f : 90f, 0);
+                // wall cap
+                Part(root.transform, PrimitiveType.Cube, new Vector3(sx * 5.15f, 2.68f, 0), new Vector3(0.56f, 0.16f, len), Fx.Mat(C(0x8E, 0x97, 0xA6)), "cap" + s);
             }
 
+            // grass + walkway beyond walls
             var grassM = Fx.Mat(C(0x7E, 0xC8, 0x50));
-            var grassM2 = Fx.Mat(C(0x6C, 0xB8, 0x44));
-            Part(root.transform, PrimitiveType.Cube, new Vector3(-7.15f, -0.10f, 0), new Vector3(3.7f, 0.1f, len), grassM, "grassL");
-            Part(root.transform, PrimitiveType.Cube, new Vector3(7.15f, -0.10f, 0), new Vector3(3.7f, 0.1f, len), grassM2, "grassR");
-
-            var sideM = Fx.Mat(C(0xB9, 0xBF, 0xC9));
-            Part(root.transform, PrimitiveType.Cube, new Vector3(-9.8f, -0.06f, 0), new Vector3(2.6f, 0.14f, len), sideM, "walkL");
-            Part(root.transform, PrimitiveType.Cube, new Vector3(9.8f, -0.06f, 0), new Vector3(2.6f, 0.14f, len), sideM, "walkR");
-
-            var wallM = Fx.Mat(C(0xC9, 0xCF, 0xDA));
-            Part(root.transform, PrimitiveType.Cube, new Vector3(-9.0f, 1.15f, 0), new Vector3(0.5f, 2.3f, len), wallM, "wallL");
-            Part(root.transform, PrimitiveType.Cube, new Vector3(9.0f, 1.15f, 0), new Vector3(0.5f, 2.3f, len), wallM, "wallR");
+            var grassM2 = Fx.Mat(C(0x6F, 0xBA, 0x46));
+            Part(root.transform, PrimitiveType.Cube, new Vector3(-7.6f, -0.09f, 0), new Vector3(4.2f, 0.1f, len), grassM, "grassL");
+            Part(root.transform, PrimitiveType.Cube, new Vector3(7.6f, -0.09f, 0), new Vector3(4.2f, 0.1f, len), grassM2, "grassR");
+            var walkM = Fx.Mat(C(0xC9, 0xCE, 0xD6));
+            Part(root.transform, PrimitiveType.Cube, new Vector3(-10.4f, -0.05f, 0), new Vector3(2.4f, 0.12f, len), walkM, "walkL");
+            Part(root.transform, PrimitiveType.Cube, new Vector3(10.4f, -0.05f, 0), new Vector3(2.4f, 0.12f, len), walkM, "walkR");
 
             return root;
         }
