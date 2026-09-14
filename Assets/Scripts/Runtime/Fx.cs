@@ -559,7 +559,7 @@ namespace DummySurfer
                     if (n < 5) ao *= 1.10f;
                     else if (n > 204) ao *= 0.90f;
 
-                    c = Color32.Lerp(Color32.black, c, ao);
+                    c = Color32.Lerp(new Color32(0, 0, 0, 255), c, ao);
                     px[y * w + x] = c;
                 }
             Blit(t, px);
@@ -659,7 +659,7 @@ namespace DummySurfer
                 for (int x = 0; x < w; x++)
                 {
                     var c0 = px[y * w + x];
-                    px[y * w + x] = Color32.Lerp(Color32.black, c0, ao);
+                    px[y * w + x] = Color32.Lerp(new Color32(0, 0, 0, 255), c0, ao);
                 }
             }
             Blit(t, px);
@@ -722,7 +722,7 @@ namespace DummySurfer
                 for (int x = 0; x < w; x++)
                 {
                     var c0 = px[y * w + x];
-                    px[y * w + x] = Color32.Lerp(Color32.black, c0, ao);
+                    px[y * w + x] = Color32.Lerp(new Color32(0, 0, 0, 255), c0, ao);
                 }
             }
             Blit(t, px);
