@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text;
 using UnityEditor;
+using UnityEditor.Build.Reporting;
 using UnityEngine;
 
 namespace DummySurfer.EditorTools
@@ -64,7 +65,7 @@ namespace DummySurfer.EditorTools
                 var sp = layers.GetArrayElementAtIndex(idx);
                 if (string.IsNullOrEmpty(sp.stringValue)) sp.stringValue = want[i];
             }
-            so.ApplyModifiedPropertiesUncomitted();
+            so.ApplyModifiedPropertiesWithoutUndo();
             AssetDatabase.SaveAssets();
         }
 
