@@ -1,19 +1,14 @@
-using System;
 using System.IO;
-using System.Linq;
 using System.Text;
 using UnityEditor;
-using UnityEditor.Build.Reporting;
 using UnityEngine;
 
 namespace DummySurfer.EditorTools
 {
     /// <summary>
-    /// Batch-mode entry point for CI (GitHub Actions / GameCI docker runners).
-    /// Mirrors DummySurferSetupWizard.SetupEverything() but contains zero
-    /// interactive dialogs / progress bars so it can run headless with
-    ///   unity-editor -batchmode -nographics -quit
-    ///     -executeMethod DummySurfer.EditorTools.CiEntryPoint.PrepareCiBuild
+    /// Batch-mode entry point for CI. The game is 100% procedural, so preparation is light:
+    /// folders, URP, Android settings, physics layers, and "anchor" materials that force the
+    /// shaders we need (URP Lit + unlit family) into the build so they survive stripping.
     /// </summary>
     public static class CiEntryPoint
     {
@@ -26,60 +21,123 @@ namespace DummySurfer.EditorTools
             log.AppendLine("[CiEntryPoint] OK  — folders ensured.");
 
             ProjectConfigurator.ConfigureUrp();
-            log.AppendLine("[CiEntryPoint] OK  — URP assets + quality tiers configured.");
+            log.AppendLine("[CiEntryPoint] OK  — URP configured.");
 
             ProjectConfigurator.ConfigureAndroid();
-            log.AppendLine("[CiEntryPoint] OK  — Android player settings configured.");
+            log.AppendLine("[CiEntryPoint] OK  — Android player settings configured (portrait, IL2CPP, ARM64, input=Both).");
 
-            AssetFactory.CreateAll();
-            log.AppendLine("[CiEntryPoint] OK  — tuning data assets created.");
+            EnsureLayers();
+            log.AppendLine("[CiEntryPoint] OK  — physics layers ensured (8 Ground, 9 Train, 10 Obstacle, 11 Coin, 12 Power).");
 
-            AssetFactory.BuildRunnerPrefab();
-            log.AppendLine("[CiEntryPoint] OK  — network runner prefab built.");
+            CreateAnchorMaterials();
+            log.AppendLine("[CiEntryPoint] OK  — shader anchor materials created in Resources.");
 
             SceneBuilder.BuildAll();
-            log.AppendLine("[CiEntryPoint] OK  — scenes generated + build settings set.");
+            log.AppendLine("[CiEntryPoint] OK  — Main scene generated + build settings set.");
 
             AssetDatabase.Refresh();
             AssetDatabase.SaveAssets();
 
-            log.AppendLine(ValidationReport.RunAndCollect());
-            Debug.Log(log.ToString());
-
-            // Fail the CI step loudly if the scene list is still empty.
             if (EditorBuildSettings.scenes == null || EditorBuildSettings.scenes.Length == 0)
             {
                 Debug.LogError("[CiEntryPoint] FATAL — no scenes in EditorBuildSettings after BuildAll().");
                 EditorApplication.Exit(2);
+                return;
             }
 
+            Debug.Log(log.ToString());
             EditorApplication.Exit(0);
         }
 
-        /// <summary>
-        /// Headless Android APK build used by CI. Assumes PrepareCiBuild ran
-        /// earlier in the same container (scenes exist in EditorBuildSettings).
-        /// Signing: uses a CI keystore passed via environment variables when
-        /// provided, otherwise falls back to Unity's default debug keystore.
-        /// </summary>
+        // ------------------------------------------------------- layers
+        static void EnsureLayers()
+        {
+            var assets = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset");
+            if (assets == null || assets.Length == 0) return;
+            var so = new SerializedObject(assets[0]);
+            var layers = so.FindProperty("layers");
+            string[] want = { "Ground", "Train", "Obstacle", "Coin", "Power" };
+            for (int i = 0; i < want.Length; i++)
+            {
+                int idx = 8 + i;
+                if (idx >= layers.arraySize) continue;
+                var sp = layers.GetArrayElementAtIndex(idx);
+                if (string.IsNullOrEmpty(sp.stringValue)) sp.stringValue = want[i];
+            }
+            so.ApplyModifiedPropertiesUncomitted();
+            AssetDatabase.SaveAssets();
+        }
+
+        // ------------------------------------------------------- shader anchors
+        static Shader FindUrpLit()
+        {
+            var s = AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.unity.render-pipelines.universal/Shaders/Lit.shader");
+            if (s != null) return s;
+            try
+            {
+                var guids = AssetDatabase.FindAssets("Lit", new[] { "Packages/com.unity.render-pipelines.universal/Shaders" });
+                foreach (var g in guids)
+                {
+                    var p = AssetDatabase.GUIDToAssetPath(g);
+                    if (p != null && p.EndsWith("/Lit.shader"))
+                    {
+                        var sh = AssetDatabase.LoadAssetAtPath<Shader>(p);
+                        if (sh != null) return sh;
+                    }
+                }
+            }
+            catch { }
+            try
+            {
+                var rp = UnityEngine.Rendering.GraphicsSettings.defaultRenderPipeline;
+                if (rp != null && rp.defaultShader != null) return rp.defaultShader;
+            }
+            catch { }
+            return null;
+        }
+
+        static void CreateAnchorMaterials()
+        {
+            Directory.CreateDirectory("Assets/Resources/Mats");
+
+            SaveMat("Assets/Resources/Mats/anchor_lit.mat", FindUrpLit() ?? Shader.Find("Unlit/Texture"));
+            SaveMat("Assets/Resources/Mats/anchor_unlitcolor.mat", Shader.Find("Unlit/Color"));
+            SaveMat("Assets/Resources/Mats/anchor_unlittex.mat", Shader.Find("Unlit/Texture"));
+            SaveMat("Assets/Resources/Mats/anchor_unlitalpha.mat", Shader.Find("Unlit/Transparent"));
+            AssetDatabase.SaveAssets();
+        }
+
+        static void SaveMat(string path, Shader shader)
+        {
+            if (shader == null)
+            {
+                Debug.LogWarning("[CiEntryPoint] Could not resolve shader for " + path);
+                return;
+            }
+            AssetDatabase.DeleteAsset(path);
+            var m = new Material(shader);
+            AssetDatabase.CreateAsset(m, path);
+            Debug.Log("[CiEntryPoint] anchor material " + path + " → shader " + shader.name);
+        }
+
+        // ------------------------------------------------------- APK build
         public static void BuildAndroid()
         {
             EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.Android);
             EditorUserBuildSettings.androidBuildSystem = AndroidBuildSystem.Gradle;
-            EditorUserBuildSettings.buildAppBundle = false;          // APK, not .aab
+            EditorUserBuildSettings.buildAppBundle = false;
             EditorUserBuildSettings.exportAsGoogleAndroidProject = false;
 
-            // Optional CI signing keystore (mounted inside the container).
-            var ksPath = Environment.GetEnvironmentVariable("CI_KEYSTORE_PATH");
+            var ksPath = System.Environment.GetEnvironmentVariable("CI_KEYSTORE_PATH");
             if (!string.IsNullOrEmpty(ksPath) && File.Exists(ksPath))
             {
                 PlayerSettings.Android.keystoreName = ksPath;
                 PlayerSettings.Android.keystorePass =
-                    Environment.GetEnvironmentVariable("CI_KEYSTORE_PASS") ?? string.Empty;
+                    System.Environment.GetEnvironmentVariable("CI_KEYSTORE_PASS") ?? string.Empty;
                 PlayerSettings.Android.keyaliasName =
-                    Environment.GetEnvironmentVariable("CI_KEYALIAS_NAME") ?? string.Empty;
+                    System.Environment.GetEnvironmentVariable("CI_KEYALIAS_NAME") ?? string.Empty;
                 PlayerSettings.Android.keyaliasPass =
-                    Environment.GetEnvironmentVariable("CI_KEYALIAS_PASS") ?? string.Empty;
+                    System.Environment.GetEnvironmentVariable("CI_KEYALIAS_PASS") ?? string.Empty;
                 Debug.Log("[CiEntryPoint] Signing with CI keystore: " + ksPath);
             }
             else
@@ -87,23 +145,21 @@ namespace DummySurfer.EditorTools
                 Debug.LogWarning("[CiEntryPoint] No CI keystore env found — using Unity default debug keystore.");
             }
 
-            var scenes = EditorBuildSettings.scenes
-                .Where(s => s.enabled)
-                .Select(s => s.path)
-                .ToArray();
-
-            if (scenes.Length == 0)
+            var scenes = EditorBuildSettings.scenes;
+            if (scenes == null || scenes.Length == 0)
             {
-                Debug.LogError("[CiEntryPoint] FATAL — no enabled scenes in EditorBuildSettings. Run PrepareCiBuild first.");
+                Debug.LogError("[CiEntryPoint] FATAL — no scenes. Run PrepareCiBuild first.");
                 EditorApplication.Exit(2);
                 return;
             }
 
-            Debug.Log("[CiEntryPoint] Building scenes: " + string.Join(", ", scenes));
+            var paths = new string[scenes.Length];
+            for (int i = 0; i < scenes.Length; i++) paths[i] = scenes[i].path;
+            Debug.Log("[CiEntryPoint] Building scenes: " + string.Join(", ", paths));
 
             var options = new BuildPlayerOptions
             {
-                scenes = scenes,
+                scenes = paths,
                 locationPathName = "build/Android/DummySurfers.apk",
                 target = BuildTarget.Android,
                 options = BuildOptions.None
@@ -115,7 +171,7 @@ namespace DummySurfer.EditorTools
             if (summary.result != BuildResult.Succeeded)
             {
                 Debug.LogError("[CiEntryPoint] FATAL — Android build failed: result=" + summary.result +
-                               " errors=" + summary.totalErrors + " warnings=" + summary.totalWarnings);
+                               " errors=" + summary.totalErrors);
                 EditorApplication.Exit(2);
                 return;
             }

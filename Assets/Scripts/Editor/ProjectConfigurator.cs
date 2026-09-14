@@ -5,16 +5,14 @@ using UnityEngine.Rendering;
 
 namespace DummySurfer.EditorTools
 {
-    /// <summary>Folder layout + render pipeline + Android player settings (spec 5.1, 8, 10).</summary>
+    /// <summary>Folder layout + render pipeline + Android player settings.</summary>
     public static class ProjectConfigurator
     {
         public static void EnsureFolders()
         {
             string[] folders =
             {
-                "Assets/Scenes", "Assets/Prefabs", "Assets/ScriptableObjects",
-                "Assets/ScriptableObjects/Resources", "Assets/ScriptableObjects/Resources/Config",
-                "Assets/ScriptableObjects/Resources/Characters", "Assets/Resources"
+                "Assets/Scenes", "Assets/Resources", "Assets/Resources/Mats", "Assets/Settings"
             };
             foreach (var f in folders)
                 if (!Directory.Exists(f))
@@ -35,8 +33,7 @@ namespace DummySurfer.EditorTools
                 var rendererData = ScriptableObject.CreateInstance<UnityEngine.Rendering.Universal.UniversalRendererData>();
                 if (rendererData == null)
                 {
-                    Warn("URP types not found — project will run on the Built-in Render Pipeline. " +
-                         "Gameplay is unaffected; assign a URP asset manually later for the intended look.");
+                    Warn("URP types not found — project will run on the Built-in Render Pipeline.");
                     return;
                 }
 
@@ -45,14 +42,13 @@ namespace DummySurfer.EditorTools
 
                 if (pipeline == null)
                 {
-                    Warn("Could not create the URP asset via API — assign one manually (docs/SETUP_GUIDE.md).");
+                    Warn("Could not create the URP asset via API.");
                     return;
                 }
 
                 AssetDatabase.CreateAsset(pipeline, "Assets/Settings/DS-Mobile-Pipeline.asset");
 
-                // Mobile-friendly defaults (spec 10 PERFORMANCE)
-                SetProp(pipeline, "shadowDistance", 45f);
+                SetProp(pipeline, "shadowDistance", 50f);
                 SetProp(pipeline, "msaaSampleCount", 2);
                 SetProp(pipeline, "renderScale", 1f);
                 SetProp(pipeline, "supportsHDR", false);
@@ -62,7 +58,7 @@ namespace DummySurfer.EditorTools
             }
             catch (System.Exception e)
             {
-                Warn("URP setup skipped (" + e.Message + "). The game still runs on Built-in RP.");
+                Warn("URP setup skipped (" + e.Message + ").");
             }
         }
 
@@ -81,31 +77,30 @@ namespace DummySurfer.EditorTools
             PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
             PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel24;
-            PlayerSettings.Android.forceInternetPermission = true;   // Relay requires internet
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
             PlayerSettings.allowedAutorotateToPortrait = true;
             PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
             PlayerSettings.allowedAutorotateToLandscapeLeft = false;
             PlayerSettings.allowedAutorotateToLandscapeRight = false;
 
-            // Active Input Handling → Input System Package (new). Internal API; best effort.
+            // Active Input Handling → BOTH (legacy Input + Input System).
+            // The game uses the legacy touch/mouse/keyboard API; "Both" keeps
+            // uGUI StandaloneInputModule + swipes working everywhere.
             try
             {
                 var prop = typeof(PlayerSettings).GetProperty("activeInputHandler",
                     System.Reflection.BindingFlags.Public |
                     System.Reflection.BindingFlags.NonPublic |
                     System.Reflection.BindingFlags.Static);
-                if (prop != null && (int)prop.GetValue(null) != 1)
+                if (prop != null && (int)prop.GetValue(null) != 2)
                 {
-                    prop.SetValue(null, 1);
-                    Debug.Log("[DummySurfer] Active Input Handling set to 'Input System Package'. " +
-                              "If prompted, restart the editor for it to take effect.");
+                    prop.SetValue(null, 2);
+                    Debug.Log("[DummySurfer] Active Input Handling set to 'Both'.");
                 }
             }
             catch
             {
-                Debug.LogWarning("[DummySurfer] Set Player Settings > Other Settings > Active Input Handling " +
-                                 "to 'Input System Package (new)' manually.");
+                Debug.LogWarning("[DummySurfer] Could not set Active Input Handling automatically.");
             }
         }
 
