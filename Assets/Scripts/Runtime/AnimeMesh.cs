@@ -147,6 +147,8 @@ namespace DummySurfer
                         int a = b + i * (seg + 1) + j;
                         int bb = a + 1, c = a + seg + 1, d = c + 1;
                         bool asc = prof[rings - 1].x >= prof[0].x;
+                        // v5.2-preview-proven state: color surfaces render with Cull Off
+                        // (winding-proof), so keep this emission EXACTLY as verified.
                         if (asc)
                         {
                             tris.Add(a); tris.Add(bb); tris.Add(d);

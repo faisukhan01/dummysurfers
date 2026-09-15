@@ -115,8 +115,8 @@ namespace DummySurfer
                 b.Ball(mP, new Vector3(0f, 0.24f, -0.235f), new Vector3(0.235f, 0.26f, 0.13f), Quaternion.identity);
                 b.Ball(mPD, new Vector3(0f, 0.11f, -0.325f), new Vector3(0.15f, 0.10f, 0.05f), Quaternion.identity);
                 var st = Quaternion.Euler(-24f, 0f, 0f);
-                b.Ball(mPD, new Vector3(-0.14f, 0.43f, 0.02f), new Vector3(0.042f, 0.15f, 0.045f), st);
-                b.Ball(mPD, new Vector3(0.14f, 0.43f, 0.02f), new Vector3(0.042f, 0.15f, 0.045f), st);
+                b.Ball(mPD, new Vector3(-0.12f, 0.395f, 0f), new Vector3(0.035f, 0.115f, 0.04f), st);
+                b.Ball(mPD, new Vector3(0.12f, 0.395f, 0f), new Vector3(0.035f, 0.115f, 0.04f), st);
                 b.Done(rig.torso, "torsoGroup");
             }
 
@@ -178,8 +178,8 @@ namespace DummySurfer
                 b.Ball(mSk, new Vector3(-0.375f, 0.155f, 0.01f), new Vector3(0.045f, 0.062f, 0.045f), Quaternion.identity);
                 b.Ball(mSk, new Vector3(0.375f, 0.155f, 0.01f), new Vector3(0.045f, 0.062f, 0.045f), Quaternion.identity);
 
-                // hair — helmet shell hugging the skull, face opening at the front
-                b.Ball(mH, new Vector3(0f, 0.225f, -0.01f), new Vector3(0.43f, 0.415f, 0.43f), Quaternion.identity, 22, 150f, 380f, 152f);
+                // hair — helmet shell hugging the skull, WIDE face opening at the front
+                b.Ball(mH, new Vector3(0f, 0.235f, -0.01f), new Vector3(0.425f, 0.41f, 0.425f), Quaternion.identity, 22, 168f, 372f, 126f);
                 // spiky crown — hair escaping under the cap rim (Jake style)
                 for (int i = 0; i < 9; i++)
                 {
@@ -197,9 +197,9 @@ namespace DummySurfer
                     b.Spike(mH, new Vector3(Mathf.Cos(ra) * 0.355f, 0.12f, Mathf.Sin(ra) * 0.355f),
                             new Vector3(Mathf.Cos(ra) * 0.35f, -1f, Mathf.Sin(ra) * 0.35f), 0.115f, 0.034f);
                 }
-                // side tufts in front of the ears
-                b.Ball(mH, new Vector3(-0.345f, 0.19f, 0.10f), new Vector3(0.05f, 0.095f, 0.07f), Quaternion.identity);
-                b.Ball(mH, new Vector3(0.345f, 0.19f, 0.10f), new Vector3(0.05f, 0.095f, 0.07f), Quaternion.identity);
+                // side tufts in front of the ears (kept high so cheeks stay clear)
+                b.Ball(mH, new Vector3(-0.33f, 0.24f, 0.05f), new Vector3(0.045f, 0.085f, 0.06f), Quaternion.identity);
+                b.Ball(mH, new Vector3(0.33f, 0.24f, 0.05f), new Vector3(0.045f, 0.085f, 0.06f), Quaternion.identity);
 
                 // cap — dome over the hair, stiff brim, white front panel, button
                 b.Ball(mC, new Vector3(0f, 0.24f, -0.02f), new Vector3(0.455f, 0.40f, 0.445f), Quaternion.identity, 22, 0f, 360f, 70f);
@@ -207,14 +207,14 @@ namespace DummySurfer
                 b.Ball(mCW, new Vector3(0f, 0.40f, 0.385f), new Vector3(0.135f, 0.095f, 0.05f), Quaternion.Euler(-20f, 0f, 0f));
                 b.Ball(mCD, new Vector3(0f, 0.645f, -0.02f), new Vector3(0.042f, 0.042f, 0.042f), Quaternion.identity);
 
-                // brows, nose, open smile with tooth, blush
-                b.Ball(mBr, new Vector3(-0.15f, 0.29f, 0.345f), new Vector3(0.095f, 0.024f, 0.028f), Quaternion.Euler(0f, 10f, 8f));
-                b.Ball(mBr, new Vector3(0.15f, 0.29f, 0.345f), new Vector3(0.095f, 0.024f, 0.028f), Quaternion.Euler(0f, -10f, -8f));
-                b.Ball(mN, new Vector3(0f, 0.13f, 0.40f), new Vector3(0.03f, 0.022f, 0.024f), Quaternion.identity);
-                b.Ball(mM, new Vector3(0f, 0.02f, 0.385f), new Vector3(0.068f, 0.042f, 0.022f), Quaternion.identity);
-                b.Ball(mW, new Vector3(0f, 0.042f, 0.392f), new Vector3(0.038f, 0.014f, 0.012f), Quaternion.identity);
-                b.Ball(mB, new Vector3(-0.225f, 0.075f, 0.315f), new Vector3(0.068f, 0.036f, 0.014f), Quaternion.Euler(0f, 38f, 0f));
-                b.Ball(mB, new Vector3(0.225f, 0.075f, 0.315f), new Vector3(0.068f, 0.036f, 0.014f), Quaternion.Euler(0f, -38f, 0f));
+                // brows, nose, smile with tooth, blush
+                b.Ball(mBr, new Vector3(-0.165f, 0.30f, 0.345f), new Vector3(0.09f, 0.024f, 0.028f), Quaternion.Euler(0f, 10f, 8f));
+                b.Ball(mBr, new Vector3(0.165f, 0.30f, 0.345f), new Vector3(0.09f, 0.024f, 0.028f), Quaternion.Euler(0f, -10f, -8f));
+                b.Ball(mN, new Vector3(0f, 0.145f, 0.40f), new Vector3(0.032f, 0.024f, 0.026f), Quaternion.identity);
+                b.Ball(mM, new Vector3(0f, 0.075f, 0.39f), new Vector3(0.05f, 0.032f, 0.02f), Quaternion.identity);
+                b.Ball(mW, new Vector3(0f, 0.092f, 0.397f), new Vector3(0.032f, 0.012f, 0.01f), Quaternion.identity);
+                b.Ball(mB, new Vector3(-0.255f, 0.045f, 0.30f), new Vector3(0.052f, 0.028f, 0.012f), Quaternion.Euler(0f, 38f, 0f));
+                b.Ball(mB, new Vector3(0.255f, 0.045f, 0.30f), new Vector3(0.052f, 0.028f, 0.012f), Quaternion.Euler(0f, -38f, 0f));
                 b.Done(rig.head, "headGroup");
 
                 // eyes — separate groups so they can blink (scale Y)
@@ -223,7 +223,7 @@ namespace DummySurfer
                 for (int s = 0; s < 2; s++)
                 {
                     float sx = s == 0 ? -1f : 1f;
-                    var eg = Pivot(rig.head, "eyeGrp" + s, new Vector3(sx * 0.15f, 0.185f, 0.345f));
+                    var eg = Pivot(rig.head, "eyeGrp" + s, new Vector3(sx * 0.165f, 0.185f, 0.345f));
                     eg.localRotation = Quaternion.Euler(0f, sx * 6f, 0f);
                     var be = new AnimeMesh.Build(0f); be.cullBack = true; // winding probe: eyes keep default culling
                     int mWh = be.Mat(capW), mIr = be.Mat(iris), mPu = be.Mat(pupil);
