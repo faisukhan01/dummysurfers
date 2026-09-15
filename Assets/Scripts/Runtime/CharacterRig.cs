@@ -72,7 +72,7 @@ namespace DummySurfer
                 if (s == 0) rig.legL = hip; else rig.legR = hip;
 
                 // thigh (jeans, continuous lathe)
-                var bT = new AnimeMesh.Build(0.012f);
+                var bT = new AnimeMesh.Build(0f);
                 int mJ = bT.Mat(jeans);
                 bT.Rev(mJ, Vector3.zero, Quaternion.identity, new Vector3(1f, 1f, 0.88f),
                        new[] { new Vector2(0.05f, 0.128f), new Vector2(-0.08f, 0.121f), new Vector2(-0.20f, 0.104f), new Vector2(-0.30f, 0.098f) });
@@ -81,7 +81,7 @@ namespace DummySurfer
                 // shin + rolled cuff + chunky sneaker (bend with the knee)
                 var knee = Pivot(hip, "knee", new Vector3(0f, -0.26f, 0f));
                 if (s == 0) rig.kneeL = knee; else rig.kneeR = knee;
-                var bS = new AnimeMesh.Build(0.011f);
+                var bS = new AnimeMesh.Build(0f);
                 int mJ2 = bS.Mat(jeans), mC = bS.Mat(cuff), mR = bS.Mat(shoeR), mW = bS.Mat(shoeW);
                 bS.Ball(mJ2, new Vector3(0f, 0.005f, 0f), new Vector3(0.096f, 0.096f, 0.088f), Quaternion.identity);
                 bS.Rev(mJ2, Vector3.zero, Quaternion.identity, new Vector3(1f, 1f, 0.88f),
@@ -99,7 +99,7 @@ namespace DummySurfer
             // ============================ TORSO (tee over jeans + backpack)
             rig.torso = Pivot(rig.body, "torso", new Vector3(0f, 0.75f, 0f));
             {
-                var b = new AnimeMesh.Build(0.013f);
+                var b = new AnimeMesh.Build(0f);
                 int mJ = b.Mat(jeans), mT = b.Mat(tee), mS = b.Mat(skin), mP = b.Mat(pack), mPD = b.Mat(packD);
                 // pelvis bridge between the thigh tops
                 b.Ball(mJ, new Vector3(0f, -0.07f, 0f), new Vector3(0.155f, 0.115f, 0.135f), Quaternion.identity);
@@ -130,7 +130,7 @@ namespace DummySurfer
                 if (s == 0) rig.armL = sh; else rig.armR = sh;
 
                 // raglan blue sleeve + white shoulder cap
-                var bU = new AnimeMesh.Build(0.011f);
+                var bU = new AnimeMesh.Build(0f);
                 int mSl = bU.Mat(slv), mSd = bU.Mat(slvD);
                 bU.Ball(mSl, new Vector3(-sx * 0.02f, 0.005f, 0f), new Vector3(0.105f, 0.105f, 0.10f), Quaternion.identity);
                 bU.Rev(mSl, Vector3.zero, Quaternion.identity, new Vector3(1f, 1f, 0.92f),
@@ -141,7 +141,7 @@ namespace DummySurfer
 
                 var elb = Pivot(sh, "elbow", new Vector3(0f, -0.205f, 0f));
                 if (s == 0) rig.elbL = elb; else rig.elbR = elb;
-                var bF = new AnimeMesh.Build(0.009f);
+                var bF = new AnimeMesh.Build(0f);
                 int mSk = bF.Mat(skin);
                 bF.Ball(mSk, new Vector3(0f, 0.005f, 0f), new Vector3(0.078f, 0.078f, 0.074f), Quaternion.identity);
                 bF.Rev(mSk, Vector3.zero, Quaternion.identity, new Vector3(1f, 1f, 0.92f),
@@ -154,7 +154,7 @@ namespace DummySurfer
             // spray can in the right hand (menu poses only)
             rig.bag = Pivot(rig.elbR, "bag", Vector3.zero);
             {
-                var b = new AnimeMesh.Build(0.006f);
+                var b = new AnimeMesh.Build(0f);
                 int mP = b.Mat(pack), mW = b.Mat(shoeW), mD = b.Mat(pupil);
                 b.Rev(mP, new Vector3(0f, -0.26f, 0.05f), Quaternion.identity, Vector3.one,
                       new[] { new Vector2(-0.07f, 0.070f), new Vector2(0f, 0.078f), new Vector2(0.07f, 0.070f) });
@@ -167,7 +167,7 @@ namespace DummySurfer
             // ============================ HEAD (the hero — huge chibi head)
             rig.head = Pivot(rig.body, "head", new Vector3(0f, 1.37f, 0f));
             {
-                var b = new AnimeMesh.Build(0.012f);
+                var b = new AnimeMesh.Build(0f);
                 int mSk = b.Mat(skin), mH = b.Mat(hair), mC = b.Mat(capR), mCD = b.Mat(capD), mCW = b.Mat(capW);
                 int mN = b.Mat(nose), mBr = b.Mat(brow), mM = b.Mat(mouth), mB = b.Mat(blush), mW = b.Mat(capW);
 
@@ -225,7 +225,7 @@ namespace DummySurfer
                     float sx = s == 0 ? -1f : 1f;
                     var eg = Pivot(rig.head, "eyeGrp" + s, new Vector3(sx * 0.15f, 0.185f, 0.345f));
                     eg.localRotation = Quaternion.Euler(0f, sx * 6f, 0f);
-                    var be = new AnimeMesh.Build(0.006f);
+                    var be = new AnimeMesh.Build(0f); be.cullBack = true; // winding probe: eyes keep default culling
                     int mWh = be.Mat(capW), mIr = be.Mat(iris), mPu = be.Mat(pupil);
                     be.Ball(mWh, Vector3.zero, new Vector3(0.10f, 0.125f, 0.05f), Quaternion.identity);
                     be.Ball(mIr, new Vector3(0f, -0.005f, 0.028f), new Vector3(0.075f, 0.10f, 0.026f), Quaternion.identity);
@@ -244,7 +244,7 @@ namespace DummySurfer
             // ============================ hoverboard (hidden by default)
             rig.board = Pivot(root.transform, "board", new Vector3(0f, 0.10f, 0f));
             {
-                var b = new AnimeMesh.Build(0.010f);
+                var b = new AnimeMesh.Build(0f);
                 int mC = b.Mat(capR), mP = b.Mat(pack);
                 b.Ball(mC, Vector3.zero, new Vector3(0.47f, 0.05f, 0.24f), Quaternion.identity, 20);
                 b.Ball(mP, new Vector3(0f, 0.006f, 0f), new Vector3(0.405f, 0.05f, 0.215f), Quaternion.identity, 20);
@@ -255,7 +255,7 @@ namespace DummySurfer
             // ============================ jetpack (hidden by default)
             rig.jet = Pivot(rig.body, "jet", Vector3.zero);
             {
-                var b = new AnimeMesh.Build(0.012f);
+                var b = new AnimeMesh.Build(0f);
                 int mP = b.Mat(pack), mPD = b.Mat(packD);
                 var prof = new[] { new Vector2(-0.17f, 0.02f), new Vector2(-0.14f, 0.11f), new Vector2(0.0f, 0.13f), new Vector2(0.14f, 0.11f), new Vector2(0.17f, 0.02f) };
                 b.Rev(mP, new Vector3(-0.17f, 1.24f, -0.28f), Quaternion.identity, Vector3.one, prof, 16);
@@ -314,7 +314,7 @@ namespace DummySurfer
                 string side = s == 0 ? "L" : "R";
                 var hip = Pivot(rig.body, "leg" + (s == 0 ? "L" : "R"), new Vector3(sx * 0.17f, 0.82f, 0f));
                 if (s == 0) rig.legL = hip; else rig.legR = hip;
-                var bT = new AnimeMesh.Build(0.012f);
+                var bT = new AnimeMesh.Build(0f);
                 int mP = bT.Mat(pants), mB = bT.Mat(boots), mD = bT.Mat(dark);
                 bT.Rev(mP, Vector3.zero, Quaternion.identity, new Vector3(1f, 1f, 0.9f),
                        new[] { new Vector2(0.06f, 0.16f), new Vector2(-0.14f, 0.15f), new Vector2(-0.26f, 0.142f) });
@@ -326,7 +326,7 @@ namespace DummySurfer
             // torso — big belly, jacket, belt, badge
             rig.torso = Pivot(rig.body, "torso", new Vector3(0f, 0.82f, 0f));
             {
-                var b = new AnimeMesh.Build(0.014f);
+                var b = new AnimeMesh.Build(0f);
                 int mJ = b.Mat(jacket), mP = b.Mat(pants), mD = b.Mat(dark), mG = b.Mat(gold);
                 b.Ball(mP, new Vector3(0f, -0.12f, 0f), new Vector3(0.30f, 0.15f, 0.28f), Quaternion.identity);
                 b.Ball(mJ, new Vector3(0f, 0.24f, 0f), new Vector3(0.42f, 0.40f, 0.40f), Quaternion.identity);
@@ -344,7 +344,7 @@ namespace DummySurfer
                 string side = s == 0 ? "L" : "R";
                 var sh = Pivot(rig.body, "arm" + (s == 0 ? "L" : "R"), new Vector3(sx * 0.40f, 1.36f, 0f));
                 if (s == 0) rig.armL = sh; else rig.armR = sh;
-                var bU = new AnimeMesh.Build(0.011f);
+                var bU = new AnimeMesh.Build(0f);
                 int mJ = bU.Mat(jacket);
                 bU.Ball(mJ, Vector3.zero, new Vector3(0.15f, 0.15f, 0.14f), Quaternion.identity);
                 bU.Rev(mJ, Vector3.zero, Quaternion.identity, new Vector3(1f, 1f, 0.92f),
@@ -353,7 +353,7 @@ namespace DummySurfer
 
                 var elb = Pivot(sh, "elbow", new Vector3(0f, -0.30f, 0f));
                 if (s == 0) rig.elbL = elb; else rig.elbR = elb;
-                var bF = new AnimeMesh.Build(0.010f);
+                var bF = new AnimeMesh.Build(0f);
                 int mSk = bF.Mat(skin);
                 bF.Rev(mSk, Vector3.zero, Quaternion.identity, new Vector3(1f, 1f, 0.92f),
                        new[] { new Vector2(0.01f, 0.118f), new Vector2(-0.12f, 0.106f) });
@@ -372,7 +372,7 @@ namespace DummySurfer
             // head — round, mustache, blue cap
             rig.head = Pivot(rig.body, "head", new Vector3(0f, 1.50f, 0f));
             {
-                var b = new AnimeMesh.Build(0.012f);
+                var b = new AnimeMesh.Build(0f);
                 int mSk = b.Mat(skin), mN = b.Mat(nose), mW = b.Mat(white), mD = b.Mat(dark);
                 int mC = b.Mat(capB), mCD = b.Mat(capD), mGy = b.Mat(grey);
                 b.Ball(mSk, new Vector3(0f, 0.18f, 0.01f), new Vector3(0.44f, 0.42f, 0.42f), Quaternion.identity);
@@ -417,7 +417,7 @@ namespace DummySurfer
 
             rig.body = Pivot(root.transform, "body", Vector3.zero);
             {
-                var b = new AnimeMesh.Build(0.010f);
+                var b = new AnimeMesh.Build(0f);
                 int mF = b.Mat(fur), mFD = b.Mat(furD), mD = b.Mat(dark), mC = b.Mat(collar), mG = b.Mat(gold);
                 b.Ball(mF, new Vector3(0f, 0.42f, 0f), new Vector3(0.16f, 0.15f, 0.34f), Quaternion.identity);
                 b.Ball(mF, new Vector3(0f, 0.45f, 0.14f), new Vector3(0.16f, 0.15f, 0.18f), Quaternion.identity);
@@ -441,7 +441,7 @@ namespace DummySurfer
                 float sx = s == 0 ? -1f : 1f;
                 var leg = Pivot(rig.body, "leg" + s, new Vector3(sx * 0.09f, 0.34f, 0.22f));
                 if (s == 0) rig.legL = leg; else rig.legR = leg;
-                var b = new AnimeMesh.Build(0.008f);
+                var b = new AnimeMesh.Build(0f);
                 int mF = b.Mat(fur), mFD = b.Mat(furD);
                 b.Rev(mF, Vector3.zero, Quaternion.identity, Vector3.one,
                       new[] { new Vector2(0.02f, 0.075f), new Vector2(-0.14f, 0.066f) });
@@ -449,7 +449,7 @@ namespace DummySurfer
                 b.Done(leg, "fleg" + s);
 
                 var bl = Pivot(rig.body, "bleg" + s, new Vector3(sx * 0.09f, 0.34f, -0.22f));
-                var bb = new AnimeMesh.Build(0.008f);
+                var bb = new AnimeMesh.Build(0f);
                 int mF2 = bb.Mat(fur), mFD2 = bb.Mat(furD);
                 bb.Rev(mF2, Vector3.zero, Quaternion.identity, Vector3.one,
                        new[] { new Vector2(0.02f, 0.075f), new Vector2(-0.14f, 0.066f) });
@@ -459,7 +459,7 @@ namespace DummySurfer
 
             rig.tail = Pivot(rig.body, "tail", new Vector3(0f, 0.52f, -0.32f));
             {
-                var b = new AnimeMesh.Build(0.007f);
+                var b = new AnimeMesh.Build(0f);
                 b.Spike(b.Mat(fur), Vector3.zero, new Vector3(0f, 0.55f, -0.85f), 0.24f, 0.045f);
                 b.Done(rig.tail, "tail");
             }

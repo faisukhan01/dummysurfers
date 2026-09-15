@@ -82,7 +82,9 @@ namespace DummySurfer
         struct Vtx { public Vector3 p, n; public Vector2 uv; }
 
         /// <summary>Accumulates surface geometry into one mesh with one submesh per
-        /// material plus a trailing OUTLINE submesh (inverted hull).</summary>
+        /// material plus an optional trailing OUTLINE submesh (inverted hull).
+        /// Use outlineWidth &lt;= 0 to skip the hull; set cullBack = true to keep a
+        /// part on default back-face culling (winding probe / closed convex parts).</summary>
         public sealed class Build
         {
             readonly List<Vtx> v = new List<Vtx>(512);
@@ -91,6 +93,7 @@ namespace DummySurfer
             readonly List<Vtx> ov = new List<Vtx>(512);
             readonly List<int> ot = new List<int>();
             readonly float ink;
+            public bool cullBack;
 
             static readonly Vector3 L = new Vector3(0.42f, 0.80f, 0.43f).normalized;
 
@@ -134,7 +137,7 @@ namespace DummySurfer
                         var w = rot * pLocal + pos;
                         float ndl = Mathf.Clamp01(Vector3.Dot(nrm, L) * 0.5f + 0.5f);
                         v.Add(new Vtx { p = w, n = nrm, uv = new Vector2(ndl, i / (float)(rings - 1)) });
-                        ov.Add(new Vtx { p = w + nrm * ink, n = nrm, uv = new Vector2(0.5f, 0.5f) });
+                        if (ink > 0f) ov.Add(new Vtx { p = w + nrm * ink, n = nrm, uv = new Vector2(0.5f, 0.5f) });
                     }
                 }
                 for (int i = 0; i < rings - 1; i++)
@@ -143,26 +146,28 @@ namespace DummySurfer
                     {
                         int a = b + i * (seg + 1) + j;
                         int bb = a + 1, c = a + seg + 1, d = c + 1;
-                        // Unity shows the face whose vertices wind clockwise seen from
-                        // outside; that flips when the profile runs downward (Balls and
-                        // top-down limbs), so auto-detect the profile direction.
                         bool asc = prof[rings - 1].x >= prof[0].x;
                         if (asc)
                         {
                             tris.Add(a); tris.Add(bb); tris.Add(d);
                             tris.Add(a); tris.Add(d); tris.Add(c);
-                            // mirror quad on the outline hull, winding flipped
-                            int oa = a, ob = bb, oc = c, od = d;
-                            ot.Add(od); ot.Add(ob); ot.Add(oa);
-                            ot.Add(oc); ot.Add(od); ot.Add(oa);
+                            if (ink > 0f)
+                            {
+                                int oa = a, ob = bb, oc = c, od = d;
+                                ot.Add(od); ot.Add(ob); ot.Add(oa);
+                                ot.Add(oc); ot.Add(od); ot.Add(oa);
+                            }
                         }
                         else
                         {
                             tris.Add(a); tris.Add(d); tris.Add(bb);
                             tris.Add(a); tris.Add(c); tris.Add(d);
-                            int oa = a, ob = bb, oc = c, od = d;
-                            ot.Add(ob); ot.Add(od); ot.Add(oa);
-                            ot.Add(od); ot.Add(oc); ot.Add(oa);
+                            if (ink > 0f)
+                            {
+                                int oa = a, ob = bb, oc = c, od = d;
+                                ot.Add(ob); ot.Add(od); ot.Add(oa);
+                                ot.Add(od); ot.Add(oc); ot.Add(oa);
+                            }
                         }
                     }
                 }
@@ -203,24 +208,28 @@ namespace DummySurfer
             public GameObject Done(Transform parent, string name)
             {
                 if (mats.Count == 0) Mat(Shade(Color.white));
+                bool hull = ink > 0f;
 
-                var all = new List<Vector3>(v.Count + ov.Count);
-                var alln = new List<Vector3>(v.Count + ov.Count);
-                var allu = new List<Vector2>(v.Count + ov.Count);
+                var all = new List<Vector3>(v.Count + (hull ? ov.Count : 0));
+                var alln = new List<Vector3>(v.Count + (hull ? ov.Count : 0));
+                var allu = new List<Vector2>(v.Count + (hull ? ov.Count : 0));
                 foreach (var q in v) { all.Add(q.p); alln.Add(q.n); allu.Add(q.uv); }
                 int obase = all.Count;
-                foreach (var q in ov) { all.Add(q.p); alln.Add(q.n); allu.Add(q.uv); }
+                if (hull) foreach (var q in ov) { all.Add(q.p); alln.Add(q.n); allu.Add(q.uv); }
 
                 var mesh = new Mesh();
                 mesh.name = name + "_mesh";
                 mesh.SetVertices(all);
                 mesh.SetNormals(alln);
                 mesh.SetUVs(0, allu);
-                mesh.subMeshCount = slots.Count + 1;
+                mesh.subMeshCount = slots.Count + (hull ? 1 : 0);
                 for (int i = 0; i < slots.Count; i++) mesh.SetTriangles(slots[i], i, false);
-                var otris = new List<int>(ot.Count);
-                foreach (var idx in ot) otris.Add(idx + obase);
-                mesh.SetTriangles(otris, slots.Count, false);
+                if (hull)
+                {
+                    var otris = new List<int>(ot.Count);
+                    foreach (var idx in ot) otris.Add(idx + obase);
+                    mesh.SetTriangles(otris, slots.Count, false);
+                }
                 mesh.RecalculateBounds();
 
                 var go = new GameObject(name);
@@ -228,9 +237,23 @@ namespace DummySurfer
                 var mf = go.AddComponent<MeshFilter>();
                 mf.sharedMesh = mesh;
                 var mr = go.AddComponent<MeshRenderer>();
-                var marr = new Material[mats.Count + 1];
-                for (int i = 0; i < mats.Count; i++) marr[i] = mats[i];
-                marr[mats.Count] = Ink();
+                int extra = hull ? 1 : 0;
+                var marr = new Material[mats.Count + extra];
+                for (int i = 0; i < mats.Count; i++)
+                {
+                    Material use = mats[i];
+                    if (!cullBack)
+                    {
+                        // winding-proof visibility: render both sides on a private instance
+                        use = new Material(mats[i]);
+                        use.name = mats[i].name + "_nc";
+                        try { use.SetFloat("_Cull", (float)UnityEngine.Rendering.CullMode.Off); } catch { }
+                        try { use.SetInt("_Cull", 0); } catch { }
+                        try { use.SetFloat("_CullMode", 0f); } catch { }
+                    }
+                    marr[i] = use;
+                }
+                if (hull) marr[mats.Count] = Ink();
                 mr.sharedMaterials = marr;
                 mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 mr.receiveShadows = false;
