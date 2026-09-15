@@ -1,16 +1,24 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DummySurfer
 {
     /// <summary>Procedural chibi cartoon characters (boy runner, inspector, dog) + pose engine.
-    /// Boy: big head, backwards cap, cream hoodie, spray-tank backpack, chunky sneakers.
-    /// Articulated: hips, knees, shoulders, elbows — expressive SS-style run cycle.</summary>
+    /// Boy "v4": huge round head, red cap with forward brim, scalloped bowl-cut fringe,
+    /// big glossy eyes with highlights, blush, open smile with tooth — white tee under an
+    /// open denim vest, rolled-cuff jeans, chunky black/white sneakers, round orange backpack.
+    /// 100% smooth primitives (spheres / capsules / cylinders) — ZERO cubes, TV-cartoon look.
+    /// Articulated: hips, knees, shoulders, elbows — expressive SS-style run cycle with
+    /// squash & stretch, bounce, head bob and auto-blinking.</summary>
     public class CharacterRig : MonoBehaviour
     {
         public Transform body, head, armL, armR, legL, legR, torso, tail, board, jet, flameL, flameR, bag;
-        public Transform kneeL, kneeR, elbL, elbR;
+        public Transform kneeL, kneeR, elbL, elbR, handR;
         public string kind = "boy";
-        float blink;
+
+        Transform[] blinkers;          // eye ellipsoids (blink by scaling Y)
+        Vector3[] blinkBase;
+        Transform[] glints;            // eye highlights (hide while blinking)
 
         // ------------------------------------------------ builder utils
         static GameObject Part(Transform parent, PrimitiveType t, Vector3 pos, Vector3 scl, Material mat, string name)
@@ -28,6 +36,27 @@ namespace DummySurfer
             return go;
         }
 
+        static GameObject Sph(Transform parent, Vector3 pos, Vector3 scl, Material mat, string name, float rotX = 0f, float rotZ = 0f)
+        {
+            var go = Part(parent, PrimitiveType.Sphere, pos, scl, mat, name);
+            if (rotX != 0f || rotZ != 0f) go.transform.localRotation = Quaternion.Euler(rotX, 0f, rotZ);
+            return go;
+        }
+
+        static GameObject Cap(Transform parent, Vector3 pos, Vector3 scl, Material mat, string name, float rotX = 0f, float rotZ = 0f)
+        {
+            var go = Part(parent, PrimitiveType.Capsule, pos, scl, mat, name);
+            if (rotX != 0f || rotZ != 0f) go.transform.localRotation = Quaternion.Euler(rotX, 0f, rotZ);
+            return go;
+        }
+
+        static GameObject Cyl(Transform parent, Vector3 pos, Vector3 scl, Material mat, string name, float rotX = 0f)
+        {
+            var go = Part(parent, PrimitiveType.Cylinder, pos, scl, mat, name);
+            if (rotX != 0f) go.transform.localRotation = Quaternion.Euler(rotX, 0f, 0f);
+            return go;
+        }
+
         static Transform Pivot(Transform parent, string name, Vector3 pos)
         {
             var go = new GameObject(name);
@@ -38,7 +67,11 @@ namespace DummySurfer
 
         static Color GMC(int r, int g, int b) { return new Color32((byte)r, (byte)g, (byte)b, 255); }
 
-        // ------------------------------------------------ BOY
+        // gradient strengths tuned per material family (baked vertical shading)
+        static Material GMat(Color c, float top, float bot) { return Fx.ShadedMat(c, top, bot); }
+        static Material Flat(Color c) { return Fx.ShadedMat(c, 1f, 1f); }
+
+        // ------------------------------------------------ BOY (hero)
         public static CharacterRig BuildBoy(Transform parent)
         {
             var root = new GameObject("Boy");
@@ -46,143 +79,153 @@ namespace DummySurfer
             var rig = root.AddComponent<CharacterRig>();
             rig.kind = "boy";
 
-            var skin = Fx.Mat(GMC(0xFF, 0xC9, 0xA0));
-            var hoodie = Fx.Mat(GMC(0xF5, 0xF1, 0xE4));
-            var hoodieD = Fx.Mat(GMC(0xE4, 0xDE, 0xCE));
-            var tee = Fx.Mat(GMC(0x2E, 0x4A, 0x8F));
-            var jeans = Fx.Mat(GMC(0x3E, 0x55, 0x78));
-            var jeansD = Fx.Mat(GMC(0x34, 0x48, 0x66));
-            var capM = Fx.Mat(GMC(0xE8, 0x40, 0x40));
-            var capW = Fx.Mat(GMC(0xFA, 0xFA, 0xFA));
-            var hairM = Fx.Mat(GMC(0x6B, 0x4A, 0x2F));
-            var white = Fx.Mat(GMC(0xFC, 0xFC, 0xFC));
-            var red = Fx.Mat(GMC(0xE8, 0x40, 0x40));
-            var pack = Fx.Mat(GMC(0xE8, 0x56, 0x3F));
-            var packD = Fx.Mat(GMC(0xC2, 0x43, 0x34));
-            var dark = Fx.Mat(GMC(0x26, 0x2C, 0x3C));
-            var smile = Fx.Mat(GMC(0x7A, 0x3A, 0x2A));
+            var skin = GMat(GMC(0xFF, 0xCD, 0xA5), 1.14f, 0.74f);
+            var hair = GMat(GMC(0x3A, 0x24, 0x1B), 1.45f, 0.55f);
+            var cap = GMat(GMC(0xE8, 0x45, 0x45), 1.28f, 0.60f);
+            var capD = GMat(GMC(0xC2, 0x35, 0x35), 1.30f, 0.60f);
+            var tee = GMat(GMC(0xFA, 0xF8, 0xF1), 1.10f, 0.80f);
+            var vest = GMat(GMC(0x4E, 0x71, 0xA8), 1.22f, 0.60f);
+            var vestD = GMat(GMC(0x3F, 0x5D, 0x90), 1.20f, 0.60f);
+            var jeans = GMat(GMC(0x58, 0x78, 0xB5), 1.18f, 0.62f);
+            var cuff = GMat(GMC(0x70, 0x90, 0xC8), 1.12f, 0.75f);
+            var shoe = GMat(GMC(0x2E, 0x2E, 0x36), 1.45f, 0.55f);
+            var sole = GMat(GMC(0xF6, 0xF4, 0xEE), 1.10f, 0.86f);
+            var pack = GMat(GMC(0xF2, 0x7E, 0x3F), 1.22f, 0.62f);
+            var packD = GMat(GMC(0xD9, 0x64, 0x27), 1.20f, 0.62f);
+            var eye = GMat(GMC(0x2B, 0x1A, 0x12), 1.25f, 0.85f);
+            var brow = GMat(GMC(0x33, 0x20, 0x1A), 1.30f, 0.70f);
+            var blush = GMat(GMC(0xFF, 0x9D, 0xA6), 1.12f, 0.95f);
+            var nose = GMat(GMC(0xF4, 0xB1, 0x83), 1.08f, 0.80f);
+            var mouth = GMat(GMC(0x8A, 0x32, 0x2B), 1.20f, 0.80f);
+            var white = Flat(GMC(0xFF, 0xFF, 0xFF));
 
             rig.body = Pivot(root.transform, "body", Vector3.zero);
 
-            // ============================ LEGS (hip → knee → shoe)
+            // ============================ LEGS (hip -> knee -> chunky sneaker)
             for (int s = 0; s < 2; s++)
             {
                 float sx = s == 0 ? -1f : 1f;
-                var hip = Pivot(rig.body, "leg" + s, new Vector3(sx * 0.13f, 0.80f, 0));
+                var hip = Pivot(rig.body, "leg" + s, new Vector3(sx * 0.135f, 0.71f, 0f));
                 if (s == 0) rig.legL = hip; else rig.legR = hip;
-                Part(hip, PrimitiveType.Capsule, new Vector3(0, -0.17f, 0), new Vector3(0.21f, 0.14f, 0.21f), jeans, "thigh");
-                var knee = Pivot(hip, "knee", new Vector3(0, -0.35f, 0));
+                Cap(hip, new Vector3(0f, -0.13f, 0f), new Vector3(0.13f, 0.12f, 0.13f), jeans, "thigh");
+                var knee = Pivot(hip, "knee", new Vector3(0f, -0.26f, 0f));
                 if (s == 0) rig.kneeL = knee; else rig.kneeR = knee;
-                Part(knee, PrimitiveType.Capsule, new Vector3(0, -0.14f, 0), new Vector3(0.18f, 0.12f, 0.18f), jeansD, "shin");
-                // chunky sneaker
-                Part(knee, PrimitiveType.Cube, new Vector3(0, -0.29f, 0.07f), new Vector3(0.18f, 0.11f, 0.35f), white, "shoe");
-                Part(knee, PrimitiveType.Cube, new Vector3(0, -0.25f, 0.07f), new Vector3(0.19f, 0.05f, 0.30f), red, "stripe");
-                Part(knee, PrimitiveType.Cube, new Vector3(0, -0.345f, 0.07f), new Vector3(0.19f, 0.05f, 0.37f), white, "sole");
+                Sph(knee, Vector3.zero, new Vector3(0.105f, 0.105f, 0.105f), jeans, "kneeJoint");
+                Cap(knee, new Vector3(0f, -0.11f, 0f), new Vector3(0.10f, 0.10f, 0.10f), jeans, "shin");
+                Cyl(knee, new Vector3(0f, -0.195f, 0f), new Vector3(0.118f, 0.03f, 0.118f), cuff, "cuff");
+                // chunky sneaker — all ellipsoids
+                Sph(knee, new Vector3(0f, -0.235f, 0.015f), new Vector3(0.115f, 0.085f, 0.175f), shoe, "shoeUpper");
+                Sph(knee, new Vector3(0f, -0.25f, 0.14f), new Vector3(0.095f, 0.065f, 0.09f), sole, "toeCap");
+                Sph(knee, new Vector3(0f, -0.29f, 0.045f), new Vector3(0.12f, 0.038f, 0.195f), sole, "sole");
+                Sph(knee, new Vector3(0f, -0.21f, -0.105f), new Vector3(0.08f, 0.05f, 0.05f), sole, "heel");
             }
 
-            // ============================ TORSO
-            rig.torso = Pivot(rig.body, "torso", new Vector3(0, 0.82f, 0));
-            Part(rig.torso, PrimitiveType.Capsule, new Vector3(0, 0.27f, 0), new Vector3(0.48f, 0.30f, 0.34f), hoodie, "chest");
-            Part(rig.torso, PrimitiveType.Sphere, new Vector3(0, 0.12f, 0.10f), new Vector3(0.36f, 0.28f, 0.26f), hoodie, "belly");
-            // navy tee at collar + hood bump
-            Part(rig.torso, PrimitiveType.Cube, new Vector3(0, 0.47f, 0.12f), new Vector3(0.22f, 0.07f, 0.07f), tee, "collar");
-            Part(rig.torso, PrimitiveType.Sphere, new Vector3(0, 0.42f, -0.16f), new Vector3(0.24f, 0.20f, 0.14f), hoodieD, "hood");
-            // front pocket + strings
-            Part(rig.torso, PrimitiveType.Cube, new Vector3(0, 0.15f, 0.175f), new Vector3(0.24f, 0.13f, 0.03f), hoodieD, "pocket");
-            Part(rig.torso, PrimitiveType.Cylinder, new Vector3(-0.05f, 0.40f, 0.165f), new Vector3(0.03f, 0.05f, 0.03f), white, "strL");
-            Part(rig.torso, PrimitiveType.Cylinder, new Vector3(0.05f, 0.40f, 0.165f), new Vector3(0.03f, 0.05f, 0.03f), white, "strR");
+            // ============================ TORSO (white tee egg + open denim vest + round backpack)
+            rig.torso = Pivot(rig.body, "torso", new Vector3(0f, 0.75f, 0f));
+            Sph(rig.torso, new Vector3(0f, 0.17f, 0.01f), new Vector3(0.335f, 0.295f, 0.25f), tee, "tee");
+            Sph(rig.torso, new Vector3(0f, -0.015f, 0.005f), new Vector3(0.30f, 0.10f, 0.235f), jeans, "hips");
+            Sph(rig.torso, new Vector3(-0.19f, 0.28f, 0.015f), new Vector3(0.105f, 0.22f, 0.21f), vest, "vestL");
+            Sph(rig.torso, new Vector3(0.19f, 0.28f, 0.015f), new Vector3(0.105f, 0.22f, 0.21f), vest, "vestR");
+            Sph(rig.torso, new Vector3(-0.20f, 0.525f, 0.005f), new Vector3(0.115f, 0.065f, 0.115f), vest, "shoulderL");
+            Sph(rig.torso, new Vector3(0.20f, 0.525f, 0.005f), new Vector3(0.115f, 0.065f, 0.115f), vest, "shoulderR");
+            Sph(rig.torso, new Vector3(0f, 0.32f, -0.15f), new Vector3(0.27f, 0.22f, 0.115f), vest, "vestBack");
+            Sph(rig.torso, new Vector3(0f, 0.55f, -0.095f), new Vector3(0.23f, 0.055f, 0.075f), vestD, "collar");
+            // round orange backpack (hero piece from behind)
+            Sph(rig.torso, new Vector3(0f, 0.30f, -0.265f), new Vector3(0.25f, 0.28f, 0.135f), pack, "pack");
+            Sph(rig.torso, new Vector3(0f, 0.21f, -0.385f), new Vector3(0.165f, 0.12f, 0.05f), packD, "packPocket");
+            Cap(rig.torso, new Vector3(-0.12f, 0.44f, 0.145f), new Vector3(0.042f, 0.10f, 0.042f), vestD, "strapL", -22f, 0f);
+            Cap(rig.torso, new Vector3(0.12f, 0.44f, 0.145f), new Vector3(0.042f, 0.10f, 0.042f), vestD, "strapR", -22f, 0f);
 
-            // ============================ BACKPACK (hero piece — seen from behind)
-            var packRoot = Pivot(rig.torso, "pack", new Vector3(0, 0.26f, -0.28f));
-            Part(packRoot, PrimitiveType.Cube, Vector3.zero, new Vector3(0.40f, 0.46f, 0.20f), pack, "packBody");
-            Part(packRoot, PrimitiveType.Cube, new Vector3(0, 0.14f, -0.11f), new Vector3(0.32f, 0.14f, 0.02f), packD, "pocket2");
-            Part(packRoot, PrimitiveType.Cube, new Vector3(0, 0.20f, 0.0f), new Vector3(0.42f, 0.05f, 0.22f), packD, "lid");
-            // spray cans sticking out
-            var canR = Fx.Mat(GMC(0xE8, 0x40, 0x40));
-            var canT = Fx.Mat(GMC(0x2F, 0xB8, 0xB0));
-            var canO = Fx.Mat(GMC(0xFF, 0x8A, 0x3D));
-            var c1 = Part(packRoot, PrimitiveType.Cylinder, new Vector3(-0.10f, 0.30f, 0.0f), new Vector3(0.11f, 0.07f, 0.11f), canR, "can1");
-            c1.transform.localRotation = Quaternion.Euler(8f, 0, -6f);
-            var c2 = Part(packRoot, PrimitiveType.Cylinder, new Vector3(0.02f, 0.32f, -0.02f), new Vector3(0.11f, 0.07f, 0.11f), canT, "can2");
-            c2.transform.localRotation = Quaternion.Euler(-6f, 0, 4f);
-            var c3 = Part(packRoot, PrimitiveType.Cylinder, new Vector3(0.13f, 0.29f, 0.02f), new Vector3(0.10f, 0.06f, 0.10f), canO, "can3");
-            c3.transform.localRotation = Quaternion.Euler(14f, 0, 8f);
-            Part(packRoot, PrimitiveType.Sphere, new Vector3(-0.10f, 0.375f, 0.0f), new Vector3(0.05f, 0.04f, 0.05f), white, "cap1");
-            Part(packRoot, PrimitiveType.Sphere, new Vector3(0.02f, 0.395f, -0.02f), new Vector3(0.05f, 0.04f, 0.05f), white, "cap2");
-            // shoulder straps
-            Part(rig.torso, PrimitiveType.Cube, new Vector3(-0.14f, 0.30f, 0.155f), new Vector3(0.08f, 0.34f, 0.035f), dark, "strapL");
-            Part(rig.torso, PrimitiveType.Cube, new Vector3(0.14f, 0.30f, 0.155f), new Vector3(0.08f, 0.34f, 0.035f), dark, "strapR");
-
-            // ============================ ARMS (shoulder → elbow → hand)
+            // ============================ ARMS (shoulder -> elbow -> mitten)
             for (int s = 0; s < 2; s++)
             {
                 float sx = s == 0 ? -1f : 1f;
-                var sh = Pivot(rig.body, "arm" + s, new Vector3(sx * 0.30f, 1.34f, 0));
+                var sh = Pivot(rig.body, "arm" + s, new Vector3(sx * 0.275f, 1.25f, 0.01f));
                 if (s == 0) rig.armL = sh; else rig.armR = sh;
-                Part(sh, PrimitiveType.Capsule, new Vector3(0, -0.13f, 0), new Vector3(0.15f, 0.11f, 0.15f), hoodie, "armu");
-                var elb = Pivot(sh, "elbow", new Vector3(0, -0.26f, 0));
+                Cap(sh, new Vector3(0f, -0.10f, 0f), new Vector3(0.105f, 0.10f, 0.105f), tee, "sleeve");
+                Sph(sh, new Vector3(0f, -0.19f, 0f), new Vector3(0.10f, 0.10f, 0.10f), tee, "sleeveHem");
+                var elb = Pivot(sh, "elbow", new Vector3(0f, -0.205f, 0f));
                 if (s == 0) rig.elbL = elb; else rig.elbR = elb;
-                Part(elb, PrimitiveType.Capsule, new Vector3(0, -0.10f, 0), new Vector3(0.125f, 0.09f, 0.125f), hoodieD, "forearm");
-                Part(elb, PrimitiveType.Sphere, new Vector3(0, -0.21f, 0), new Vector3(0.14f, 0.14f, 0.14f), skin, "hand");
-                if (s == 1)
-                {
-                    // spray can in right hand (menu pose)
-                    rig.bag = Part(elb, PrimitiveType.Cylinder, new Vector3(0, -0.27f, 0.05f), new Vector3(0.10f, 0.09f, 0.10f), canO, "spraycan").transform;
-                    rig.bag.gameObject.SetActive(false);
-                }
+                Sph(elb, Vector3.zero, new Vector3(0.082f, 0.082f, 0.082f), skin, "elbowJoint");
+                Cap(elb, new Vector3(0f, -0.09f, 0f), new Vector3(0.082f, 0.078f, 0.082f), skin, "forearm");
+                var hand = Sph(elb, new Vector3(0f, -0.19f, 0.005f), new Vector3(0.09f, 0.095f, 0.09f), skin, "hand");
+                if (s == 1) rig.handR = hand.transform;
             }
 
-            // ============================ HEAD (big, chibi)
-            rig.head = Pivot(rig.body, "head", new Vector3(0, 1.46f, 0));
-            Part(rig.head, PrimitiveType.Sphere, new Vector3(0, 0.17f, 0), new Vector3(0.50f, 0.47f, 0.47f), skin, "skull");
-            // ears
-            Part(rig.head, PrimitiveType.Sphere, new Vector3(-0.235f, 0.14f, 0.0f), new Vector3(0.075f, 0.10f, 0.075f), skin, "earL");
-            Part(rig.head, PrimitiveType.Sphere, new Vector3(0.235f, 0.14f, 0.0f), new Vector3(0.075f, 0.10f, 0.075f), skin, "earR");
-            // hair: back mass + fringe
-            Part(rig.head, PrimitiveType.Sphere, new Vector3(0, 0.22f, -0.10f), new Vector3(0.52f, 0.38f, 0.44f), hairM, "hairBack");
-            Part(rig.head, PrimitiveType.Cube, new Vector3(0, 0.30f, 0.185f), new Vector3(0.34f, 0.07f, 0.10f), hairM, "fringe");
-            // backwards cap: dome + back brim + white front panel
-            Part(rig.head, PrimitiveType.Sphere, new Vector3(0, 0.315f, 0.0f), new Vector3(0.52f, 0.32f, 0.52f), capM, "cap");
-            var brim = Part(rig.head, PrimitiveType.Cube, new Vector3(0, 0.30f, -0.28f), new Vector3(0.30f, 0.04f, 0.22f), capM, "brimBack");
-            brim.transform.localRotation = Quaternion.Euler(-14f, 0, 0);
-            Part(rig.head, PrimitiveType.Cube, new Vector3(0, 0.30f, 0.235f), new Vector3(0.22f, 0.11f, 0.03f), capW, "panel");
-            // face (visible in menu / death cam)
-            Part(rig.head, PrimitiveType.Sphere, new Vector3(-0.10f, 0.16f, 0.205f), new Vector3(0.10f, 0.115f, 0.05f), white, "eyeW");
-            Part(rig.head, PrimitiveType.Sphere, new Vector3(0.10f, 0.16f, 0.205f), new Vector3(0.10f, 0.115f, 0.05f), white, "eyeW2");
-            Part(rig.head, PrimitiveType.Sphere, new Vector3(-0.10f, 0.155f, 0.243f), new Vector3(0.05f, 0.055f, 0.03f), dark, "pupilL");
-            Part(rig.head, PrimitiveType.Sphere, new Vector3(0.10f, 0.155f, 0.243f), new Vector3(0.05f, 0.055f, 0.03f), dark, "pupilR");
-            Part(rig.head, PrimitiveType.Cube, new Vector3(-0.10f, 0.265f, 0.225f), new Vector3(0.11f, 0.028f, 0.02f), hairM, "browL");
-            Part(rig.head, PrimitiveType.Cube, new Vector3(0.10f, 0.265f, 0.225f), new Vector3(0.11f, 0.028f, 0.02f), hairM, "browR");
-            var mouth = Part(rig.head, PrimitiveType.Cube, new Vector3(0, 0.045f, 0.225f), new Vector3(0.13f, 0.035f, 0.02f), smile, "smile");
-            mouth.transform.localRotation = Quaternion.Euler(0, 0, 0);
+            // spray can in the right hand (menu poses only)
+            rig.bag = Pivot(rig.elbR, "bag", Vector3.zero);
+            Cyl(rig.bag, new Vector3(0f, -0.26f, 0.05f), new Vector3(0.08f, 0.07f, 0.08f), pack, "can");
+            Cyl(rig.bag, new Vector3(0f, -0.175f, 0.05f), new Vector3(0.042f, 0.028f, 0.042f), sole, "canTop");
+            rig.bag.gameObject.SetActive(false);
 
-            // hoverboard (hidden by default)
-            rig.board = new GameObject("board").transform;
-            rig.board.SetParent(root.transform, false);
-            rig.board.localPosition = new Vector3(0, 0.12f, 0);
-            Part(rig.board, PrimitiveType.Cube, Vector3.zero, new Vector3(0.92f, 0.08f, 0.46f), Fx.Mat(GMC(0xFF, 0xD2, 0x3E)), "deck");
-            Part(rig.board, PrimitiveType.Cube, new Vector3(0, -0.025f, 0), new Vector3(0.84f, 0.05f, 0.38f), Fx.Mat(GMC(0xFF, 0x6B, 0x8E)), "stripe");
-            Part(rig.board, PrimitiveType.Cube, new Vector3(-0.34f, 0.055f, 0), new Vector3(0.22f, 0.05f, 0.40f), capM, "noseT");
-            Part(rig.board, PrimitiveType.Cube, new Vector3(0.34f, 0.055f, 0), new Vector3(0.22f, 0.05f, 0.40f), capM, "noseB");
+            // ============================ HEAD (the hero — huge chibi head)
+            rig.head = Pivot(rig.body, "head", new Vector3(0f, 1.37f, 0f));
+            Sph(rig.head, new Vector3(0f, 0f, 0.01f), new Vector3(0.445f, 0.43f, 0.435f), skin, "skull");
+            Sph(rig.head, new Vector3(-0.39f, -0.01f, -0.03f), new Vector3(0.05f, 0.075f, 0.06f), skin, "earL");
+            Sph(rig.head, new Vector3(0.39f, -0.01f, -0.03f), new Vector3(0.05f, 0.075f, 0.06f), skin, "earR");
+            // hair — bowl cut hugging the skull, tucked under the cap
+            Sph(rig.head, new Vector3(0f, 0.07f, -0.055f), new Vector3(0.462f, 0.415f, 0.44f), hair, "hairBack");
+            for (int i = 0; i < 9; i++)
+            {
+                float bx = -0.208f + i * 0.052f;
+                var f = Sph(rig.head,
+                    new Vector3(bx, 0.115f - Mathf.Abs(bx) * 0.06f, 0.415f - bx * bx * 1.1f),
+                    new Vector3(0.075f, 0.055f, 0.065f), hair, "fringe" + i,
+                    0f, -bx * 45f);
+            }
+            Sph(rig.head, new Vector3(-0.345f, 0.02f, 0.11f), new Vector3(0.062f, 0.088f, 0.078f), hair, "tuftL");
+            Sph(rig.head, new Vector3(0.345f, 0.02f, 0.11f), new Vector3(0.062f, 0.088f, 0.078f), hair, "tuftR");
+            Sph(rig.head, new Vector3(0f, -0.10f, -0.33f), new Vector3(0.20f, 0.09f, 0.085f), hair, "backTuft");
+            Sph(rig.head, new Vector3(-0.17f, -0.05f, -0.31f), new Vector3(0.09f, 0.08f, 0.075f), hair, "backTuftL");
+            Sph(rig.head, new Vector3(0.17f, -0.05f, -0.31f), new Vector3(0.09f, 0.08f, 0.075f), hair, "backTuftR");
+            // cap — round dome wrapping the skull, forward brim, button on top
+            Sph(rig.head, new Vector3(0f, 0.27f, -0.005f), new Vector3(0.44f, 0.30f, 0.435f), cap, "capDome");
+            Sph(rig.head, new Vector3(0f, 0.12f, 0.46f), new Vector3(0.30f, 0.032f, 0.10f), cap, "capBrim").transform.localRotation = Quaternion.Euler(-14f, 0f, 0f);
+            Sph(rig.head, new Vector3(0f, 0.585f, -0.005f), new Vector3(0.055f, 0.05f, 0.055f), capD, "capButton");
+            // face — big glossy eyes, brows, blush, nose, open smile
+            var blinkList = new List<Transform>();
+            var blinkBaseList = new List<Vector3>();
+            var glintList = new List<Transform>();
+            for (int s = 0; s < 2; s++)
+            {
+                float sx = s == 0 ? -1f : 1f;
+                var e = Sph(rig.head, new Vector3(sx * 0.18f, 0.02f, 0.385f), new Vector3(0.115f, 0.14f, 0.05f), eye, "eye" + s);
+                blinkList.Add(e.transform);
+                blinkBaseList.Add(e.transform.localScale);
+                var g1 = Sph(rig.head, new Vector3(sx * 0.15f, 0.065f, 0.415f), new Vector3(0.034f, 0.038f, 0.022f), white, "glint");
+                var g2 = Sph(rig.head, new Vector3(sx * 0.205f, -0.03f, 0.412f), new Vector3(0.016f, 0.018f, 0.012f), white, "glint2");
+                glintList.Add(g1.transform);
+                glintList.Add(g2.transform);
+            }
+            rig.blinkers = blinkList.ToArray();
+            rig.blinkBase = blinkBaseList.ToArray();
+            rig.glints = glintList.ToArray();
+            Sph(rig.head, new Vector3(-0.18f, 0.085f, 0.395f), new Vector3(0.11f, 0.032f, 0.045f), brow, "browL").transform.localRotation = Quaternion.Euler(0f, 0f, 7f);
+            Sph(rig.head, new Vector3(0.18f, 0.085f, 0.395f), new Vector3(0.11f, 0.032f, 0.045f), brow, "browR").transform.localRotation = Quaternion.Euler(0f, 0f, -7f);
+            Sph(rig.head, new Vector3(-0.255f, -0.075f, 0.325f), new Vector3(0.07f, 0.042f, 0.026f), blush, "blushL").transform.localRotation = Quaternion.Euler(0f, 38f, 0f);
+            Sph(rig.head, new Vector3(0.255f, -0.075f, 0.325f), new Vector3(0.07f, 0.042f, 0.026f), blush, "blushR").transform.localRotation = Quaternion.Euler(0f, -38f, 0f);
+            Sph(rig.head, new Vector3(0f, -0.03f, 0.435f), new Vector3(0.04f, 0.032f, 0.036f), nose, "nose");
+            Sph(rig.head, new Vector3(0f, -0.075f, 0.415f), new Vector3(0.09f, 0.038f, 0.026f), mouth, "smile");
+            Sph(rig.head, new Vector3(0f, -0.062f, 0.426f), new Vector3(0.045f, 0.012f, 0.011f), white, "tooth");
+
+            // ============================ hoverboard (hidden by default)
+            rig.board = Pivot(root.transform, "board", new Vector3(0f, 0.10f, 0f));
+            Sph(rig.board, Vector3.zero, new Vector3(0.47f, 0.045f, 0.24f), cap, "deck");
+            Sph(rig.board, new Vector3(0f, -0.005f, 0f), new Vector3(0.40f, 0.03f, 0.20f), pack, "deckStripe");
             rig.board.gameObject.SetActive(false);
 
-            // jetpack (hidden)
-            rig.jet = new GameObject("jet").transform;
-            rig.jet.SetParent(rig.body, false);
-            Part(rig.jet, PrimitiveType.Cylinder, new Vector3(-0.16f, 1.24f, -0.26f), new Vector3(0.18f, 0.17f, 0.18f), pack, "tank1");
-            Part(rig.jet, PrimitiveType.Cylinder, new Vector3(0.16f, 1.24f, -0.26f), new Vector3(0.18f, 0.17f, 0.18f), pack, "tank2");
-            Part(rig.jet, PrimitiveType.Cylinder, new Vector3(-0.16f, 1.42f, -0.26f), new Vector3(0.08f, 0.04f, 0.08f), dark, "n1");
-            Part(rig.jet, PrimitiveType.Cylinder, new Vector3(0.16f, 1.42f, -0.26f), new Vector3(0.08f, 0.04f, 0.08f), dark, "n2");
-            rig.flameL = Part(rig.jet, PrimitiveType.Sphere, new Vector3(-0.16f, 1.02f, -0.26f), new Vector3(0.20f, 0.5f, 0.20f), Fx.MatGlow(GMC(0xFF, 0x8A, 0x3D)), "fl1").transform;
-            rig.flameR = Part(rig.jet, PrimitiveType.Sphere, new Vector3(0.16f, 1.02f, -0.26f), new Vector3(0.20f, 0.5f, 0.20f), Fx.MatGlow(GMC(0xFF, 0xD2, 0x3E)), "fl2").transform;
+            // ============================ jetpack (hidden by default)
+            rig.jet = Pivot(rig.body, "jet", Vector3.zero);
+            Cap(rig.jet, new Vector3(-0.17f, 1.24f, -0.28f), new Vector3(0.14f, 0.17f, 0.14f), pack, "tankL");
+            Cap(rig.jet, new Vector3(0.17f, 1.24f, -0.28f), new Vector3(0.14f, 0.17f, 0.14f), pack, "tankR");
+            rig.flameL = Sph(rig.jet, new Vector3(-0.17f, 0.98f, -0.28f), new Vector3(0.09f, 0.24f, 0.09f), Fx.MatGlow(GMC(0xFF, 0xB0, 0x54)), "flameL").transform;
+            rig.flameR = Sph(rig.jet, new Vector3(0.17f, 0.98f, -0.28f), new Vector3(0.09f, 0.24f, 0.09f), Fx.MatGlow(GMC(0xFF, 0xD2, 0x4A)), "flameR").transform;
             rig.jet.gameObject.SetActive(false);
 
             return rig;
         }
 
-        public Transform handR;
-
-        // ------------------------------------------------ INSPECTOR
+        // ------------------------------------------------ INSPECTOR (rounded)
         public static CharacterRig BuildInspector(Transform parent)
         {
             var root = new GameObject("Inspector");
@@ -190,63 +233,66 @@ namespace DummySurfer
             var rig = root.AddComponent<CharacterRig>();
             rig.kind = "guard";
 
-            var skin = Fx.Mat(GMC(0xFF, 0xC9, 0xA0));
-            var jacket = Fx.Mat(GMC(0x7A, 0x8A, 0x46));   // olive jacket (Ref 08)
-            var jacketD = Fx.Mat(GMC(0x64, 0x72, 0x3A));
-            var pants = Fx.Mat(GMC(0x4A, 0x55, 0x68));
-            var boots = Fx.Mat(GMC(0x26, 0x29, 0x32));
-            var capB = Fx.Mat(GMC(0x3E, 0x6F, 0xE0));     // blue cap
-            var capD = Fx.Mat(GMC(0x2A, 0x4A, 0xA0));
-            var grey = Fx.Mat(GMC(0x9A, 0xA0, 0xA8));
+            var skin = GMat(GMC(0xFF, 0xC9, 0xA0), 1.14f, 0.74f);
+            var jacket = GMat(GMC(0x7A, 0x8A, 0x46), 1.22f, 0.58f);
+            var jacketD = GMat(GMC(0x64, 0x72, 0x3A), 1.18f, 0.60f);
+            var pants = GMat(GMC(0x4A, 0x55, 0x68), 1.18f, 0.62f);
+            var boots = GMat(GMC(0x26, 0x29, 0x32), 1.45f, 0.55f);
+            var capB = GMat(GMC(0x3E, 0x6F, 0xE0), 1.28f, 0.60f);
+            var capD = GMat(GMC(0x2A, 0x4A, 0xA0), 1.30f, 0.60f);
+            var grey = GMat(GMC(0x9A, 0xA0, 0xA8), 1.15f, 0.75f);
             var gold = Fx.MatGlow(GMC(0xFF, 0xD2, 0x3E));
-            var dark = Fx.Mat(GMC(0x26, 0x2C, 0x3C));
-            var white = Fx.Mat(GMC(0xFA, 0xFA, 0xFA));
+            var dark = GMat(GMC(0x26, 0x2C, 0x3C), 1.30f, 0.70f);
+            var white = Flat(GMC(0xFA, 0xFA, 0xFA));
 
             rig.body = Pivot(root.transform, "body", Vector3.zero);
 
-            rig.legL = Pivot(rig.body, "legL", new Vector3(-0.17f, 0.82f, 0));
-            Part(rig.legL, PrimitiveType.Capsule, new Vector3(0, -0.20f, 0), new Vector3(0.24f, 0.18f, 0.24f), pants, "thighL");
-            Part(rig.legL, PrimitiveType.Cube, new Vector3(0, -0.42f, 0.05f), new Vector3(0.19f, 0.13f, 0.36f), boots, "bootL");
-            rig.legR = Pivot(rig.body, "legR", new Vector3(0.17f, 0.82f, 0));
-            Part(rig.legR, PrimitiveType.Capsule, new Vector3(0, -0.20f, 0), new Vector3(0.24f, 0.18f, 0.24f), pants, "thighR");
-            Part(rig.legR, PrimitiveType.Cube, new Vector3(0, -0.42f, 0.05f), new Vector3(0.19f, 0.13f, 0.36f), boots, "bootR");
+            rig.legL = Pivot(rig.body, "legL", new Vector3(-0.17f, 0.82f, 0f));
+            Cap(rig.legL, new Vector3(0f, -0.20f, 0f), new Vector3(0.24f, 0.18f, 0.24f), pants, "thighL");
+            Sph(rig.legL, new Vector3(0f, -0.42f, 0.05f), new Vector3(0.19f, 0.13f, 0.30f), boots, "bootL");
+            Sph(rig.legL, new Vector3(0f, -0.475f, 0.06f), new Vector3(0.20f, 0.045f, 0.33f), dark, "soleL");
+            rig.legR = Pivot(rig.body, "legR", new Vector3(0.17f, 0.82f, 0f));
+            Cap(rig.legR, new Vector3(0f, -0.20f, 0f), new Vector3(0.24f, 0.18f, 0.24f), pants, "thighR");
+            Sph(rig.legR, new Vector3(0f, -0.42f, 0.05f), new Vector3(0.19f, 0.13f, 0.30f), boots, "bootR");
+            Sph(rig.legR, new Vector3(0f, -0.475f, 0.06f), new Vector3(0.20f, 0.045f, 0.33f), dark, "soleR");
 
-            rig.torso = Pivot(rig.body, "torso", new Vector3(0, 0.82f, 0));
-            Part(rig.torso, PrimitiveType.Capsule, new Vector3(0, 0.30f, 0), new Vector3(0.64f, 0.30f, 0.46f), jacket, "chest");
-            Part(rig.torso, PrimitiveType.Sphere, new Vector3(0, 0.22f, 0.10f), new Vector3(0.46f, 0.40f, 0.34f), jacket, "belly");
-            Part(rig.torso, PrimitiveType.Cube, new Vector3(0, 0.04f, 0.19f), new Vector3(0.48f, 0.08f, 0.10f), dark, "belt");
-            Part(rig.torso, PrimitiveType.Sphere, new Vector3(-0.15f, 0.40f, 0.22f), new Vector3(0.08f, 0.08f, 0.035f), gold, "badge");
-            Part(rig.torso, PrimitiveType.Cube, new Vector3(0.13f, 0.34f, 0.23f), new Vector3(0.09f, 0.12f, 0.02f), jacketD, "pocket");
+            rig.torso = Pivot(rig.body, "torso", new Vector3(0f, 0.82f, 0f));
+            Sph(rig.torso, new Vector3(0f, 0.28f, 0.02f), new Vector3(0.55f, 0.42f, 0.42f), jacket, "belly");
+            Sph(rig.torso, new Vector3(0f, 0.44f, 0.03f), new Vector3(0.50f, 0.30f, 0.40f), jacket, "chest");
+            Sph(rig.torso, new Vector3(0f, 0.10f, 0.02f), new Vector3(0.50f, 0.09f, 0.40f), dark, "belt");
+            Sph(rig.torso, new Vector3(-0.16f, 0.44f, 0.21f), new Vector3(0.08f, 0.08f, 0.035f), gold, "badge");
+            Sph(rig.torso, new Vector3(0.16f, 0.36f, 0.22f), new Vector3(0.10f, 0.11f, 0.05f), jacketD, "pocket");
 
-            rig.armL = Pivot(rig.body, "armL", new Vector3(-0.40f, 1.36f, 0));
-            Part(rig.armL, PrimitiveType.Capsule, new Vector3(0, -0.19f, 0), new Vector3(0.19f, 0.13f, 0.19f), jacket, "armuL");
-            Part(rig.armL, PrimitiveType.Sphere, new Vector3(0, -0.39f, 0), new Vector3(0.17f, 0.17f, 0.17f), skin, "handL");
-            rig.armR = Pivot(rig.body, "armR", new Vector3(0.40f, 1.36f, 0));
-            Part(rig.armR, PrimitiveType.Capsule, new Vector3(0, -0.19f, 0), new Vector3(0.19f, 0.13f, 0.19f), jacket, "armuR");
-            Part(rig.armR, PrimitiveType.Sphere, new Vector3(0, -0.39f, 0), new Vector3(0.17f, 0.17f, 0.17f), skin, "handR");
-            Part(rig.armR, PrimitiveType.Cylinder, new Vector3(0, -0.47f, 0.11f), new Vector3(0.05f, 0.16f, 0.05f), grey, "baton");
+            rig.armL = Pivot(rig.body, "armL", new Vector3(-0.40f, 1.36f, 0f));
+            Cap(rig.armL, new Vector3(0f, -0.19f, 0f), new Vector3(0.19f, 0.14f, 0.19f), jacket, "armuL");
+            Sph(rig.armL, new Vector3(0f, -0.38f, 0f), new Vector3(0.17f, 0.17f, 0.17f), skin, "handL");
+            rig.armR = Pivot(rig.body, "armR", new Vector3(0.40f, 1.36f, 0f));
+            Cap(rig.armR, new Vector3(0f, -0.19f, 0f), new Vector3(0.19f, 0.14f, 0.19f), jacket, "armuR");
+            var handR = Sph(rig.armR, new Vector3(0f, -0.38f, 0f), new Vector3(0.17f, 0.17f, 0.17f), skin, "handR");
+            rig.handR = handR.transform;
+            Cyl(rig.armR, new Vector3(0f, -0.48f, 0.10f), new Vector3(0.05f, 0.16f, 0.05f), grey, "baton", 20f);
 
-            rig.head = Pivot(rig.body, "head", new Vector3(0, 1.50f, 0));
-            Part(rig.head, PrimitiveType.Sphere, new Vector3(0, 0.18f, 0), new Vector3(0.46f, 0.44f, 0.44f), skin, "skull");
-            // big white mustache
-            Part(rig.head, PrimitiveType.Cube, new Vector3(0, 0.07f, 0.21f), new Vector3(0.24f, 0.06f, 0.05f), white, "mustache");
-            Part(rig.head, PrimitiveType.Sphere, new Vector3(-0.10f, 0.06f, 0.20f), new Vector3(0.06f, 0.05f, 0.04f), white, "moL");
-            Part(rig.head, PrimitiveType.Sphere, new Vector3(0.10f, 0.06f, 0.20f), new Vector3(0.06f, 0.05f, 0.04f), white, "moR");
+            rig.head = Pivot(rig.body, "head", new Vector3(0f, 1.50f, 0f));
+            Sph(rig.head, new Vector3(0f, 0.18f, 0f), new Vector3(0.46f, 0.44f, 0.44f), skin, "skull");
+            // bushy white mustache (three puffs)
+            Sph(rig.head, new Vector3(-0.075f, 0.06f, 0.215f), new Vector3(0.10f, 0.045f, 0.05f), white, "moL");
+            Sph(rig.head, new Vector3(0.075f, 0.06f, 0.215f), new Vector3(0.10f, 0.045f, 0.05f), white, "moR");
+            Sph(rig.head, new Vector3(0f, 0.075f, 0.22f), new Vector3(0.06f, 0.04f, 0.045f), white, "moC");
+            Sph(rig.head, new Vector3(0f, 0.12f, 0.225f), new Vector3(0.055f, 0.045f, 0.05f), GMat(GMC(0xF0, 0xB0, 0x88), 1.08f, 0.8f), "nose");
+            Sph(rig.head, new Vector3(-0.09f, 0.20f, 0.20f), new Vector3(0.075f, 0.085f, 0.04f), white, "eyeL");
+            Sph(rig.head, new Vector3(0.09f, 0.20f, 0.20f), new Vector3(0.075f, 0.085f, 0.04f), white, "eyeR");
+            Sph(rig.head, new Vector3(-0.09f, 0.195f, 0.235f), new Vector3(0.035f, 0.042f, 0.02f), dark, "pupL");
+            Sph(rig.head, new Vector3(0.09f, 0.195f, 0.235f), new Vector3(0.035f, 0.042f, 0.02f), dark, "pupR");
+            Sph(rig.head, new Vector3(-0.09f, 0.275f, 0.215f), new Vector3(0.10f, 0.03f, 0.05f), grey, "browL").transform.localRotation = Quaternion.Euler(0f, 0f, 8f);
+            Sph(rig.head, new Vector3(0.09f, 0.275f, 0.215f), new Vector3(0.10f, 0.03f, 0.05f), grey, "browR").transform.localRotation = Quaternion.Euler(0f, 0f, -8f);
             // blue cap with dark peak
-            Part(rig.head, PrimitiveType.Cylinder, new Vector3(0, 0.33f, 0), new Vector3(0.48f, 0.10f, 0.48f), capB, "capTop");
-            var peak = Part(rig.head, PrimitiveType.Cube, new Vector3(0, 0.28f, 0.26f), new Vector3(0.34f, 0.045f, 0.20f), capD, "peak");
-            peak.transform.localRotation = Quaternion.Euler(-8f, 0, 0);
-            Part(rig.head, PrimitiveType.Sphere, new Vector3(-0.085f, 0.17f, 0.20f), new Vector3(0.085f, 0.095f, 0.05f), white, "eyeL");
-            Part(rig.head, PrimitiveType.Sphere, new Vector3(0.085f, 0.17f, 0.20f), new Vector3(0.085f, 0.095f, 0.05f), white, "eyeR");
-            Part(rig.head, PrimitiveType.Sphere, new Vector3(-0.085f, 0.165f, 0.235f), new Vector3(0.042f, 0.05f, 0.03f), dark, "pupL");
-            Part(rig.head, PrimitiveType.Sphere, new Vector3(0.085f, 0.165f, 0.235f), new Vector3(0.042f, 0.05f, 0.03f), dark, "pupR");
-            // angry brows
-            Part(rig.head, PrimitiveType.Cube, new Vector3(-0.09f, 0.245f, 0.215f), new Vector3(0.11f, 0.03f, 0.02f), grey, "browL");
-            Part(rig.head, PrimitiveType.Cube, new Vector3(0.09f, 0.245f, 0.215f), new Vector3(0.11f, 0.03f, 0.02f), grey, "browR");
+            Sph(rig.head, new Vector3(0f, 0.40f, 0f), new Vector3(0.48f, 0.22f, 0.48f), capB, "capTop");
+            Sph(rig.head, new Vector3(0f, 0.335f, 0.28f), new Vector3(0.30f, 0.04f, 0.18f), capD, "peak").transform.localRotation = Quaternion.Euler(-10f, 0f, 0f);
+            Sph(rig.head, new Vector3(0f, 0.60f, 0f), new Vector3(0.05f, 0.045f, 0.05f), capD, "capButton");
             return rig;
         }
 
-        // ------------------------------------------------ DOG
+        // ------------------------------------------------ DOG (rounded)
         public static CharacterRig BuildDog(Transform parent)
         {
             var root = new GameObject("Dog");
@@ -255,39 +301,41 @@ namespace DummySurfer
             var rig = root.AddComponent<CharacterRig>();
             rig.kind = "dog";
 
-            var fur = Fx.Mat(GMC(0xD9, 0xB3, 0x80));
-            var furD = Fx.Mat(GMC(0xB0, 0x8C, 0x5E));
-            var dark = Fx.Mat(GMC(0x26, 0x2C, 0x3C));
-            var collar = Fx.Mat(GMC(0xE8, 0x40, 0x40));
+            var fur = GMat(GMC(0xD9, 0xB3, 0x80), 1.18f, 0.66f);
+            var furD = GMat(GMC(0xB0, 0x8C, 0x5E), 1.15f, 0.62f);
+            var dark = GMat(GMC(0x26, 0x2C, 0x3C), 1.30f, 0.70f);
+            var collar = GMat(GMC(0xE8, 0x40, 0x40), 1.28f, 0.60f);
+            var gold = Fx.MatGlow(GMC(0xFF, 0xD2, 0x3E));
 
             rig.body = Pivot(root.transform, "body", Vector3.zero);
-            Part(rig.body, PrimitiveType.Cube, new Vector3(0, 0.42f, 0), new Vector3(0.30f, 0.28f, 0.64f), fur, "torso");
-            Part(rig.body, PrimitiveType.Cube, new Vector3(0, 0.58f, 0.34f), new Vector3(0.26f, 0.24f, 0.24f), fur, "head");
-            Part(rig.body, PrimitiveType.Cube, new Vector3(0, 0.54f, 0.50f), new Vector3(0.13f, 0.11f, 0.12f), furD, "snout");
-            Part(rig.body, PrimitiveType.Sphere, new Vector3(0, 0.58f, 0.545f), new Vector3(0.05f, 0.045f, 0.04f), dark, "nose");
-            Part(rig.body, PrimitiveType.Cube, new Vector3(-0.09f, 0.72f, 0.32f), new Vector3(0.06f, 0.11f, 0.05f), furD, "earL");
-            Part(rig.body, PrimitiveType.Cube, new Vector3(0.09f, 0.72f, 0.32f), new Vector3(0.06f, 0.11f, 0.05f), furD, "earR");
-            Part(rig.body, PrimitiveType.Sphere, new Vector3(-0.07f, 0.60f, 0.47f), new Vector3(0.05f, 0.05f, 0.04f), dark, "eyeL");
-            Part(rig.body, PrimitiveType.Sphere, new Vector3(0.07f, 0.60f, 0.47f), new Vector3(0.05f, 0.05f, 0.04f), dark, "eyeR");
-            Part(rig.body, PrimitiveType.Cube, new Vector3(0, 0.44f, 0.26f), new Vector3(0.28f, 0.08f, 0.10f), collar, "collar");
-            Part(rig.body, PrimitiveType.Sphere, new Vector3(0, 0.40f, 0.26f), new Vector3(0.05f, 0.05f, 0.04f), goldDog(), "tag");
+            Sph(rig.body, new Vector3(0f, 0.42f, 0f), new Vector3(0.16f, 0.15f, 0.34f), fur, "torso");
+            Sph(rig.body, new Vector3(0f, 0.58f, 0.30f), new Vector3(0.15f, 0.14f, 0.15f), fur, "head");
+            Sph(rig.body, new Vector3(0f, 0.545f, 0.425f), new Vector3(0.07f, 0.06f, 0.08f), furD, "snout");
+            Sph(rig.body, new Vector3(0f, 0.575f, 0.495f), new Vector3(0.045f, 0.04f, 0.04f), dark, "nose");
+            Sph(rig.body, new Vector3(-0.085f, 0.70f, 0.28f), new Vector3(0.05f, 0.10f, 0.045f), furD, "earL").transform.localRotation = Quaternion.Euler(0f, 0f, 25f);
+            Sph(rig.body, new Vector3(0.085f, 0.70f, 0.28f), new Vector3(0.05f, 0.10f, 0.045f), furD, "earR").transform.localRotation = Quaternion.Euler(0f, 0f, -25f);
+            Sph(rig.body, new Vector3(-0.06f, 0.60f, 0.435f), new Vector3(0.035f, 0.04f, 0.025f), dark, "eyeL");
+            Sph(rig.body, new Vector3(0.06f, 0.60f, 0.435f), new Vector3(0.035f, 0.04f, 0.025f), dark, "eyeR");
+            Cyl(rig.body, new Vector3(0f, 0.47f, 0.26f), new Vector3(0.125f, 0.025f, 0.125f), collar, "collar");
+            Sph(rig.body, new Vector3(0f, 0.42f, 0.31f), new Vector3(0.045f, 0.045f, 0.02f), gold, "tag");
 
-            rig.legL = Pivot(rig.body, "legFL", new Vector3(-0.10f, 0.32f, 0.24f));
-            Part(rig.legL, PrimitiveType.Cube, new Vector3(0, -0.14f, 0), new Vector3(0.07f, 0.30f, 0.07f), fur, "flegL");
-            rig.legR = Pivot(rig.body, "legFR", new Vector3(0.10f, 0.32f, 0.24f));
-            Part(rig.legR, PrimitiveType.Cube, new Vector3(0, -0.14f, 0), new Vector3(0.07f, 0.30f, 0.07f), fur, "flegR");
-            var bl = Pivot(rig.body, "legBL", new Vector3(-0.10f, 0.32f, -0.24f));
-            Part(bl, PrimitiveType.Cube, new Vector3(0, -0.14f, 0), new Vector3(0.07f, 0.30f, 0.07f), fur, "blegL");
-            var br = Pivot(rig.body, "legBR", new Vector3(0.10f, 0.32f, -0.24f));
-            Part(br, PrimitiveType.Cube, new Vector3(0, -0.14f, 0), new Vector3(0.07f, 0.30f, 0.07f), fur, "blegR");
+            rig.legL = Pivot(rig.body, "legFL", new Vector3(-0.09f, 0.34f, 0.22f));
+            Cap(rig.legL, new Vector3(0f, -0.13f, 0f), new Vector3(0.075f, 0.13f, 0.075f), fur, "flegL");
+            Sph(rig.legL, new Vector3(0f, -0.27f, 0.01f), new Vector3(0.07f, 0.055f, 0.08f), furD, "pawL");
+            rig.legR = Pivot(rig.body, "legFR", new Vector3(0.09f, 0.34f, 0.22f));
+            Cap(rig.legR, new Vector3(0f, -0.13f, 0f), new Vector3(0.075f, 0.13f, 0.075f), fur, "flegR");
+            Sph(rig.legR, new Vector3(0f, -0.27f, 0.01f), new Vector3(0.07f, 0.055f, 0.08f), furD, "pawR");
+            var bl = Pivot(rig.body, "legBL", new Vector3(-0.09f, 0.34f, -0.22f));
+            Cap(bl, new Vector3(0f, -0.13f, 0f), new Vector3(0.075f, 0.13f, 0.075f), fur, "blegL");
+            Sph(bl, new Vector3(0f, -0.27f, 0.01f), new Vector3(0.07f, 0.055f, 0.08f), furD, "bpawL");
+            var br = Pivot(rig.body, "legBR", new Vector3(0.09f, 0.34f, -0.22f));
+            Cap(br, new Vector3(0f, -0.13f, 0f), new Vector3(0.075f, 0.13f, 0.075f), fur, "blegR");
+            Sph(br, new Vector3(0f, -0.27f, 0.01f), new Vector3(0.07f, 0.055f, 0.08f), furD, "bpawR");
 
-            rig.tail = Pivot(rig.body, "tail", new Vector3(0, 0.52f, -0.32f));
-            Part(rig.tail, PrimitiveType.Cube, new Vector3(0, 0.06f, -0.10f), new Vector3(0.05f, 0.05f, 0.26f), fur, "tail");
+            rig.tail = Pivot(rig.body, "tail", new Vector3(0f, 0.52f, -0.32f));
+            Cap(rig.tail, new Vector3(0f, 0.05f, -0.10f), new Vector3(0.045f, 0.14f, 0.045f), fur, "tail", -40f, 0f);
             return rig;
         }
-
-        static Material _goldDog;
-        static Material goldDog() { if (_goldDog == null) _goldDog = Fx.MatGlow(GMC(0xFF, 0xD2, 0x3E)); return _goldDog; }
 
         // ================================================== POSE ENGINE
         public float phase;
@@ -309,19 +357,38 @@ namespace DummySurfer
             if (tail != null) tail.localRotation = Quaternion.identity;
         }
 
+        void Blink(float t)
+        {
+            if (blinkers == null) return;
+            float cyc = t % 3.4f;
+            bool closed = cyc < 0.13f;
+            for (int i = 0; i < blinkers.Length; i++)
+            {
+                var b = blinkBase[i];
+                blinkers[i].localScale = new Vector3(b.x, closed ? b.y * 0.12f : b.y, b.z);
+            }
+            if (glints != null)
+                for (int i = 0; i < glints.Length; i++)
+                {
+                    if (glints[i] != null && glints[i].gameObject.activeSelf == closed)
+                        glints[i].gameObject.SetActive(!closed);
+                }
+        }
+
         public void Pose(string mode, float t, float speedF)
         {
             if (body == null) return;
             float s = Mathf.Clamp01(speedF);
             ZeroPose();
+            Blink(t);
 
             if (kind == "dog")
             {
                 float p = phase;
-                legL.localRotation = Quaternion.Euler(Mathf.Sin(p) * 52f, 0, 0);
-                legR.localRotation = Quaternion.Euler(Mathf.Sin(p + Mathf.PI) * 52f, 0, 0);
-                body.localPosition = new Vector3(0, Mathf.Abs(Mathf.Sin(p)) * 0.045f, 0);
-                if (tail != null) tail.localRotation = Quaternion.Euler(0, Mathf.Sin(p * 2.2f) * 28f, 30f);
+                legL.localRotation = Quaternion.Euler(Mathf.Sin(p) * 52f, 0f, 0f);
+                legR.localRotation = Quaternion.Euler(Mathf.Sin(p + Mathf.PI) * 52f, 0f, 0f);
+                body.localPosition = new Vector3(0f, Mathf.Abs(Mathf.Sin(p)) * 0.045f, 0f);
+                if (tail != null) tail.localRotation = Quaternion.Euler(0f, Mathf.Sin(p * 2.2f) * 28f, 30f);
                 return;
             }
 
@@ -329,145 +396,149 @@ namespace DummySurfer
             {
                 case "idle":
                 {
-                    float b = Mathf.Sin(t * 2.2f);
-                    body.localPosition = new Vector3(0, b * 0.012f, 0);
-                    armL.localRotation = Quaternion.Euler(0, 0, 7f + b * 3f);
-                    armR.localRotation = Quaternion.Euler(-28f + Mathf.Sin(t * 3.1f) * 8f, 0, -13f);
-                    if (elbR != null) elbR.localRotation = Quaternion.Euler(-55f, 0, 0);
-                    head.localRotation = Quaternion.Euler(Mathf.Sin(t * 1.3f) * 4f, Mathf.Sin(t * 0.7f) * 10f, 0);
+                    float b = Mathf.Sin(t * 2.1f);
+                    body.localPosition = new Vector3(0f, b * 0.012f, 0f);
+                    armL.localRotation = Quaternion.Euler(2f, 0f, 10f + b * 3f);
+                    armR.localRotation = Quaternion.Euler(-8f + Mathf.Sin(t * 2.6f) * 6f, 0f, -10f);
+                    if (elbR != null) elbR.localRotation = Quaternion.Euler(-26f, 0f, 0f);
+                    head.localRotation = Quaternion.Euler(Mathf.Sin(t * 1.2f) * 3f, Mathf.Sin(t * 0.65f) * 13f, 0f);
                     if (bag != null) bag.gameObject.SetActive(true);
                     break;
                 }
                 case "spray":
                 {
                     float b = Mathf.Sin(t * 2.0f);
-                    body.localPosition = new Vector3(0, b * 0.010f, 0);
-                    armR.localRotation = Quaternion.Euler(-96f + Mathf.Sin(t * 9f) * 6f, 0, -8f);
-                    if (elbR != null) elbR.localRotation = Quaternion.Euler(-18f, 0, 0);
-                    armL.localRotation = Quaternion.Euler(0, 0, 11f);
-                    head.localRotation = Quaternion.Euler(-6f, -16f, 0);
+                    body.localPosition = new Vector3(0f, b * 0.010f, 0f);
+                    armR.localRotation = Quaternion.Euler(-98f + Mathf.Sin(t * 9f) * 6f, 0f, -6f);
+                    if (elbR != null) elbR.localRotation = Quaternion.Euler(-16f, 0f, 0f);
+                    armL.localRotation = Quaternion.Euler(0f, 0f, 12f);
+                    head.localRotation = Quaternion.Euler(-5f, -15f, 0f);
                     if (bag != null) bag.gameObject.SetActive(true);
                     break;
                 }
                 case "run":
                 {
                     float p = phase;
-                    float amp = 0.5f + 0.5f * s;
-                    float hipL = Mathf.Sin(p) * 62f * amp;
-                    float hipR = Mathf.Sin(p + Mathf.PI) * 62f * amp;
-                    legL.localRotation = Quaternion.Euler(hipL, 0, 0);
-                    legR.localRotation = Quaternion.Euler(hipR, 0, 0);
-                    // knee bends when the leg swings back / lifts
-                    float kbL = Mathf.Clamp01(-Mathf.Sin(p - 0.6f)) * 95f * amp;
-                    float kbR = Mathf.Clamp01(-Mathf.Sin(p + Mathf.PI - 0.6f)) * 95f * amp;
-                    if (kneeL != null) kneeL.localRotation = Quaternion.Euler(kbL, 0, 0);
-                    if (kneeR != null) kneeR.localRotation = Quaternion.Euler(kbR, 0, 0);
-                    // arms opposite
-                    float shL = Mathf.Sin(p + Mathf.PI) * 50f * amp;
-                    float shR = Mathf.Sin(p) * 50f * amp;
-                    armL.localRotation = Quaternion.Euler(shL, 0, 6f);
-                    armR.localRotation = Quaternion.Euler(shR, 0, -6f);
-                    if (elbL != null) elbL.localRotation = Quaternion.Euler(-70f - Mathf.Abs(Mathf.Sin(p + Mathf.PI)) * 25f, 0, 0);
-                    if (elbR != null) elbR.localRotation = Quaternion.Euler(-70f - Mathf.Abs(Mathf.Sin(p)) * 25f, 0, 0);
-                    body.localPosition = new Vector3(0, Mathf.Abs(Mathf.Sin(p)) * 0.055f * s, 0);
-                    body.localRotation = Quaternion.Euler(4f + s * 6f, 0, 0);
-                    head.localRotation = Quaternion.Euler(-7f, 0, 0);
+                    float amp = 0.55f + 0.45f * s;
+                    legL.localRotation = Quaternion.Euler(Mathf.Sin(p) * 62f * amp, 0f, 0f);
+                    legR.localRotation = Quaternion.Euler(Mathf.Sin(p + Mathf.PI) * 62f * amp, 0f, 0f);
+                    float kbL = Mathf.Max(0f, -Mathf.Sin(p - 0.85f)) * 105f * amp;
+                    float kbR = Mathf.Max(0f, -Mathf.Sin(p + Mathf.PI - 0.85f)) * 105f * amp;
+                    if (kneeL != null) kneeL.localRotation = Quaternion.Euler(kbL, 0f, 0f);
+                    if (kneeR != null) kneeR.localRotation = Quaternion.Euler(kbR, 0f, 0f);
+                    float swL = Mathf.Sin(p + Mathf.PI);
+                    float swR = Mathf.Sin(p);
+                    armL.localRotation = Quaternion.Euler(2f + swL * 26f * amp, 0f, 9f);
+                    armR.localRotation = Quaternion.Euler(2f + swR * 26f * amp, 0f, -9f);
+                    if (elbL != null) elbL.localRotation = Quaternion.Euler(-76f, 0f, 0f);
+                    if (elbR != null) elbR.localRotation = Quaternion.Euler(-76f, 0f, 0f);
+                    float bounce = Mathf.Abs(Mathf.Sin(p));
+                    body.localPosition = new Vector3(0f, bounce * 0.05f * s, 0f);
+                    body.localScale = new Vector3(1f + bounce * 0.018f * s, 1f - bounce * 0.04f * s, 1f + bounce * 0.018f * s);
+                    body.localRotation = Quaternion.Euler(7f + 4f * s, 0f, 0f);
+                    torso.localRotation = Quaternion.Euler(4f, 0f, 0f);
+                    head.localRotation = Quaternion.Euler(-6f + Mathf.Sin(p * 2f) * 2.5f, 0f, Mathf.Sin(p) * 3f);
                     if (bag != null) bag.gameObject.SetActive(false);
                     break;
                 }
                 case "jump":
                 {
-                    legL.localRotation = Quaternion.Euler(-48f, 0, 10f);
-                    legR.localRotation = Quaternion.Euler(22f, 0, -10f);
-                    if (kneeL != null) kneeL.localRotation = Quaternion.Euler(78f, 0, 0);
-                    if (kneeR != null) kneeR.localRotation = Quaternion.Euler(38f, 0, 0);
-                    armL.localRotation = Quaternion.Euler(-128f, 0, 16f);
-                    armR.localRotation = Quaternion.Euler(-148f, 0, -16f);
-                    if (elbL != null) elbL.localRotation = Quaternion.Euler(-40f, 0, 0);
-                    if (elbR != null) elbR.localRotation = Quaternion.Euler(-40f, 0, 0);
-                    body.localRotation = Quaternion.Euler(-6f, 0, 0);
+                    legL.localRotation = Quaternion.Euler(-52f, 0f, 8f);
+                    legR.localRotation = Quaternion.Euler(18f, 0f, -8f);
+                    if (kneeL != null) kneeL.localRotation = Quaternion.Euler(88f, 0f, 0f);
+                    if (kneeR != null) kneeR.localRotation = Quaternion.Euler(34f, 0f, 0f);
+                    armL.localRotation = Quaternion.Euler(-150f, 0f, 18f);
+                    armR.localRotation = Quaternion.Euler(-165f, 0f, -18f);
+                    if (elbL != null) elbL.localRotation = Quaternion.Euler(-30f, 0f, 0f);
+                    if (elbR != null) elbR.localRotation = Quaternion.Euler(-30f, 0f, 0f);
+                    body.localRotation = Quaternion.Euler(-8f, 0f, 0f);
+                    body.localScale = new Vector3(0.98f, 1.04f, 0.98f);
+                    head.localRotation = Quaternion.Euler(-10f, 0f, 0f);
                     break;
                 }
                 case "roll":
                 {
-                    body.localScale = new Vector3(1f, 0.60f, 1f);
-                    body.localPosition = new Vector3(0, -0.08f, 0);
-                    body.localRotation = Quaternion.Euler(-phase * 620f, 0, 0);
-                    legL.localRotation = Quaternion.Euler(-78f, 0, 0);
-                    legR.localRotation = Quaternion.Euler(-78f, 0, 0);
-                    if (kneeL != null) kneeL.localRotation = Quaternion.Euler(105f, 0, 0);
-                    if (kneeR != null) kneeR.localRotation = Quaternion.Euler(105f, 0, 0);
-                    armL.localRotation = Quaternion.Euler(-95f, 0, 0);
-                    armR.localRotation = Quaternion.Euler(-95f, 0, 0);
-                    if (elbL != null) elbL.localRotation = Quaternion.Euler(-75f, 0, 0);
-                    if (elbR != null) elbR.localRotation = Quaternion.Euler(-75f, 0, 0);
+                    body.localScale = new Vector3(0.8f, 0.52f, 0.8f);
+                    body.localPosition = new Vector3(0f, -0.10f, 0f);
+                    body.localRotation = Quaternion.Euler(-phase * 620f, 0f, 0f);
+                    legL.localRotation = Quaternion.Euler(-92f, 0f, 0f);
+                    legR.localRotation = Quaternion.Euler(-92f, 0f, 0f);
+                    if (kneeL != null) kneeL.localRotation = Quaternion.Euler(118f, 0f, 0f);
+                    if (kneeR != null) kneeR.localRotation = Quaternion.Euler(118f, 0f, 0f);
+                    armL.localRotation = Quaternion.Euler(-118f, 0f, 0f);
+                    armR.localRotation = Quaternion.Euler(-118f, 0f, 0f);
+                    if (elbL != null) elbL.localRotation = Quaternion.Euler(-96f, 0f, 0f);
+                    if (elbR != null) elbR.localRotation = Quaternion.Euler(-96f, 0f, 0f);
+                    head.localRotation = Quaternion.Euler(26f, 0f, 0f);
                     break;
                 }
                 case "board":
                 {
                     float p = phase * 0.5f;
-                    legL.localRotation = Quaternion.Euler(-26f + Mathf.Sin(p) * 5f, 0, 14f);
-                    legR.localRotation = Quaternion.Euler(22f, 0, -14f);
-                    if (kneeL != null) kneeL.localRotation = Quaternion.Euler(42f, 0, 0);
-                    if (kneeR != null) kneeR.localRotation = Quaternion.Euler(34f, 0, 0);
-                    armL.localRotation = Quaternion.Euler(0, 0, 46f);
-                    armR.localRotation = Quaternion.Euler(0, 0, -46f);
-                    if (elbL != null) elbL.localRotation = Quaternion.Euler(-22f, 0, 0);
-                    if (elbR != null) elbR.localRotation = Quaternion.Euler(-22f, 0, 0);
-                    body.localRotation = Quaternion.Euler(0, 0, Mathf.Sin(p) * 5f);
-                    head.localRotation = Quaternion.Euler(-4f, 0, Mathf.Sin(p) * 4f);
+                    legL.localRotation = Quaternion.Euler(-26f + Mathf.Sin(p) * 6f, 0f, 16f);
+                    legR.localRotation = Quaternion.Euler(24f, 0f, -16f);
+                    if (kneeL != null) kneeL.localRotation = Quaternion.Euler(46f, 0f, 0f);
+                    if (kneeR != null) kneeR.localRotation = Quaternion.Euler(36f, 0f, 0f);
+                    armL.localRotation = Quaternion.Euler(-8f, 0f, 52f);
+                    armR.localRotation = Quaternion.Euler(-8f, 0f, -52f);
+                    if (elbL != null) elbL.localRotation = Quaternion.Euler(-24f, 0f, 0f);
+                    if (elbR != null) elbR.localRotation = Quaternion.Euler(-24f, 0f, 0f);
+                    body.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(p) * 5f);
+                    head.localRotation = Quaternion.Euler(-6f, 0f, Mathf.Sin(p) * 5f);
                     break;
                 }
                 case "jet":
                 {
                     float p = phase * 0.35f;
-                    legL.localRotation = Quaternion.Euler(14f + Mathf.Sin(p) * 12f, 0, 5f);
-                    legR.localRotation = Quaternion.Euler(18f + Mathf.Sin(p + 1f) * 12f, 0, -5f);
-                    if (kneeL != null) kneeL.localRotation = Quaternion.Euler(32f, 0, 0);
-                    if (kneeR != null) kneeR.localRotation = Quaternion.Euler(28f, 0, 0);
-                    armL.localRotation = Quaternion.Euler(-46f, 0, 22f);
-                    armR.localRotation = Quaternion.Euler(-46f, 0, -22f);
-                    if (elbL != null) elbL.localRotation = Quaternion.Euler(-26f, 0, 0);
-                    if (elbR != null) elbR.localRotation = Quaternion.Euler(-26f, 0, 0);
-                    body.localRotation = Quaternion.Euler(-9f, 0, 0);
-                    if (flameL != null) flameL.localScale = new Vector3(0.2f, 0.35f + Mathf.Abs(Mathf.Sin(t * 30f)) * 0.3f, 0.2f);
-                    if (flameR != null) flameR.localScale = new Vector3(0.2f, 0.35f + Mathf.Abs(Mathf.Cos(t * 28f)) * 0.3f, 0.2f);
+                    legL.localRotation = Quaternion.Euler(12f + Mathf.Sin(p) * 14f, 0f, 5f);
+                    legR.localRotation = Quaternion.Euler(17f + Mathf.Sin(p + 1.1f) * 14f, 0f, -5f);
+                    if (kneeL != null) kneeL.localRotation = Quaternion.Euler(34f, 0f, 0f);
+                    if (kneeR != null) kneeR.localRotation = Quaternion.Euler(30f, 0f, 0f);
+                    armL.localRotation = Quaternion.Euler(-38f, 0f, 26f);
+                    armR.localRotation = Quaternion.Euler(-38f, 0f, -26f);
+                    if (elbL != null) elbL.localRotation = Quaternion.Euler(-78f, 0f, 0f);
+                    if (elbR != null) elbR.localRotation = Quaternion.Euler(-78f, 0f, 0f);
+                    body.localRotation = Quaternion.Euler(-10f, 0f, 0f);
+                    head.localRotation = Quaternion.Euler(-12f, 0f, 0f);
+                    if (flameL != null) flameL.localScale = new Vector3(0.09f, 0.17f + Mathf.Abs(Mathf.Sin(t * 26f)) * 0.19f, 0.09f);
+                    if (flameR != null) flameR.localScale = new Vector3(0.09f, 0.17f + Mathf.Abs(Mathf.Cos(t * 24f)) * 0.19f, 0.09f);
                     break;
                 }
                 case "stumble":
                 {
                     float p = phase;
-                    body.localRotation = Quaternion.Euler(16f, 0, Mathf.Sin(p * 2f) * 17f);
-                    legL.localRotation = Quaternion.Euler(32f, 0, 0);
-                    legR.localRotation = Quaternion.Euler(-22f, 0, 0);
-                    if (kneeL != null) kneeL.localRotation = Quaternion.Euler(50f, 0, 0);
-                    armL.localRotation = Quaternion.Euler(Mathf.Sin(p * 6f) * 85f - 45f, 0, 32f);
-                    armR.localRotation = Quaternion.Euler(Mathf.Sin(p * 6f + 2f) * 85f - 45f, 0, -32f);
-                    head.localRotation = Quaternion.Euler(-10f, 0, Mathf.Sin(p * 3f) * 8f);
+                    body.localRotation = Quaternion.Euler(16f, 0f, Mathf.Sin(p * 2f) * 15f);
+                    legL.localRotation = Quaternion.Euler(30f, 0f, 0f);
+                    legR.localRotation = Quaternion.Euler(-22f, 0f, 0f);
+                    if (kneeL != null) kneeL.localRotation = Quaternion.Euler(52f, 0f, 0f);
+                    armL.localRotation = Quaternion.Euler(Mathf.Sin(p * 6f) * 85f - 55f, 0f, 34f);
+                    armR.localRotation = Quaternion.Euler(Mathf.Sin(p * 6f + 2f) * 85f - 55f, 0f, -34f);
+                    head.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(p * 3f) * 9f);
                     break;
                 }
                 case "dead":
                 {
-                    body.localRotation = Quaternion.Euler(-84f, 0, 0);
-                    body.localPosition = new Vector3(0, -0.25f, 0.3f);
-                    legL.localRotation = Quaternion.Euler(22f, 0, 12f);
-                    legR.localRotation = Quaternion.Euler(-12f, 0, -16f);
-                    if (kneeL != null) kneeL.localRotation = Quaternion.Euler(28f, 0, 0);
-                    armL.localRotation = Quaternion.Euler(-34f, 0, 42f);
-                    armR.localRotation = Quaternion.Euler(-22f, 0, -42f);
+                    body.localRotation = Quaternion.Euler(-84f, 0f, 0f);
+                    body.localPosition = new Vector3(0f, -0.24f, 0.28f);
+                    legL.localRotation = Quaternion.Euler(20f, 0f, 12f);
+                    legR.localRotation = Quaternion.Euler(-12f, 0f, -16f);
+                    if (kneeL != null) kneeL.localRotation = Quaternion.Euler(26f, 0f, 0f);
+                    armL.localRotation = Quaternion.Euler(-38f, 0f, 46f);
+                    armR.localRotation = Quaternion.Euler(-24f, 0f, -46f);
                     break;
                 }
                 case "grab":
                 {
                     float reach = Mathf.Clamp01(t * 3f);
-                    armL.localRotation = Quaternion.Euler(-115f * reach, 0, 12f);
-                    armR.localRotation = Quaternion.Euler(-130f * reach, 0, -12f);
-                    if (elbL != null) elbL.localRotation = Quaternion.Euler(-30f * reach, 0, 0);
-                    if (elbR != null) elbR.localRotation = Quaternion.Euler(-30f * reach, 0, 0);
-                    legL.localRotation = Quaternion.Euler(Mathf.Sin(phase) * 42f, 0, 0);
-                    legR.localRotation = Quaternion.Euler(Mathf.Sin(phase + Mathf.PI) * 42f, 0, 0);
-                    if (kneeL != null) kneeL.localRotation = Quaternion.Euler(Mathf.Clamp01(-Mathf.Sin(phase - 0.6f)) * 80f, 0, 0);
-                    if (kneeR != null) kneeR.localRotation = Quaternion.Euler(Mathf.Clamp01(-Mathf.Sin(phase + Mathf.PI - 0.6f)) * 80f, 0, 0);
+                    armL.localRotation = Quaternion.Euler(-115f * reach, 0f, 12f);
+                    armR.localRotation = Quaternion.Euler(-130f * reach, 0f, -12f);
+                    if (elbL != null) elbL.localRotation = Quaternion.Euler(-30f * reach, 0f, 0f);
+                    if (elbR != null) elbR.localRotation = Quaternion.Euler(-30f * reach, 0f, 0f);
+                    float p = phase;
+                    legL.localRotation = Quaternion.Euler(Mathf.Sin(p) * 46f, 0f, 0f);
+                    legR.localRotation = Quaternion.Euler(Mathf.Sin(p + Mathf.PI) * 46f, 0f, 0f);
+                    if (kneeL != null) kneeL.localRotation = Quaternion.Euler(Mathf.Max(0f, -Mathf.Sin(p - 0.85f)) * 86f, 0f, 0f);
+                    if (kneeR != null) kneeR.localRotation = Quaternion.Euler(Mathf.Max(0f, -Mathf.Sin(p + Mathf.PI - 0.85f)) * 86f, 0f, 0f);
                     break;
                 }
             }

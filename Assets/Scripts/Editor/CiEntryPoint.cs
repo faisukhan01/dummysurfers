@@ -302,6 +302,23 @@ namespace DummySurfer.EditorTools
                 cam.Render();
                 SavePng(rt, "build/previews/menu.png");
 
+                // ---------- shot C: hero portrait (character QA close-up) ----------
+                boy.transform.rotation = Quaternion.Euler(0, 20f, 0);
+                boy.Pose("idle", 1.0f, 0f);
+                cam.transform.position = new Vector3(1.9f, 1.75f, 3.6f);
+                cam.transform.rotation = Quaternion.LookRotation(new Vector3(0f, 1.30f, 0.05f) - cam.transform.position);
+                cam.Render();
+                SavePng(rt, "build/previews/portrait.png");
+
+                // ---------- shot D: back view (what the player actually sees) ----------
+                boy.transform.rotation = Quaternion.Euler(0, 0f, 0);
+                boy.Pose("run", 0f, 1f);
+                boy.phase = 2.15f;
+                cam.transform.position = new Vector3(0f, 2.1f, -3.4f);
+                cam.transform.rotation = Quaternion.LookRotation(new Vector3(0f, 1.35f, 1.0f) - cam.transform.position);
+                cam.Render();
+                SavePng(rt, "build/previews/back.png");
+
                 rt.Release();
                 Debug.Log("[Preview] done");
             }
