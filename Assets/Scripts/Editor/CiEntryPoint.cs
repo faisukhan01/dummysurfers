@@ -292,7 +292,7 @@ namespace DummySurfer.EditorTools
                 SavePng(rt, "build/previews/gameplay.png");
 
                 // ---------- shot B: menu view (spray pose + graffiti wall) ----------
-                boy.transform.rotation = Quaternion.Euler(0, 152f, 0);
+                boy.transform.rotation = Quaternion.Euler(0, 208f, 0); // face the menu camera
                 boy.Pose("spray", 1.5f, 0f);
                 var wall = DummySurfer.WorldFactory.GraffitiPanel(15f, 6.4f, new Color32(0xB7, 0xBE, 0xC9, 255), 3);
                 wall.transform.position = new Vector3(4.9f, 3.0f, 14f);

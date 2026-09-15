@@ -48,7 +48,7 @@ namespace DummySurfer
 
             BuildMenuDressing();
 
-            player.transform.rotation = Quaternion.Euler(0, 152f, 0);
+            player.transform.rotation = Quaternion.Euler(0, 208f, 0); // face the menu camera
             StartCoroutine(Boot());
         }
 
@@ -211,7 +211,7 @@ namespace DummySurfer
         {
             TrackSpawner.I.ResetWorld();
             player.ResetRun();
-            player.transform.rotation = Quaternion.Euler(0, 152f, 0);
+            player.transform.rotation = Quaternion.Euler(0, 208f, 0); // face the menu camera
             CameraRig.I.mode = CameraRig.CamMode.Menu;
             GameManager.I.SetState(GameManager.St.Menu);
         }
@@ -245,7 +245,7 @@ namespace DummySurfer
             var g = GameManager.I;
             TrackSpawner.I.ResetWorld();
             player.ResetRun();
-            player.transform.rotation = Quaternion.Euler(0, 152f, 0);
+            player.transform.rotation = Quaternion.Euler(0, 208f, 0); // face the menu camera
             if (Chaser.I != null) Chaser.I.Hide();
             CameraRig.I.mode = CameraRig.CamMode.Menu;
             g.Save();

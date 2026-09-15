@@ -3,59 +3,23 @@ using UnityEngine;
 
 namespace DummySurfer
 {
-    /// <summary>Procedural chibi cartoon characters (boy runner, inspector, dog) + pose engine.
-    /// Boy "v4": huge round head, red cap with forward brim, scalloped bowl-cut fringe,
-    /// big glossy eyes with highlights, blush, open smile with tooth — white tee under an
-    /// open denim vest, rolled-cuff jeans, chunky black/white sneakers, round orange backpack.
-    /// 100% smooth primitives (spheres / capsules / cylinders) — ZERO cubes, TV-cartoon look.
-    /// Articulated: hips, knees, shoulders, elbows — expressive SS-style run cycle with
-    /// squash & stretch, bounce, head bob and auto-blinking.</summary>
+    /// <summary>Procedural chibi anime characters (boy runner, inspector, dog) + pose engine.
+    /// Boy "v5": continuous lathe-surface body (no primitive stacking), baked cel shading
+    /// via AnimeMesh ramp UVs + inverted-hull ink outlines. Jake-style outfit: red cap over
+    /// spiky brown hair, big glossy anime eyes with highlights, white tee over jeans with
+    /// rolled cuffs, chunky red/white sneakers, round orange backpack, spray can for menus.
+    /// Articulated: hips, knees, shoulders, elbows — SS-style run cycle with squash &amp;
+    /// stretch, bounce, head bob and auto-blinking. Same pivot skeleton as v4, so every
+    /// gameplay system (PlayerController / Chaser / cameras) works unchanged.</summary>
     public class CharacterRig : MonoBehaviour
     {
         public Transform body, head, armL, armR, legL, legR, torso, tail, board, jet, flameL, flameR, bag;
         public Transform kneeL, kneeR, elbL, elbR, handR;
         public string kind = "boy";
 
-        Transform[] blinkers;          // eye ellipsoids (blink by scaling Y)
+        Transform[] blinkers;          // eye groups (blink by scaling Y)
         Vector3[] blinkBase;
         Transform[] glints;            // eye highlights (hide while blinking)
-
-        // ------------------------------------------------ builder utils
-        static GameObject Part(Transform parent, PrimitiveType t, Vector3 pos, Vector3 scl, Material mat, string name)
-        {
-            var go = GameObject.CreatePrimitive(t);
-            Object.Destroy(go.GetComponent<Collider>());
-            go.name = name;
-            go.transform.SetParent(parent, false);
-            go.transform.localPosition = pos;
-            go.transform.localScale = scl;
-            var mr = go.GetComponent<MeshRenderer>();
-            mr.sharedMaterial = mat;
-            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
-            mr.receiveShadows = true;
-            return go;
-        }
-
-        static GameObject Sph(Transform parent, Vector3 pos, Vector3 scl, Material mat, string name, float rotX = 0f, float rotZ = 0f)
-        {
-            var go = Part(parent, PrimitiveType.Sphere, pos, scl, mat, name);
-            if (rotX != 0f || rotZ != 0f) go.transform.localRotation = Quaternion.Euler(rotX, 0f, rotZ);
-            return go;
-        }
-
-        static GameObject Cap(Transform parent, Vector3 pos, Vector3 scl, Material mat, string name, float rotX = 0f, float rotZ = 0f)
-        {
-            var go = Part(parent, PrimitiveType.Capsule, pos, scl, mat, name);
-            if (rotX != 0f || rotZ != 0f) go.transform.localRotation = Quaternion.Euler(rotX, 0f, rotZ);
-            return go;
-        }
-
-        static GameObject Cyl(Transform parent, Vector3 pos, Vector3 scl, Material mat, string name, float rotX = 0f)
-        {
-            var go = Part(parent, PrimitiveType.Cylinder, pos, scl, mat, name);
-            if (rotX != 0f) go.transform.localRotation = Quaternion.Euler(rotX, 0f, 0f);
-            return go;
-        }
 
         static Transform Pivot(Transform parent, string name, Vector3 pos)
         {
@@ -65,13 +29,9 @@ namespace DummySurfer
             return go.transform;
         }
 
-        static Color GMC(int r, int g, int b) { return new Color32((byte)r, (byte)g, (byte)b, 255); }
+        static Color C(int r, int g, int b) { return new Color32((byte)r, (byte)g, (byte)b, 255); }
 
-        // gradient strengths tuned per material family (baked vertical shading)
-        static Material GMat(Color c, float top, float bot) { return Fx.ShadedMat(c, top, bot); }
-        static Material Flat(Color c) { return Fx.ShadedMat(c, 1f, 1f); }
-
-        // ------------------------------------------------ BOY (hero)
+        // ================================================== BOY (hero)
         public static CharacterRig BuildBoy(Transform parent)
         {
             var root = new GameObject("Boy");
@@ -79,25 +39,26 @@ namespace DummySurfer
             var rig = root.AddComponent<CharacterRig>();
             rig.kind = "boy";
 
-            var skin = GMat(GMC(0xFF, 0xCD, 0xA5), 1.14f, 0.74f);
-            var hair = GMat(GMC(0x3A, 0x24, 0x1B), 1.45f, 0.55f);
-            var cap = GMat(GMC(0xE8, 0x45, 0x45), 1.28f, 0.60f);
-            var capD = GMat(GMC(0xC2, 0x35, 0x35), 1.30f, 0.60f);
-            var tee = GMat(GMC(0xFA, 0xF8, 0xF1), 1.10f, 0.80f);
-            var vest = GMat(GMC(0x4E, 0x71, 0xA8), 1.22f, 0.60f);
-            var vestD = GMat(GMC(0x3F, 0x5D, 0x90), 1.20f, 0.60f);
-            var jeans = GMat(GMC(0x58, 0x78, 0xB5), 1.18f, 0.62f);
-            var cuff = GMat(GMC(0x70, 0x90, 0xC8), 1.12f, 0.75f);
-            var shoe = GMat(GMC(0x2E, 0x2E, 0x36), 1.45f, 0.55f);
-            var sole = GMat(GMC(0xF6, 0xF4, 0xEE), 1.10f, 0.86f);
-            var pack = GMat(GMC(0xF2, 0x7E, 0x3F), 1.22f, 0.62f);
-            var packD = GMat(GMC(0xD9, 0x64, 0x27), 1.20f, 0.62f);
-            var eye = GMat(GMC(0x2B, 0x1A, 0x12), 1.25f, 0.85f);
-            var brow = GMat(GMC(0x33, 0x20, 0x1A), 1.30f, 0.70f);
-            var blush = GMat(GMC(0xFF, 0x9D, 0xA6), 1.12f, 0.95f);
-            var nose = GMat(GMC(0xF4, 0xB1, 0x83), 1.08f, 0.80f);
-            var mouth = GMat(GMC(0x8A, 0x32, 0x2B), 1.20f, 0.80f);
-            var white = Flat(GMC(0xFF, 0xFF, 0xFF));
+            var skin = AnimeMesh.Shade(C(0xFF, 0xC8, 0x9C));
+            var nose = AnimeMesh.Shade(C(0xF0, 0xAE, 0x84));
+            var hair = AnimeMesh.Shade(C(0x4A, 0x2A, 0x16));
+            var capR = AnimeMesh.Shade(C(0xE2, 0x3B, 0x3B));
+            var capD = AnimeMesh.Shade(C(0xC2, 0x2F, 0x2F));
+            var capW = AnimeMesh.Shade(C(0xFB, 0xFA, 0xF6));
+            var tee = AnimeMesh.Shade(C(0xFA, 0xF7, 0xEF));
+            var slv = AnimeMesh.Shade(C(0x3F, 0x6B, 0xB5));
+            var slvD = AnimeMesh.Shade(C(0x33, 0x58, 0x9A));
+            var jeans = AnimeMesh.Shade(C(0x4C, 0x6F, 0xB0));
+            var cuff = AnimeMesh.Shade(C(0x6C, 0x8F, 0xCB));
+            var shoeR = AnimeMesh.Shade(C(0xD8, 0x35, 0x3A));
+            var shoeW = AnimeMesh.Shade(C(0xF5, 0xF3, 0xEC));
+            var pack = AnimeMesh.Shade(C(0xF2, 0x80, 0x2F));
+            var packD = AnimeMesh.Shade(C(0xD9, 0x6A, 0x22));
+            var iris = AnimeMesh.Shade(C(0x3A, 0x24, 0x14));
+            var pupil = AnimeMesh.Shade(C(0x17, 0x10, 0x0B));
+            var brow = AnimeMesh.Shade(C(0x33, 0x20, 0x1A));
+            var mouth = AnimeMesh.Shade(C(0x8A, 0x32, 0x2B));
+            var blush = AnimeMesh.Shade(C(0xF5, 0xA9, 0xA0));
 
             rig.body = Pivot(root.transform, "body", Vector3.zero);
 
@@ -105,127 +66,226 @@ namespace DummySurfer
             for (int s = 0; s < 2; s++)
             {
                 float sx = s == 0 ? -1f : 1f;
+                string side = s == 0 ? "L" : "R";
+
                 var hip = Pivot(rig.body, "leg" + s, new Vector3(sx * 0.135f, 0.71f, 0f));
                 if (s == 0) rig.legL = hip; else rig.legR = hip;
-                Cap(hip, new Vector3(0f, -0.13f, 0f), new Vector3(0.13f, 0.12f, 0.13f), jeans, "thigh");
+
+                // thigh (jeans, continuous lathe)
+                var bT = new AnimeMesh.Build(0.012f);
+                int mJ = bT.Mat(jeans);
+                bT.Rev(mJ, Vector3.zero, Quaternion.identity, new Vector3(1f, 1f, 0.88f),
+                       new[] { new Vector2(0.05f, 0.128f), new Vector2(-0.08f, 0.121f), new Vector2(-0.20f, 0.104f), new Vector2(-0.30f, 0.098f) });
+                bT.Done(hip, "thigh" + side);
+
+                // shin + rolled cuff + chunky sneaker (bend with the knee)
                 var knee = Pivot(hip, "knee", new Vector3(0f, -0.26f, 0f));
                 if (s == 0) rig.kneeL = knee; else rig.kneeR = knee;
-                Sph(knee, Vector3.zero, new Vector3(0.105f, 0.105f, 0.105f), jeans, "kneeJoint");
-                Cap(knee, new Vector3(0f, -0.11f, 0f), new Vector3(0.10f, 0.10f, 0.10f), jeans, "shin");
-                Cyl(knee, new Vector3(0f, -0.195f, 0f), new Vector3(0.118f, 0.03f, 0.118f), cuff, "cuff");
-                // chunky sneaker — all ellipsoids
-                Sph(knee, new Vector3(0f, -0.235f, 0.015f), new Vector3(0.115f, 0.085f, 0.175f), shoe, "shoeUpper");
-                Sph(knee, new Vector3(0f, -0.25f, 0.14f), new Vector3(0.095f, 0.065f, 0.09f), sole, "toeCap");
-                Sph(knee, new Vector3(0f, -0.29f, 0.045f), new Vector3(0.12f, 0.038f, 0.195f), sole, "sole");
-                Sph(knee, new Vector3(0f, -0.21f, -0.105f), new Vector3(0.08f, 0.05f, 0.05f), sole, "heel");
+                var bS = new AnimeMesh.Build(0.011f);
+                int mJ2 = bS.Mat(jeans), mC = bS.Mat(cuff), mR = bS.Mat(shoeR), mW = bS.Mat(shoeW);
+                bS.Ball(mJ2, new Vector3(0f, 0.005f, 0f), new Vector3(0.096f, 0.096f, 0.088f), Quaternion.identity);
+                bS.Rev(mJ2, Vector3.zero, Quaternion.identity, new Vector3(1f, 1f, 0.88f),
+                       new[] { new Vector2(0.0f, 0.092f), new Vector2(-0.14f, 0.086f), new Vector2(-0.22f, 0.082f) });
+                bS.Rev(mC, Vector3.zero, Quaternion.identity, new Vector3(1f, 1f, 0.88f),
+                       new[] { new Vector2(-0.13f, 0.099f), new Vector2(-0.19f, 0.095f), new Vector2(-0.235f, 0.088f) });
+                // sneaker — smooth overlapping ellipsoids (red upper, white toe/sole)
+                bS.Ball(mW, new Vector3(0f, -0.24f, -0.06f), new Vector3(0.055f, 0.05f, 0.06f), Quaternion.identity);
+                bS.Ball(mR, new Vector3(0f, -0.245f, 0.03f), new Vector3(0.10f, 0.075f, 0.14f), Quaternion.identity);
+                bS.Ball(mW, new Vector3(0f, -0.265f, 0.145f), new Vector3(0.082f, 0.06f, 0.075f), Quaternion.identity);
+                bS.Ball(mW, new Vector3(0f, -0.30f, 0.045f), new Vector3(0.115f, 0.032f, 0.19f), Quaternion.identity);
+                bS.Done(knee, "shin" + side);
             }
 
-            // ============================ TORSO (white tee egg + open denim vest + round backpack)
+            // ============================ TORSO (tee over jeans + backpack)
             rig.torso = Pivot(rig.body, "torso", new Vector3(0f, 0.75f, 0f));
-            Sph(rig.torso, new Vector3(0f, 0.17f, 0.01f), new Vector3(0.335f, 0.295f, 0.25f), tee, "tee");
-            Sph(rig.torso, new Vector3(0f, -0.015f, 0.005f), new Vector3(0.30f, 0.10f, 0.235f), jeans, "hips");
-            Sph(rig.torso, new Vector3(-0.19f, 0.28f, 0.015f), new Vector3(0.105f, 0.22f, 0.21f), vest, "vestL");
-            Sph(rig.torso, new Vector3(0.19f, 0.28f, 0.015f), new Vector3(0.105f, 0.22f, 0.21f), vest, "vestR");
-            Sph(rig.torso, new Vector3(-0.20f, 0.525f, 0.005f), new Vector3(0.115f, 0.065f, 0.115f), vest, "shoulderL");
-            Sph(rig.torso, new Vector3(0.20f, 0.525f, 0.005f), new Vector3(0.115f, 0.065f, 0.115f), vest, "shoulderR");
-            Sph(rig.torso, new Vector3(0f, 0.32f, -0.15f), new Vector3(0.27f, 0.22f, 0.115f), vest, "vestBack");
-            Sph(rig.torso, new Vector3(0f, 0.55f, -0.095f), new Vector3(0.23f, 0.055f, 0.075f), vestD, "collar");
-            // round orange backpack (hero piece from behind)
-            Sph(rig.torso, new Vector3(0f, 0.30f, -0.265f), new Vector3(0.25f, 0.28f, 0.135f), pack, "pack");
-            Sph(rig.torso, new Vector3(0f, 0.21f, -0.385f), new Vector3(0.165f, 0.12f, 0.05f), packD, "packPocket");
-            Cap(rig.torso, new Vector3(-0.12f, 0.44f, 0.145f), new Vector3(0.042f, 0.10f, 0.042f), vestD, "strapL", -22f, 0f);
-            Cap(rig.torso, new Vector3(0.12f, 0.44f, 0.145f), new Vector3(0.042f, 0.10f, 0.042f), vestD, "strapR", -22f, 0f);
+            {
+                var b = new AnimeMesh.Build(0.013f);
+                int mJ = b.Mat(jeans), mT = b.Mat(tee), mS = b.Mat(skin), mP = b.Mat(pack), mPD = b.Mat(packD);
+                // pelvis bridge between the thigh tops
+                b.Ball(mJ, new Vector3(0f, -0.07f, 0f), new Vector3(0.155f, 0.115f, 0.135f), Quaternion.identity);
+                // white tee — continuous egg, hem overhangs the jeans
+                b.Rev(mT, Vector3.zero, Quaternion.identity, new Vector3(1f, 1f, 0.84f),
+                      new[] { new Vector2(-0.06f, 0.205f), new Vector2(0.02f, 0.185f), new Vector2(0.12f, 0.178f), new Vector2(0.26f, 0.196f), new Vector2(0.38f, 0.215f), new Vector2(0.46f, 0.205f), new Vector2(0.505f, 0.16f), new Vector2(0.535f, 0.09f) });
+                // collar + neck
+                b.Rev(mT, Vector3.zero, Quaternion.identity, new Vector3(1f, 1f, 0.9f),
+                      new[] { new Vector2(0.495f, 0.098f), new Vector2(0.525f, 0.092f), new Vector2(0.545f, 0.088f) });
+                b.Rev(mS, Vector3.zero, Quaternion.identity, Vector3.one,
+                      new[] { new Vector2(0.44f, 0.075f), new Vector2(0.54f, 0.07f), new Vector2(0.62f, 0.078f) });
+                // round orange backpack + pocket + straps (hero piece from behind)
+                b.Ball(mP, new Vector3(0f, 0.24f, -0.235f), new Vector3(0.235f, 0.26f, 0.13f), Quaternion.identity);
+                b.Ball(mPD, new Vector3(0f, 0.11f, -0.325f), new Vector3(0.15f, 0.10f, 0.05f), Quaternion.identity);
+                var st = Quaternion.Euler(-24f, 0f, 0f);
+                b.Ball(mPD, new Vector3(-0.14f, 0.43f, 0.02f), new Vector3(0.042f, 0.15f, 0.045f), st);
+                b.Ball(mPD, new Vector3(0.14f, 0.43f, 0.02f), new Vector3(0.042f, 0.15f, 0.045f), st);
+                b.Done(rig.torso, "torsoGroup");
+            }
 
-            // ============================ ARMS (shoulder -> elbow -> mitten)
+            // ============================ ARMS (shoulder -> elbow -> hand)
             for (int s = 0; s < 2; s++)
             {
                 float sx = s == 0 ? -1f : 1f;
+                string side = s == 0 ? "L" : "R";
+
                 var sh = Pivot(rig.body, "arm" + s, new Vector3(sx * 0.275f, 1.25f, 0.01f));
                 if (s == 0) rig.armL = sh; else rig.armR = sh;
-                Cap(sh, new Vector3(0f, -0.10f, 0f), new Vector3(0.105f, 0.10f, 0.105f), tee, "sleeve");
-                Sph(sh, new Vector3(0f, -0.19f, 0f), new Vector3(0.10f, 0.10f, 0.10f), tee, "sleeveHem");
+
+                // raglan blue sleeve + white shoulder cap
+                var bU = new AnimeMesh.Build(0.011f);
+                int mSl = bU.Mat(slv), mSd = bU.Mat(slvD);
+                bU.Ball(mSl, new Vector3(-sx * 0.02f, 0.005f, 0f), new Vector3(0.105f, 0.105f, 0.10f), Quaternion.identity);
+                bU.Rev(mSl, Vector3.zero, Quaternion.identity, new Vector3(1f, 1f, 0.92f),
+                       new[] { new Vector2(0.02f, 0.102f), new Vector2(-0.08f, 0.094f), new Vector2(-0.17f, 0.088f) });
+                bU.Rev(mSd, Vector3.zero, Quaternion.identity, new Vector3(1f, 1f, 0.92f),
+                       new[] { new Vector2(-0.155f, 0.092f), new Vector2(-0.185f, 0.088f), new Vector2(-0.205f, 0.082f) });
+                bU.Done(sh, "upperArm" + side);
+
                 var elb = Pivot(sh, "elbow", new Vector3(0f, -0.205f, 0f));
                 if (s == 0) rig.elbL = elb; else rig.elbR = elb;
-                Sph(elb, Vector3.zero, new Vector3(0.082f, 0.082f, 0.082f), skin, "elbowJoint");
-                Cap(elb, new Vector3(0f, -0.09f, 0f), new Vector3(0.082f, 0.078f, 0.082f), skin, "forearm");
-                var hand = Sph(elb, new Vector3(0f, -0.19f, 0.005f), new Vector3(0.09f, 0.095f, 0.09f), skin, "hand");
-                if (s == 1) rig.handR = hand.transform;
+                var bF = new AnimeMesh.Build(0.009f);
+                int mSk = bF.Mat(skin);
+                bF.Ball(mSk, new Vector3(0f, 0.005f, 0f), new Vector3(0.078f, 0.078f, 0.074f), Quaternion.identity);
+                bF.Rev(mSk, Vector3.zero, Quaternion.identity, new Vector3(1f, 1f, 0.92f),
+                       new[] { new Vector2(0.0f, 0.074f), new Vector2(-0.10f, 0.066f), new Vector2(-0.15f, 0.060f) });
+                bF.Ball(mSk, new Vector3(0f, -0.20f, 0.008f), new Vector3(0.088f, 0.095f, 0.088f), Quaternion.identity);
+                bF.Done(elb, "foreArm" + side);
+                if (s == 1) rig.handR = elb;
             }
 
             // spray can in the right hand (menu poses only)
             rig.bag = Pivot(rig.elbR, "bag", Vector3.zero);
-            Cyl(rig.bag, new Vector3(0f, -0.26f, 0.05f), new Vector3(0.08f, 0.07f, 0.08f), pack, "can");
-            Cyl(rig.bag, new Vector3(0f, -0.175f, 0.05f), new Vector3(0.042f, 0.028f, 0.042f), sole, "canTop");
+            {
+                var b = new AnimeMesh.Build(0.006f);
+                int mP = b.Mat(pack), mW = b.Mat(shoeW), mD = b.Mat(pupil);
+                b.Rev(mP, new Vector3(0f, -0.26f, 0.05f), Quaternion.identity, Vector3.one,
+                      new[] { new Vector2(-0.07f, 0.070f), new Vector2(0f, 0.078f), new Vector2(0.07f, 0.070f) });
+                b.Ball(mW, new Vector3(0f, -0.185f, 0.05f), new Vector3(0.045f, 0.03f, 0.045f), Quaternion.identity);
+                b.Ball(mD, new Vector3(0f, -0.155f, 0.05f), new Vector3(0.018f, 0.022f, 0.018f), Quaternion.identity);
+                b.Done(rig.bag, "sprayCan");
+            }
             rig.bag.gameObject.SetActive(false);
 
             // ============================ HEAD (the hero — huge chibi head)
             rig.head = Pivot(rig.body, "head", new Vector3(0f, 1.37f, 0f));
-            Sph(rig.head, new Vector3(0f, 0f, 0.01f), new Vector3(0.445f, 0.43f, 0.435f), skin, "skull");
-            Sph(rig.head, new Vector3(-0.39f, -0.01f, -0.03f), new Vector3(0.05f, 0.075f, 0.06f), skin, "earL");
-            Sph(rig.head, new Vector3(0.39f, -0.01f, -0.03f), new Vector3(0.05f, 0.075f, 0.06f), skin, "earR");
-            // hair — bowl cut hugging the skull, tucked under the cap
-            Sph(rig.head, new Vector3(0f, 0.07f, -0.055f), new Vector3(0.462f, 0.415f, 0.44f), hair, "hairBack");
-            for (int i = 0; i < 9; i++)
             {
-                float bx = -0.208f + i * 0.052f;
-                var f = Sph(rig.head,
-                    new Vector3(bx, 0.115f - Mathf.Abs(bx) * 0.06f, 0.415f - bx * bx * 1.1f),
-                    new Vector3(0.075f, 0.055f, 0.065f), hair, "fringe" + i,
-                    0f, -bx * 45f);
+                var b = new AnimeMesh.Build(0.012f);
+                int mSk = b.Mat(skin), mH = b.Mat(hair), mC = b.Mat(capR), mCD = b.Mat(capD), mCW = b.Mat(capW);
+                int mN = b.Mat(nose), mBr = b.Mat(brow), mM = b.Mat(mouth), mB = b.Mat(blush), mW = b.Mat(capW);
+
+                // skull — egg with a chin
+                b.Rev(mSk, new Vector3(0f, 0.10f, 0.01f), Quaternion.identity, new Vector3(1f, 1f, 0.965f),
+                      new[] { new Vector2(-0.145f, 0.024f), new Vector2(-0.10f, 0.135f), new Vector2(-0.045f, 0.23f), new Vector2(0.01f, 0.31f), new Vector2(0.09f, 0.365f), new Vector2(0.17f, 0.398f), new Vector2(0.25f, 0.405f), new Vector2(0.33f, 0.372f), new Vector2(0.41f, 0.292f), new Vector2(0.47f, 0.18f), new Vector2(0.51f, 0.06f) });
+                // ears
+                b.Ball(mSk, new Vector3(-0.375f, 0.155f, 0.01f), new Vector3(0.045f, 0.062f, 0.045f), Quaternion.identity);
+                b.Ball(mSk, new Vector3(0.375f, 0.155f, 0.01f), new Vector3(0.045f, 0.062f, 0.045f), Quaternion.identity);
+
+                // hair — helmet shell hugging the skull, face opening at the front
+                b.Ball(mH, new Vector3(0f, 0.225f, -0.01f), new Vector3(0.43f, 0.415f, 0.43f), Quaternion.identity, 22, 150f, 380f, 152f);
+                // spiky crown — hair escaping under the cap rim (Jake style)
+                for (int i = 0; i < 9; i++)
+                {
+                    float th = 160f + i * (220f / 8f);
+                    float ra = th * Mathf.Deg2Rad;
+                    var dir = new Vector3(Mathf.Cos(ra) * 1.0f, 0.38f + 0.10f * (i % 3), Mathf.Sin(ra) * 1.0f).normalized;
+                    float len = 0.13f + 0.035f * ((i * 7) % 3);
+                    b.Spike(mH, new Vector3(Mathf.Cos(ra) * 0.385f, 0.33f + 0.05f * (i % 2), Mathf.Sin(ra) * 0.385f), dir, len, 0.042f);
+                }
+                // nape spikes down the back
+                for (int i = 0; i < 5; i++)
+                {
+                    float th = 205f + i * 32.5f;
+                    float ra = th * Mathf.Deg2Rad;
+                    b.Spike(mH, new Vector3(Mathf.Cos(ra) * 0.355f, 0.12f, Mathf.Sin(ra) * 0.355f),
+                            new Vector3(Mathf.Cos(ra) * 0.35f, -1f, Mathf.Sin(ra) * 0.35f), 0.115f, 0.034f);
+                }
+                // side tufts in front of the ears
+                b.Ball(mH, new Vector3(-0.345f, 0.19f, 0.10f), new Vector3(0.05f, 0.095f, 0.07f), Quaternion.identity);
+                b.Ball(mH, new Vector3(0.345f, 0.19f, 0.10f), new Vector3(0.05f, 0.095f, 0.07f), Quaternion.identity);
+
+                // cap — dome over the hair, stiff brim, white front panel, button
+                b.Ball(mC, new Vector3(0f, 0.24f, -0.02f), new Vector3(0.455f, 0.40f, 0.445f), Quaternion.identity, 22, 0f, 360f, 70f);
+                b.Ball(mCD, new Vector3(0f, 0.315f, 0.415f), new Vector3(0.17f, 0.03f, 0.125f), Quaternion.Euler(-16f, 0f, 0f));
+                b.Ball(mCW, new Vector3(0f, 0.40f, 0.385f), new Vector3(0.135f, 0.095f, 0.05f), Quaternion.Euler(-20f, 0f, 0f));
+                b.Ball(mCD, new Vector3(0f, 0.645f, -0.02f), new Vector3(0.042f, 0.042f, 0.042f), Quaternion.identity);
+
+                // brows, nose, open smile with tooth, blush
+                b.Ball(mBr, new Vector3(-0.15f, 0.29f, 0.345f), new Vector3(0.095f, 0.024f, 0.028f), Quaternion.Euler(0f, 10f, 8f));
+                b.Ball(mBr, new Vector3(0.15f, 0.29f, 0.345f), new Vector3(0.095f, 0.024f, 0.028f), Quaternion.Euler(0f, -10f, -8f));
+                b.Ball(mN, new Vector3(0f, 0.13f, 0.40f), new Vector3(0.03f, 0.022f, 0.024f), Quaternion.identity);
+                b.Ball(mM, new Vector3(0f, 0.02f, 0.385f), new Vector3(0.068f, 0.042f, 0.022f), Quaternion.identity);
+                b.Ball(mW, new Vector3(0f, 0.042f, 0.392f), new Vector3(0.038f, 0.014f, 0.012f), Quaternion.identity);
+                b.Ball(mB, new Vector3(-0.225f, 0.075f, 0.315f), new Vector3(0.068f, 0.036f, 0.014f), Quaternion.Euler(0f, 38f, 0f));
+                b.Ball(mB, new Vector3(0.225f, 0.075f, 0.315f), new Vector3(0.068f, 0.036f, 0.014f), Quaternion.Euler(0f, -38f, 0f));
+                b.Done(rig.head, "headGroup");
+
+                // eyes — separate groups so they can blink (scale Y)
+                var blinkList = new List<Transform>();
+                var blinkBaseList = new List<Vector3>();
+                for (int s = 0; s < 2; s++)
+                {
+                    float sx = s == 0 ? -1f : 1f;
+                    var eg = Pivot(rig.head, "eyeGrp" + s, new Vector3(sx * 0.15f, 0.185f, 0.345f));
+                    eg.localRotation = Quaternion.Euler(0f, sx * 6f, 0f);
+                    var be = new AnimeMesh.Build(0.006f);
+                    int mWh = be.Mat(capW), mIr = be.Mat(iris), mPu = be.Mat(pupil);
+                    be.Ball(mWh, Vector3.zero, new Vector3(0.10f, 0.125f, 0.05f), Quaternion.identity);
+                    be.Ball(mIr, new Vector3(0f, -0.005f, 0.028f), new Vector3(0.075f, 0.10f, 0.026f), Quaternion.identity);
+                    be.Ball(mPu, new Vector3(0f, -0.005f, 0.042f), new Vector3(0.032f, 0.048f, 0.014f), Quaternion.identity);
+                    be.Ball(mWh, new Vector3(-0.022f, 0.035f, 0.05f), new Vector3(0.024f, 0.028f, 0.012f), Quaternion.identity);
+                    be.Ball(mWh, new Vector3(0.028f, -0.035f, 0.046f), new Vector3(0.011f, 0.013f, 0.008f), Quaternion.identity);
+                    be.Done(eg, "eye" + s);
+                    blinkList.Add(eg);
+                    blinkBaseList.Add(Vector3.one);
+                }
+                rig.blinkers = blinkList.ToArray();
+                rig.blinkBase = blinkBaseList.ToArray();
+                rig.glints = null; // glints flatten with the eye group while blinking
             }
-            Sph(rig.head, new Vector3(-0.345f, 0.02f, 0.11f), new Vector3(0.062f, 0.088f, 0.078f), hair, "tuftL");
-            Sph(rig.head, new Vector3(0.345f, 0.02f, 0.11f), new Vector3(0.062f, 0.088f, 0.078f), hair, "tuftR");
-            Sph(rig.head, new Vector3(0f, -0.10f, -0.33f), new Vector3(0.20f, 0.09f, 0.085f), hair, "backTuft");
-            Sph(rig.head, new Vector3(-0.17f, -0.05f, -0.31f), new Vector3(0.09f, 0.08f, 0.075f), hair, "backTuftL");
-            Sph(rig.head, new Vector3(0.17f, -0.05f, -0.31f), new Vector3(0.09f, 0.08f, 0.075f), hair, "backTuftR");
-            // cap — round dome wrapping the skull, forward brim, button on top
-            Sph(rig.head, new Vector3(0f, 0.27f, -0.005f), new Vector3(0.44f, 0.30f, 0.435f), cap, "capDome");
-            Sph(rig.head, new Vector3(0f, 0.12f, 0.46f), new Vector3(0.30f, 0.032f, 0.10f), cap, "capBrim").transform.localRotation = Quaternion.Euler(-14f, 0f, 0f);
-            Sph(rig.head, new Vector3(0f, 0.585f, -0.005f), new Vector3(0.055f, 0.05f, 0.055f), capD, "capButton");
-            // face — big glossy eyes, brows, blush, nose, open smile
-            var blinkList = new List<Transform>();
-            var blinkBaseList = new List<Vector3>();
-            var glintList = new List<Transform>();
-            for (int s = 0; s < 2; s++)
-            {
-                float sx = s == 0 ? -1f : 1f;
-                var e = Sph(rig.head, new Vector3(sx * 0.18f, 0.02f, 0.385f), new Vector3(0.115f, 0.14f, 0.05f), eye, "eye" + s);
-                blinkList.Add(e.transform);
-                blinkBaseList.Add(e.transform.localScale);
-                var g1 = Sph(rig.head, new Vector3(sx * 0.15f, 0.065f, 0.415f), new Vector3(0.034f, 0.038f, 0.022f), white, "glint");
-                var g2 = Sph(rig.head, new Vector3(sx * 0.205f, -0.03f, 0.412f), new Vector3(0.016f, 0.018f, 0.012f), white, "glint2");
-                glintList.Add(g1.transform);
-                glintList.Add(g2.transform);
-            }
-            rig.blinkers = blinkList.ToArray();
-            rig.blinkBase = blinkBaseList.ToArray();
-            rig.glints = glintList.ToArray();
-            Sph(rig.head, new Vector3(-0.18f, 0.085f, 0.395f), new Vector3(0.11f, 0.032f, 0.045f), brow, "browL").transform.localRotation = Quaternion.Euler(0f, 0f, 7f);
-            Sph(rig.head, new Vector3(0.18f, 0.085f, 0.395f), new Vector3(0.11f, 0.032f, 0.045f), brow, "browR").transform.localRotation = Quaternion.Euler(0f, 0f, -7f);
-            Sph(rig.head, new Vector3(-0.255f, -0.075f, 0.325f), new Vector3(0.07f, 0.042f, 0.026f), blush, "blushL").transform.localRotation = Quaternion.Euler(0f, 38f, 0f);
-            Sph(rig.head, new Vector3(0.255f, -0.075f, 0.325f), new Vector3(0.07f, 0.042f, 0.026f), blush, "blushR").transform.localRotation = Quaternion.Euler(0f, -38f, 0f);
-            Sph(rig.head, new Vector3(0f, -0.03f, 0.435f), new Vector3(0.04f, 0.032f, 0.036f), nose, "nose");
-            Sph(rig.head, new Vector3(0f, -0.075f, 0.415f), new Vector3(0.09f, 0.038f, 0.026f), mouth, "smile");
-            Sph(rig.head, new Vector3(0f, -0.062f, 0.426f), new Vector3(0.045f, 0.012f, 0.011f), white, "tooth");
 
             // ============================ hoverboard (hidden by default)
             rig.board = Pivot(root.transform, "board", new Vector3(0f, 0.10f, 0f));
-            Sph(rig.board, Vector3.zero, new Vector3(0.47f, 0.045f, 0.24f), cap, "deck");
-            Sph(rig.board, new Vector3(0f, -0.005f, 0f), new Vector3(0.40f, 0.03f, 0.20f), pack, "deckStripe");
+            {
+                var b = new AnimeMesh.Build(0.010f);
+                int mC = b.Mat(capR), mP = b.Mat(pack);
+                b.Ball(mC, Vector3.zero, new Vector3(0.47f, 0.05f, 0.24f), Quaternion.identity, 20);
+                b.Ball(mP, new Vector3(0f, 0.006f, 0f), new Vector3(0.405f, 0.05f, 0.215f), Quaternion.identity, 20);
+                b.Done(rig.board, "hoverboard");
+            }
             rig.board.gameObject.SetActive(false);
 
             // ============================ jetpack (hidden by default)
             rig.jet = Pivot(rig.body, "jet", Vector3.zero);
-            Cap(rig.jet, new Vector3(-0.17f, 1.24f, -0.28f), new Vector3(0.14f, 0.17f, 0.14f), pack, "tankL");
-            Cap(rig.jet, new Vector3(0.17f, 1.24f, -0.28f), new Vector3(0.14f, 0.17f, 0.14f), pack, "tankR");
-            rig.flameL = Sph(rig.jet, new Vector3(-0.17f, 0.98f, -0.28f), new Vector3(0.09f, 0.24f, 0.09f), Fx.MatGlow(GMC(0xFF, 0xB0, 0x54)), "flameL").transform;
-            rig.flameR = Sph(rig.jet, new Vector3(0.17f, 0.98f, -0.28f), new Vector3(0.09f, 0.24f, 0.09f), Fx.MatGlow(GMC(0xFF, 0xD2, 0x4A)), "flameR").transform;
+            {
+                var b = new AnimeMesh.Build(0.012f);
+                int mP = b.Mat(pack), mPD = b.Mat(packD);
+                var prof = new[] { new Vector2(-0.17f, 0.02f), new Vector2(-0.14f, 0.11f), new Vector2(0.0f, 0.13f), new Vector2(0.14f, 0.11f), new Vector2(0.17f, 0.02f) };
+                b.Rev(mP, new Vector3(-0.17f, 1.24f, -0.28f), Quaternion.identity, Vector3.one, prof, 16);
+                b.Rev(mP, new Vector3(0.17f, 1.24f, -0.28f), Quaternion.identity, Vector3.one, prof, 16);
+                b.Ball(mPD, new Vector3(-0.17f, 1.415f, -0.28f), new Vector3(0.09f, 0.06f, 0.09f), Quaternion.identity);
+                b.Ball(mPD, new Vector3(0.17f, 1.415f, -0.28f), new Vector3(0.09f, 0.06f, 0.09f), Quaternion.identity);
+                b.Done(rig.jet, "jetpack");
+            }
+            var fl = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            Object.Destroy(fl.GetComponent<Collider>());
+            fl.name = "flameL";
+            fl.transform.SetParent(rig.jet, false);
+            fl.transform.localPosition = new Vector3(-0.17f, 0.98f, -0.28f);
+            fl.transform.localScale = new Vector3(0.09f, 0.24f, 0.09f);
+            fl.GetComponent<MeshRenderer>().sharedMaterial = Fx.MatGlow(C(0xFF, 0xB0, 0x54));
+            rig.flameL = fl.transform;
+            var fr = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            Object.Destroy(fr.GetComponent<Collider>());
+            fr.name = "flameR";
+            fr.transform.SetParent(rig.jet, false);
+            fr.transform.localPosition = new Vector3(0.17f, 0.98f, -0.28f);
+            fr.transform.localScale = new Vector3(0.09f, 0.24f, 0.09f);
+            fr.GetComponent<MeshRenderer>().sharedMaterial = Fx.MatGlow(C(0xFF, 0xD2, 0x4A));
+            rig.flameR = fr.transform;
             rig.jet.gameObject.SetActive(false);
 
             return rig;
         }
 
-        // ------------------------------------------------ INSPECTOR (rounded)
+        // ================================================== INSPECTOR (guard)
         public static CharacterRig BuildInspector(Transform parent)
         {
             var root = new GameObject("Inspector");
@@ -233,66 +293,114 @@ namespace DummySurfer
             var rig = root.AddComponent<CharacterRig>();
             rig.kind = "guard";
 
-            var skin = GMat(GMC(0xFF, 0xC9, 0xA0), 1.14f, 0.74f);
-            var jacket = GMat(GMC(0x7A, 0x8A, 0x46), 1.22f, 0.58f);
-            var jacketD = GMat(GMC(0x64, 0x72, 0x3A), 1.18f, 0.60f);
-            var pants = GMat(GMC(0x4A, 0x55, 0x68), 1.18f, 0.62f);
-            var boots = GMat(GMC(0x26, 0x29, 0x32), 1.45f, 0.55f);
-            var capB = GMat(GMC(0x3E, 0x6F, 0xE0), 1.28f, 0.60f);
-            var capD = GMat(GMC(0x2A, 0x4A, 0xA0), 1.30f, 0.60f);
-            var grey = GMat(GMC(0x9A, 0xA0, 0xA8), 1.15f, 0.75f);
-            var gold = Fx.MatGlow(GMC(0xFF, 0xD2, 0x3E));
-            var dark = GMat(GMC(0x26, 0x2C, 0x3C), 1.30f, 0.70f);
-            var white = Flat(GMC(0xFA, 0xFA, 0xFA));
+            var skin = AnimeMesh.Shade(C(0xFF, 0xC9, 0xA0));
+            var nose = AnimeMesh.Shade(C(0xF0, 0xB0, 0x88));
+            var jacket = AnimeMesh.Shade(C(0x7A, 0x8A, 0x46));
+            var pants = AnimeMesh.Shade(C(0x4A, 0x55, 0x68));
+            var boots = AnimeMesh.Shade(C(0x26, 0x29, 0x32));
+            var dark = AnimeMesh.Shade(C(0x26, 0x2C, 0x3C));
+            var capB = AnimeMesh.Shade(C(0x3E, 0x6F, 0xE0));
+            var capD = AnimeMesh.Shade(C(0x2A, 0x4A, 0xA0));
+            var grey = AnimeMesh.Shade(C(0x9A, 0xA0, 0xA8));
+            var gold = AnimeMesh.Shade(C(0xFF, 0xD2, 0x3E));
+            var white = AnimeMesh.Shade(C(0xFA, 0xFA, 0xFA));
 
             rig.body = Pivot(root.transform, "body", Vector3.zero);
 
-            rig.legL = Pivot(rig.body, "legL", new Vector3(-0.17f, 0.82f, 0f));
-            Cap(rig.legL, new Vector3(0f, -0.20f, 0f), new Vector3(0.24f, 0.18f, 0.24f), pants, "thighL");
-            Sph(rig.legL, new Vector3(0f, -0.42f, 0.05f), new Vector3(0.19f, 0.13f, 0.30f), boots, "bootL");
-            Sph(rig.legL, new Vector3(0f, -0.475f, 0.06f), new Vector3(0.20f, 0.045f, 0.33f), dark, "soleL");
-            rig.legR = Pivot(rig.body, "legR", new Vector3(0.17f, 0.82f, 0f));
-            Cap(rig.legR, new Vector3(0f, -0.20f, 0f), new Vector3(0.24f, 0.18f, 0.24f), pants, "thighR");
-            Sph(rig.legR, new Vector3(0f, -0.42f, 0.05f), new Vector3(0.19f, 0.13f, 0.30f), boots, "bootR");
-            Sph(rig.legR, new Vector3(0f, -0.475f, 0.06f), new Vector3(0.20f, 0.045f, 0.33f), dark, "soleR");
+            // legs — pants + boots in one continuous group per hip
+            for (int s = 0; s < 2; s++)
+            {
+                float sx = s == 0 ? -1f : 1f;
+                string side = s == 0 ? "L" : "R";
+                var hip = Pivot(rig.body, "leg" + (s == 0 ? "L" : "R"), new Vector3(sx * 0.17f, 0.82f, 0f));
+                if (s == 0) rig.legL = hip; else rig.legR = hip;
+                var bT = new AnimeMesh.Build(0.012f);
+                int mP = bT.Mat(pants), mB = bT.Mat(boots), mD = bT.Mat(dark);
+                bT.Rev(mP, Vector3.zero, Quaternion.identity, new Vector3(1f, 1f, 0.9f),
+                       new[] { new Vector2(0.06f, 0.16f), new Vector2(-0.14f, 0.15f), new Vector2(-0.26f, 0.142f) });
+                bT.Ball(mB, new Vector3(0f, -0.30f, 0.05f), new Vector3(0.15f, 0.11f, 0.24f), Quaternion.identity);
+                bT.Ball(mD, new Vector3(0f, -0.385f, 0.06f), new Vector3(0.16f, 0.04f, 0.26f), Quaternion.identity);
+                bT.Done(hip, "leg" + side);
+            }
 
+            // torso — big belly, jacket, belt, badge
             rig.torso = Pivot(rig.body, "torso", new Vector3(0f, 0.82f, 0f));
-            Sph(rig.torso, new Vector3(0f, 0.28f, 0.02f), new Vector3(0.55f, 0.42f, 0.42f), jacket, "belly");
-            Sph(rig.torso, new Vector3(0f, 0.44f, 0.03f), new Vector3(0.50f, 0.30f, 0.40f), jacket, "chest");
-            Sph(rig.torso, new Vector3(0f, 0.10f, 0.02f), new Vector3(0.50f, 0.09f, 0.40f), dark, "belt");
-            Sph(rig.torso, new Vector3(-0.16f, 0.44f, 0.21f), new Vector3(0.08f, 0.08f, 0.035f), gold, "badge");
-            Sph(rig.torso, new Vector3(0.16f, 0.36f, 0.22f), new Vector3(0.10f, 0.11f, 0.05f), jacketD, "pocket");
+            {
+                var b = new AnimeMesh.Build(0.014f);
+                int mJ = b.Mat(jacket), mP = b.Mat(pants), mD = b.Mat(dark), mG = b.Mat(gold);
+                b.Ball(mP, new Vector3(0f, -0.12f, 0f), new Vector3(0.30f, 0.15f, 0.28f), Quaternion.identity);
+                b.Ball(mJ, new Vector3(0f, 0.24f, 0f), new Vector3(0.42f, 0.40f, 0.40f), Quaternion.identity);
+                b.Ball(mJ, new Vector3(0f, 0.50f, 0.01f), new Vector3(0.37f, 0.30f, 0.37f), Quaternion.identity);
+                b.Ball(mD, new Vector3(0f, 0.03f, 0f), new Vector3(0.425f, 0.062f, 0.405f), Quaternion.identity);
+                b.Ball(mG, new Vector3(0f, 0.03f, 0.40f), new Vector3(0.06f, 0.05f, 0.03f), Quaternion.identity);
+                b.Ball(mG, new Vector3(-0.14f, 0.54f, 0.345f), new Vector3(0.055f, 0.055f, 0.03f), Quaternion.Euler(0f, -18f, 0f));
+                b.Done(rig.torso, "torsoGroup");
+            }
 
-            rig.armL = Pivot(rig.body, "armL", new Vector3(-0.40f, 1.36f, 0f));
-            Cap(rig.armL, new Vector3(0f, -0.19f, 0f), new Vector3(0.19f, 0.14f, 0.19f), jacket, "armuL");
-            Sph(rig.armL, new Vector3(0f, -0.38f, 0f), new Vector3(0.17f, 0.17f, 0.17f), skin, "handL");
-            rig.armR = Pivot(rig.body, "armR", new Vector3(0.40f, 1.36f, 0f));
-            Cap(rig.armR, new Vector3(0f, -0.19f, 0f), new Vector3(0.19f, 0.14f, 0.19f), jacket, "armuR");
-            var handR = Sph(rig.armR, new Vector3(0f, -0.38f, 0f), new Vector3(0.17f, 0.17f, 0.17f), skin, "handR");
-            rig.handR = handR.transform;
-            Cyl(rig.armR, new Vector3(0f, -0.48f, 0.10f), new Vector3(0.05f, 0.16f, 0.05f), grey, "baton", 20f);
+            // arms
+            for (int s = 0; s < 2; s++)
+            {
+                float sx = s == 0 ? -1f : 1f;
+                string side = s == 0 ? "L" : "R";
+                var sh = Pivot(rig.body, "arm" + (s == 0 ? "L" : "R"), new Vector3(sx * 0.40f, 1.36f, 0f));
+                if (s == 0) rig.armL = sh; else rig.armR = sh;
+                var bU = new AnimeMesh.Build(0.011f);
+                int mJ = bU.Mat(jacket);
+                bU.Ball(mJ, Vector3.zero, new Vector3(0.15f, 0.15f, 0.14f), Quaternion.identity);
+                bU.Rev(mJ, Vector3.zero, Quaternion.identity, new Vector3(1f, 1f, 0.92f),
+                       new[] { new Vector2(0.02f, 0.145f), new Vector2(-0.16f, 0.132f), new Vector2(-0.28f, 0.124f) });
+                bU.Done(sh, "upperArm" + side);
 
+                var elb = Pivot(sh, "elbow", new Vector3(0f, -0.30f, 0f));
+                if (s == 0) rig.elbL = elb; else rig.elbR = elb;
+                var bF = new AnimeMesh.Build(0.010f);
+                int mSk = bF.Mat(skin);
+                bF.Rev(mSk, Vector3.zero, Quaternion.identity, new Vector3(1f, 1f, 0.92f),
+                       new[] { new Vector2(0.01f, 0.118f), new Vector2(-0.12f, 0.106f) });
+                bF.Ball(mSk, new Vector3(0f, -0.22f, 0f), new Vector3(0.135f, 0.135f, 0.13f), Quaternion.identity);
+                if (s == 1)
+                {
+                    int mGy = bF.Mat(grey), mDk = bF.Mat(dark);
+                    bF.Rev(mGy, new Vector3(0f, -0.42f, 0.10f), Quaternion.Euler(20f, 0f, 0f), Vector3.one,
+                           new[] { new Vector2(-0.16f, 0.026f), new Vector2(0.16f, 0.026f) });
+                    bF.Ball(mDk, new Vector3(0f, -0.575f, 0.155f), new Vector3(0.034f, 0.034f, 0.034f), Quaternion.identity);
+                    rig.handR = elb;
+                }
+                bF.Done(elb, "foreArm" + side);
+            }
+
+            // head — round, mustache, blue cap
             rig.head = Pivot(rig.body, "head", new Vector3(0f, 1.50f, 0f));
-            Sph(rig.head, new Vector3(0f, 0.18f, 0f), new Vector3(0.46f, 0.44f, 0.44f), skin, "skull");
-            // bushy white mustache (three puffs)
-            Sph(rig.head, new Vector3(-0.075f, 0.06f, 0.215f), new Vector3(0.10f, 0.045f, 0.05f), white, "moL");
-            Sph(rig.head, new Vector3(0.075f, 0.06f, 0.215f), new Vector3(0.10f, 0.045f, 0.05f), white, "moR");
-            Sph(rig.head, new Vector3(0f, 0.075f, 0.22f), new Vector3(0.06f, 0.04f, 0.045f), white, "moC");
-            Sph(rig.head, new Vector3(0f, 0.12f, 0.225f), new Vector3(0.055f, 0.045f, 0.05f), GMat(GMC(0xF0, 0xB0, 0x88), 1.08f, 0.8f), "nose");
-            Sph(rig.head, new Vector3(-0.09f, 0.20f, 0.20f), new Vector3(0.075f, 0.085f, 0.04f), white, "eyeL");
-            Sph(rig.head, new Vector3(0.09f, 0.20f, 0.20f), new Vector3(0.075f, 0.085f, 0.04f), white, "eyeR");
-            Sph(rig.head, new Vector3(-0.09f, 0.195f, 0.235f), new Vector3(0.035f, 0.042f, 0.02f), dark, "pupL");
-            Sph(rig.head, new Vector3(0.09f, 0.195f, 0.235f), new Vector3(0.035f, 0.042f, 0.02f), dark, "pupR");
-            Sph(rig.head, new Vector3(-0.09f, 0.275f, 0.215f), new Vector3(0.10f, 0.03f, 0.05f), grey, "browL").transform.localRotation = Quaternion.Euler(0f, 0f, 8f);
-            Sph(rig.head, new Vector3(0.09f, 0.275f, 0.215f), new Vector3(0.10f, 0.03f, 0.05f), grey, "browR").transform.localRotation = Quaternion.Euler(0f, 0f, -8f);
-            // blue cap with dark peak
-            Sph(rig.head, new Vector3(0f, 0.40f, 0f), new Vector3(0.48f, 0.22f, 0.48f), capB, "capTop");
-            Sph(rig.head, new Vector3(0f, 0.335f, 0.28f), new Vector3(0.30f, 0.04f, 0.18f), capD, "peak").transform.localRotation = Quaternion.Euler(-10f, 0f, 0f);
-            Sph(rig.head, new Vector3(0f, 0.60f, 0f), new Vector3(0.05f, 0.045f, 0.05f), capD, "capButton");
+            {
+                var b = new AnimeMesh.Build(0.012f);
+                int mSk = b.Mat(skin), mN = b.Mat(nose), mW = b.Mat(white), mD = b.Mat(dark);
+                int mC = b.Mat(capB), mCD = b.Mat(capD), mGy = b.Mat(grey);
+                b.Ball(mSk, new Vector3(0f, 0.18f, 0.01f), new Vector3(0.44f, 0.42f, 0.42f), Quaternion.identity);
+                b.Ball(mSk, new Vector3(-0.42f, 0.16f, 0.01f), new Vector3(0.045f, 0.06f, 0.045f), Quaternion.identity);
+                b.Ball(mSk, new Vector3(0.42f, 0.16f, 0.01f), new Vector3(0.045f, 0.06f, 0.045f), Quaternion.identity);
+                // bushy white mustache (three puffs)
+                b.Ball(mW, new Vector3(-0.075f, 0.10f, 0.365f), new Vector3(0.09f, 0.045f, 0.05f), Quaternion.identity);
+                b.Ball(mW, new Vector3(0.075f, 0.10f, 0.365f), new Vector3(0.09f, 0.045f, 0.05f), Quaternion.identity);
+                b.Ball(mW, new Vector3(0f, 0.115f, 0.375f), new Vector3(0.06f, 0.04f, 0.045f), Quaternion.identity);
+                b.Ball(mN, new Vector3(0f, 0.17f, 0.395f), new Vector3(0.055f, 0.05f, 0.05f), Quaternion.identity);
+                // eyes
+                b.Ball(mW, new Vector3(-0.09f, 0.26f, 0.355f), new Vector3(0.06f, 0.07f, 0.03f), Quaternion.identity);
+                b.Ball(mW, new Vector3(0.09f, 0.26f, 0.355f), new Vector3(0.06f, 0.07f, 0.03f), Quaternion.identity);
+                b.Ball(mD, new Vector3(-0.09f, 0.255f, 0.375f), new Vector3(0.028f, 0.034f, 0.02f), Quaternion.identity);
+                b.Ball(mD, new Vector3(0.09f, 0.255f, 0.375f), new Vector3(0.028f, 0.034f, 0.02f), Quaternion.identity);
+                b.Ball(mGy, new Vector3(-0.09f, 0.345f, 0.345f), new Vector3(0.085f, 0.028f, 0.03f), Quaternion.Euler(0f, 8f, 8f));
+                b.Ball(mGy, new Vector3(0.09f, 0.345f, 0.345f), new Vector3(0.085f, 0.028f, 0.03f), Quaternion.Euler(0f, -8f, -8f));
+                // blue cap with dark peak
+                b.Ball(mC, new Vector3(0f, 0.42f, 0f), new Vector3(0.46f, 0.26f, 0.46f), Quaternion.identity, 20, 0f, 360f, 95f);
+                b.Ball(mCD, new Vector3(0f, 0.375f, 0.36f), new Vector3(0.26f, 0.035f, 0.16f), Quaternion.Euler(-10f, 0f, 0f));
+                b.Ball(mCD, new Vector3(0f, 0.675f, 0f), new Vector3(0.045f, 0.045f, 0.045f), Quaternion.identity);
+                b.Done(rig.head, "headGroup");
+            }
+
             return rig;
         }
 
-        // ------------------------------------------------ DOG (rounded)
+        // ================================================== DOG
         public static CharacterRig BuildDog(Transform parent)
         {
             var root = new GameObject("Dog");
@@ -301,39 +409,60 @@ namespace DummySurfer
             var rig = root.AddComponent<CharacterRig>();
             rig.kind = "dog";
 
-            var fur = GMat(GMC(0xD9, 0xB3, 0x80), 1.18f, 0.66f);
-            var furD = GMat(GMC(0xB0, 0x8C, 0x5E), 1.15f, 0.62f);
-            var dark = GMat(GMC(0x26, 0x2C, 0x3C), 1.30f, 0.70f);
-            var collar = GMat(GMC(0xE8, 0x40, 0x40), 1.28f, 0.60f);
-            var gold = Fx.MatGlow(GMC(0xFF, 0xD2, 0x3E));
+            var fur = AnimeMesh.Shade(C(0xD9, 0xB3, 0x80));
+            var furD = AnimeMesh.Shade(C(0xB0, 0x8C, 0x5E));
+            var dark = AnimeMesh.Shade(C(0x26, 0x2C, 0x3C));
+            var collar = AnimeMesh.Shade(C(0xE8, 0x40, 0x40));
+            var gold = AnimeMesh.Shade(C(0xFF, 0xD2, 0x3E));
 
             rig.body = Pivot(root.transform, "body", Vector3.zero);
-            Sph(rig.body, new Vector3(0f, 0.42f, 0f), new Vector3(0.16f, 0.15f, 0.34f), fur, "torso");
-            Sph(rig.body, new Vector3(0f, 0.58f, 0.30f), new Vector3(0.15f, 0.14f, 0.15f), fur, "head");
-            Sph(rig.body, new Vector3(0f, 0.545f, 0.425f), new Vector3(0.07f, 0.06f, 0.08f), furD, "snout");
-            Sph(rig.body, new Vector3(0f, 0.575f, 0.495f), new Vector3(0.045f, 0.04f, 0.04f), dark, "nose");
-            Sph(rig.body, new Vector3(-0.085f, 0.70f, 0.28f), new Vector3(0.05f, 0.10f, 0.045f), furD, "earL").transform.localRotation = Quaternion.Euler(0f, 0f, 25f);
-            Sph(rig.body, new Vector3(0.085f, 0.70f, 0.28f), new Vector3(0.05f, 0.10f, 0.045f), furD, "earR").transform.localRotation = Quaternion.Euler(0f, 0f, -25f);
-            Sph(rig.body, new Vector3(-0.06f, 0.60f, 0.435f), new Vector3(0.035f, 0.04f, 0.025f), dark, "eyeL");
-            Sph(rig.body, new Vector3(0.06f, 0.60f, 0.435f), new Vector3(0.035f, 0.04f, 0.025f), dark, "eyeR");
-            Cyl(rig.body, new Vector3(0f, 0.47f, 0.26f), new Vector3(0.125f, 0.025f, 0.125f), collar, "collar");
-            Sph(rig.body, new Vector3(0f, 0.42f, 0.31f), new Vector3(0.045f, 0.045f, 0.02f), gold, "tag");
+            {
+                var b = new AnimeMesh.Build(0.010f);
+                int mF = b.Mat(fur), mFD = b.Mat(furD), mD = b.Mat(dark), mC = b.Mat(collar), mG = b.Mat(gold);
+                b.Ball(mF, new Vector3(0f, 0.42f, 0f), new Vector3(0.16f, 0.15f, 0.34f), Quaternion.identity);
+                b.Ball(mF, new Vector3(0f, 0.45f, 0.14f), new Vector3(0.16f, 0.15f, 0.18f), Quaternion.identity);
+                b.Ball(mF, new Vector3(0f, 0.585f, 0.30f), new Vector3(0.15f, 0.145f, 0.15f), Quaternion.identity);
+                b.Ball(mFD, new Vector3(0f, 0.545f, 0.425f), new Vector3(0.07f, 0.055f, 0.085f), Quaternion.identity);
+                b.Ball(mD, new Vector3(0f, 0.575f, 0.50f), new Vector3(0.042f, 0.038f, 0.04f), Quaternion.identity);
+                var eL = Quaternion.Euler(0f, 0f, 25f);
+                var eR = Quaternion.Euler(0f, 0f, -25f);
+                b.Ball(mFD, new Vector3(-0.085f, 0.70f, 0.28f), new Vector3(0.05f, 0.10f, 0.045f), eL);
+                b.Ball(mFD, new Vector3(0.085f, 0.70f, 0.28f), new Vector3(0.05f, 0.10f, 0.045f), eR);
+                b.Ball(mD, new Vector3(-0.06f, 0.60f, 0.435f), new Vector3(0.035f, 0.04f, 0.025f), Quaternion.identity);
+                b.Ball(mD, new Vector3(0.06f, 0.60f, 0.435f), new Vector3(0.035f, 0.04f, 0.025f), Quaternion.identity);
+                b.Ball(mC, new Vector3(0f, 0.475f, 0.245f), new Vector3(0.125f, 0.032f, 0.125f), Quaternion.identity);
+                b.Ball(mG, new Vector3(0f, 0.425f, 0.31f), new Vector3(0.042f, 0.042f, 0.02f), Quaternion.identity);
+                b.Done(rig.body, "dogBody");
+            }
 
-            rig.legL = Pivot(rig.body, "legFL", new Vector3(-0.09f, 0.34f, 0.22f));
-            Cap(rig.legL, new Vector3(0f, -0.13f, 0f), new Vector3(0.075f, 0.13f, 0.075f), fur, "flegL");
-            Sph(rig.legL, new Vector3(0f, -0.27f, 0.01f), new Vector3(0.07f, 0.055f, 0.08f), furD, "pawL");
-            rig.legR = Pivot(rig.body, "legFR", new Vector3(0.09f, 0.34f, 0.22f));
-            Cap(rig.legR, new Vector3(0f, -0.13f, 0f), new Vector3(0.075f, 0.13f, 0.075f), fur, "flegR");
-            Sph(rig.legR, new Vector3(0f, -0.27f, 0.01f), new Vector3(0.07f, 0.055f, 0.08f), furD, "pawR");
-            var bl = Pivot(rig.body, "legBL", new Vector3(-0.09f, 0.34f, -0.22f));
-            Cap(bl, new Vector3(0f, -0.13f, 0f), new Vector3(0.075f, 0.13f, 0.075f), fur, "blegL");
-            Sph(bl, new Vector3(0f, -0.27f, 0.01f), new Vector3(0.07f, 0.055f, 0.08f), furD, "bpawL");
-            var br = Pivot(rig.body, "legBR", new Vector3(0.09f, 0.34f, -0.22f));
-            Cap(br, new Vector3(0f, -0.13f, 0f), new Vector3(0.075f, 0.13f, 0.075f), fur, "blegR");
-            Sph(br, new Vector3(0f, -0.27f, 0.01f), new Vector3(0.07f, 0.055f, 0.08f), furD, "bpawR");
+            // four legs — front pair animated
+            for (int s = 0; s < 2; s++)
+            {
+                float sx = s == 0 ? -1f : 1f;
+                var leg = Pivot(rig.body, "leg" + s, new Vector3(sx * 0.09f, 0.34f, 0.22f));
+                if (s == 0) rig.legL = leg; else rig.legR = leg;
+                var b = new AnimeMesh.Build(0.008f);
+                int mF = b.Mat(fur), mFD = b.Mat(furD);
+                b.Rev(mF, Vector3.zero, Quaternion.identity, Vector3.one,
+                      new[] { new Vector2(0.02f, 0.075f), new Vector2(-0.14f, 0.066f) });
+                b.Ball(mFD, new Vector3(0f, -0.185f, 0.012f), new Vector3(0.07f, 0.05f, 0.085f), Quaternion.identity);
+                b.Done(leg, "fleg" + s);
+
+                var bl = Pivot(rig.body, "bleg" + s, new Vector3(sx * 0.09f, 0.34f, -0.22f));
+                var bb = new AnimeMesh.Build(0.008f);
+                int mF2 = bb.Mat(fur), mFD2 = bb.Mat(furD);
+                bb.Rev(mF2, Vector3.zero, Quaternion.identity, Vector3.one,
+                       new[] { new Vector2(0.02f, 0.075f), new Vector2(-0.14f, 0.066f) });
+                bb.Ball(mFD2, new Vector3(0f, -0.185f, 0.012f), new Vector3(0.07f, 0.05f, 0.085f), Quaternion.identity);
+                bb.Done(bl, "bleg" + s);
+            }
 
             rig.tail = Pivot(rig.body, "tail", new Vector3(0f, 0.52f, -0.32f));
-            Cap(rig.tail, new Vector3(0f, 0.05f, -0.10f), new Vector3(0.045f, 0.14f, 0.045f), fur, "tail", -40f, 0f);
+            {
+                var b = new AnimeMesh.Build(0.007f);
+                b.Spike(b.Mat(fur), Vector3.zero, new Vector3(0f, 0.55f, -0.85f), 0.24f, 0.045f);
+                b.Done(rig.tail, "tail");
+            }
             return rig;
         }
 
