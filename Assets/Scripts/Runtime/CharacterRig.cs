@@ -213,8 +213,8 @@ namespace DummySurfer
                 b.Ball(mN, new Vector3(0f, 0.145f, 0.40f), new Vector3(0.032f, 0.024f, 0.026f), Quaternion.identity);
                 b.Ball(mM, new Vector3(0f, 0.075f, 0.39f), new Vector3(0.05f, 0.032f, 0.02f), Quaternion.identity);
                 b.Ball(mW, new Vector3(0f, 0.092f, 0.397f), new Vector3(0.032f, 0.012f, 0.01f), Quaternion.identity);
-                b.Ball(mB, new Vector3(-0.255f, 0.045f, 0.30f), new Vector3(0.052f, 0.028f, 0.012f), Quaternion.Euler(0f, 38f, 0f));
-                b.Ball(mB, new Vector3(0.255f, 0.045f, 0.30f), new Vector3(0.052f, 0.028f, 0.012f), Quaternion.Euler(0f, -38f, 0f));
+                b.Ball(mB, new Vector3(-0.218f, 0.05f, 0.305f), new Vector3(0.044f, 0.026f, 0.012f), Quaternion.Euler(0f, 34f, 0f));
+                b.Ball(mB, new Vector3(0.218f, 0.05f, 0.305f), new Vector3(0.044f, 0.026f, 0.012f), Quaternion.Euler(0f, -34f, 0f));
                 b.Done(rig.head, "headGroup");
 
                 // eyes — separate groups so they can blink (scale Y)
