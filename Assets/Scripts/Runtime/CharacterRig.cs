@@ -402,14 +402,14 @@ namespace DummySurfer
                     armR.localRotation = Quaternion.Euler(-8f + Mathf.Sin(t * 2.6f) * 6f, 0f, -10f);
                     if (elbR != null) elbR.localRotation = Quaternion.Euler(-26f, 0f, 0f);
                     head.localRotation = Quaternion.Euler(Mathf.Sin(t * 1.2f) * 3f, Mathf.Sin(t * 0.65f) * 13f, 0f);
-                    if (bag != null) bag.gameObject.SetActive(true);
+                    if (bag != null) bag.gameObject.SetActive(false);
                     break;
                 }
                 case "spray":
                 {
                     float b = Mathf.Sin(t * 2.0f);
                     body.localPosition = new Vector3(0f, b * 0.010f, 0f);
-                    armR.localRotation = Quaternion.Euler(-98f + Mathf.Sin(t * 9f) * 6f, 0f, -6f);
+                    armR.localRotation = Quaternion.Euler(-72f + Mathf.Sin(t * 9f) * 6f, 0f, -6f);
                     if (elbR != null) elbR.localRotation = Quaternion.Euler(-16f, 0f, 0f);
                     armL.localRotation = Quaternion.Euler(0f, 0f, 12f);
                     head.localRotation = Quaternion.Euler(-5f, -15f, 0f);
