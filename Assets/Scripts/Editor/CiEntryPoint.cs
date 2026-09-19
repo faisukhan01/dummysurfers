@@ -298,15 +298,15 @@ namespace DummySurfer.EditorTools
                 wall.transform.position = new Vector3(4.9f, 3.0f, 14f);
                 wall.transform.rotation = Quaternion.Euler(0, -90f, 0);
                 cam.transform.position = new Vector3(-2.7f, 1.85f, -2.6f);
-                cam.transform.rotation = Quaternion.LookRotation(new Vector3(0.35f, 1.32f, 0.9f) - cam.transform.position);
+                cam.transform.rotation = Quaternion.LookRotation(new Vector3(0.35f, 1.42f, 0.9f) - cam.transform.position);
                 cam.Render();
                 SavePng(rt, "build/previews/menu.png");
 
                 // ---------- shot C: hero portrait (character QA close-up) ----------
                 boy.transform.rotation = Quaternion.Euler(0, 20f, 0);
                 boy.Pose("idle", 1.0f, 0f);
-                cam.transform.position = new Vector3(1.9f, 1.80f, 3.6f);
-                cam.transform.rotation = Quaternion.LookRotation(new Vector3(0f, 1.40f, 0.05f) - cam.transform.position);
+                cam.transform.position = new Vector3(1.9f, 1.85f, 3.6f);
+                cam.transform.rotation = Quaternion.LookRotation(new Vector3(0f, 1.50f, 0.05f) - cam.transform.position);
                 cam.Render();
                 SavePng(rt, "build/previews/portrait.png");
 
@@ -315,7 +315,7 @@ namespace DummySurfer.EditorTools
                 boy.Pose("run", 0f, 1f);
                 boy.phase = 2.15f;
                 cam.transform.position = new Vector3(0f, 2.1f, -3.4f);
-                cam.transform.rotation = Quaternion.LookRotation(new Vector3(0f, 1.35f, 1.0f) - cam.transform.position);
+                cam.transform.rotation = Quaternion.LookRotation(new Vector3(0f, 1.45f, 1.0f) - cam.transform.position);
                 cam.Render();
                 SavePng(rt, "build/previews/back.png");
 

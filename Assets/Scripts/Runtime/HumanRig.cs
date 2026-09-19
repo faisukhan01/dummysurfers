@@ -5,9 +5,10 @@ using UnityEngine;
 namespace DummySurfer
 {
     /// <summary>
-    /// Loads the procedurally generated realistic human (HumanMesh.bytes) and builds it in-engine.
-    /// The file contains two meshes: a SKINNED body (torso+arms+legs+backpack, one continuous
-    /// surface with blended joint weights) and a STATIC head (skull/hair/ears/nose/lips).
+    /// Loads the procedurally generated CARTOON hero (HumanMesh.bytes, v8 "Jake-style") and
+    /// builds it in-engine. The file contains two meshes: a SKINNED body (hoodie torso + arms
+    /// + jeans legs + big sneakers + backpack, one continuous surface with blended joint
+    /// weights) and a STATIC head (oversized cartoon skull, cap, hair, big expressive face).
     /// Material zones are baked as per-vertex material ids; lighting matches AnimeMesh (baked
     /// NdotL in UV.x sampled through the cel ramp by the URP Unlit shader). Bone order and rest
     /// positions mirror the python generator exactly.
@@ -21,38 +22,44 @@ namespace DummySurfer
             return _asset;
         }
 
-        // palette MUST match gen_human.py MAT_COLORS
+        // palette MUST match gen_cartoon.py MAT_COLORS (v8 cartoon hero)
         static readonly Color32[] Pal =
         {
-            new Color32(0xE8,0xAC,0x84,255), // 0 skin
-            new Color32(0x2E,0x1C,0x10,255), // 1 hair
-            new Color32(0xEF,0xED,0xE4,255), // 2 shirt
-            new Color32(0x3D,0x5A,0x80,255), // 3 jeans
-            new Color32(0xC0,0x39,0x2F,255), // 4 shoe
-            new Color32(0xE8,0xE4,0xDA,255), // 5 sole
-            new Color32(0xC9,0x7B,0x2D,255), // 6 pack
-            new Color32(0xA8,0x60,0x1F,255), // 7 straps
-            new Color32(0x24,0x1A,0x12,255), // 8 eye
-            new Color32(0xA5,0x60,0x4F,255), // 9 lip
+            new Color32(0xF5,0xC2,0x9E,255), // 0 skin
+            new Color32(0x4A,0x2C,0x17,255), // 1 hair
+            new Color32(0xF6,0xF2,0xE7,255), // 2 hoodie (cream)
+            new Color32(0x4E,0x6E,0x9E,255), // 3 jeans (denim)
+            new Color32(0xFB,0xFB,0xF6,255), // 4 shoe (white)
+            new Color32(0xE9,0xE4,0xD8,255), // 5 sole
+            new Color32(0xEE,0x8A,0x3C,255), // 6 backpack (orange)
+            new Color32(0x33,0x31,0x3E,255), // 7 straps (dark)
+            new Color32(0x2A,0x21,0x1B,255), // 8 eye dark
+            new Color32(0xA8,0x58,0x4E,255), // 9 mouth
+            new Color32(0xD9,0x3B,0x2F,255), // 10 cap red
+            new Color32(0xA9,0x2A,0x22,255), // 11 cap dark (brim)
+            new Color32(0xF8,0xF4,0xEA,255), // 12 badge white
+            new Color32(0xFE,0xFE,0xFA,255), // 13 teeth / eye white
+            new Color32(0x8F,0xAF,0xD9,255), // 14 rolled cuff (light denim)
+            new Color32(0xE2,0xA6,0x7F,255), // 15 skin shade
         };
 
-        // rest world positions, order = bone index in the file (mirrors python BONES)
+        // rest world positions, order = bone index in the file (mirrors gen_cartoon.py REST)
         public static readonly Vector3[] RestPos =
         {
             new Vector3(0f, 0f, 0f),            // 0 body
-            new Vector3(0f, 1.02f, 0f),         // 1 torso
-            new Vector3(-0.205f, 1.445f, 0f),   // 2 armL
-            new Vector3(-0.215f, 1.145f, 0f),   // 3 elbL
-            new Vector3(-0.222f, 0.930f, 0f),   // 4 handL
-            new Vector3(0.205f, 1.445f, 0f),    // 5 armR
-            new Vector3(0.215f, 1.145f, 0f),    // 6 elbR
-            new Vector3(0.222f, 0.930f, 0f),    // 7 handR
-            new Vector3(-0.105f, 0.960f, 0f),   // 8 legL
-            new Vector3(-0.105f, 0.500f, 0f),   // 9 kneeL
-            new Vector3(-0.105f, 0.075f, 0f),   // 10 footL
-            new Vector3(0.105f, 0.960f, 0f),    // 11 legR
-            new Vector3(0.105f, 0.500f, 0f),    // 12 kneeR
-            new Vector3(0.105f, 0.075f, 0f),    // 13 footR
+            new Vector3(0f, 0.840f, 0f),        // 1 torso (hips)
+            new Vector3(-0.252f, 1.235f, 0f),   // 2 armL
+            new Vector3(-0.258f, 0.925f, 0f),   // 3 elbL
+            new Vector3(-0.262f, 0.665f, 0f),   // 4 handL
+            new Vector3(0.252f, 1.235f, 0f),    // 5 armR
+            new Vector3(0.258f, 0.925f, 0f),    // 6 elbR
+            new Vector3(0.262f, 0.665f, 0f),    // 7 handR
+            new Vector3(-0.118f, 0.780f, 0f),   // 8 legL
+            new Vector3(-0.118f, 0.415f, 0f),   // 9 kneeL
+            new Vector3(-0.118f, 0.075f, 0f),   // 10 footL
+            new Vector3(0.118f, 0.780f, 0f),    // 11 legR
+            new Vector3(0.118f, 0.415f, 0f),    // 12 kneeR
+            new Vector3(0.118f, 0.075f, 0f),    // 13 footR
         };
 
         class RawMesh
@@ -202,8 +209,8 @@ namespace DummySurfer
                 var htris = new Dictionary<int, List<int>>();
                 SplitZones(head, hzone, htris);
                 var headMats = ZoneMaterials(head, hzone, htris);
-                // head mesh is in body-space; the head pivot rests at (0, 1.56, 0) — rebase into pivot-local space
-                var headOffset = new Vector3(0f, -1.56f, 0f);
+                // head mesh is in body-space; the head pivot rests at (0, 1.30, 0) — rebase into pivot-local space
+                var headOffset = new Vector3(0f, -1.30f, 0f);
                 var headMesh = BuildMeshGeometry(head, headOffset, hzone, htris, null, null);
 
                 var hgo = new GameObject("HumanHead");
