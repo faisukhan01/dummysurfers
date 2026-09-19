@@ -209,8 +209,9 @@ namespace DummySurfer
                 var htris = new Dictionary<int, List<int>>();
                 SplitZones(head, hzone, htris);
                 var headMats = ZoneMaterials(head, hzone, htris);
-                // head mesh is in body-space; the head pivot rests at (0, 1.30, 0) — rebase into pivot-local space
-                var headOffset = new Vector3(0f, -1.30f, 0f);
+                // head mesh is in body-space; the head pivot rests at (0, 1.26, 0) and the head
+                // SINKS into the chest yoke (cartoon look) — rebase into pivot-local space
+                var headOffset = new Vector3(0f, -1.26f, 0f);
                 var headMesh = BuildMeshGeometry(head, headOffset, hzone, htris, null, null);
 
                 var hgo = new GameObject("HumanHead");

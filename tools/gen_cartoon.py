@@ -255,11 +255,11 @@ def build_body():
     # ---- torso block (cream hoodie over denim hips) ----
     sphere(m, (0, 0.855, 0), (0.195, 0.150, 0.165), M_JEANS, w2(B_TORSO, 0.72, B_BODY))       # pelvis
     sphere(m, (0, 0.985, 0.010), (0.195, 0.160, 0.170), M_HOODIE, w1(B_TORSO))                # belly
-    sphere(m, (0, 1.130, 0.005), (0.205, 0.185, 0.185), M_HOODIE, w1(B_TORSO))                # chest
+    sphere(m, (0, 1.190, 0.005), (0.215, 0.225, 0.195), M_HOODIE, w1(B_TORSO))                # chest yoke (swallows the head base)
     sphere(m, (0, 1.255, -0.135), (0.135, 0.100, 0.080), M_HOODIE, w1(B_TORSO))               # hood bump
-    # neck
+    # neck (thick, cartoon)
     lathe(m, (0, 1.235, 0), (0, 1.330, 0),
-          [(0.0, 0.078), (0.5, 0.074), (1.0, 0.068)], M_SKIN, w1(B_TORSO), seg=12)
+          [(0.0, 0.092), (0.5, 0.088), (1.0, 0.082)], M_SKIN, w1(B_TORSO), seg=12)
 
     # ---- backpack + shoulder straps ----
     sphere(m, (0, 1.100, -0.205), (0.155, 0.130, 0.072), M_PACK, w1(B_TORSO))
@@ -308,15 +308,19 @@ def build_body():
 def build_head():
     m = MeshBuf()
 
-    # skull + ears
+    # skull + jaw + ears (head mesh stays authored around skull center 1.505;
+    # HumanRig rebases it onto the 1.26 pivot — the head sinks into the chest yoke)
     sphere(m, (0, 1.505, 0.005), (0.205, 0.198, 0.198), M_SKIN, None, seg=20, rings=11)
+    sphere(m, (0, 1.395, 0.010), (0.125, 0.105, 0.125), M_SKIN, None, seg=14, rings=8)        # jaw filler
     for sx in (-1.0, 1.0):
         sphere(m, (sx * 0.200, 1.495, 0.0), (0.042, 0.055, 0.042), M_SKIN, None, seg=10, rings=6)
         sphere(m, (sx * 0.226, 1.495, 0.0), (0.015, 0.026, 0.020), M_SKIN2, None, seg=8, rings=5)
 
-    # hair tuft under the cap (small — reads as a haircut, not a hood)
+    # hair tuft under the cap (small — reads as a haircut, not a hood) + side tufts over the ears
     sphere(m, (0, 1.585, -0.100), (0.160, 0.100, 0.110), M_HAIR, None, seg=16, rings=9)
     sphere(m, (0, 1.615, 0.085), (0.150, 0.042, 0.100), M_HAIR, None, seg=14, rings=7)
+    for sx in (-1.0, 1.0):
+        sphere(m, (sx * 0.140, 1.600, -0.050), (0.060, 0.060, 0.080), M_HAIR, None, seg=10, rings=6)
 
     # big expressive eyes
     for sx in (-1.0, 1.0):

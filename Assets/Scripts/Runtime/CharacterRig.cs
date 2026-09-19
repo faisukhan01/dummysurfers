@@ -54,7 +54,7 @@ namespace DummySurfer
             {
                 // fallback: plain pivots with the identical rest table (HumanRig.RestPos-compatible)
                 rig.torso = Pivot(rig.body, "torso", new Vector3(0f, 0.840f, 0f));
-                rig.head = Pivot(rig.torso, "head", new Vector3(0f, 0.460f, 0f)); // world rest (0, 1.30, 0)
+                rig.head = Pivot(rig.torso, "head", new Vector3(0f, 0.420f, 0f)); // world rest (0, 1.26, 0)
 
                 var armT = new Transform[2]; var elbT = new Transform[2]; var handT = new Transform[2];
                 var legT = new Transform[2]; var kneeT = new Transform[2]; var footT = new Transform[2];
@@ -225,8 +225,8 @@ namespace DummySurfer
             Add("mixamorig:Spine1", new Vector3(0f, 1.060f, 0f));
             Add("mixamorig:Spine2", new Vector3(0f, 1.170f, 0f));
             Add("mixamorig:Neck", new Vector3(0f, 1.260f, 0f));
-            Add("mixamorig:Head", new Vector3(0f, 1.300f, 0f));                   // exact head pivot (big cartoon head)
-            Add("mixamorig:HeadTop_End", new Vector3(0f, 1.720f, 0f));
+            Add("mixamorig:Head", new Vector3(0f, 1.260f, 0f));                   // head pivot (head sinks into chest yoke)
+            Add("mixamorig:HeadTop_End", new Vector3(0f, 1.680f, 0f));
             Add("mixamorig:LeftShoulder", new Vector3(-0.130f, 1.235f, 0f));
             Add("mixamorig:LeftArm", new Vector3(-0.252f, 1.235f, 0f));           // armL slot
             Add("mixamorig:LeftForeArm", new Vector3(-0.258f, 0.925f, 0f));       // elbL slot
@@ -575,6 +575,13 @@ namespace DummySurfer
                         gst.speed = 1f;
                         gst.time = Mathf.Repeat(t, gestureAnim.GetClip("gesture").length);
                         gestureAnim.Sample();
+                        // v8: the Mixamo clip carries Hips POSITION keys from the original
+                        // skeleton (~1.0 m) — they would stretch the compact cartoon body.
+                        // Keep the clip's ROTATIONS (waving arms etc.), discard positions.
+                        if (extraBones != null)
+                            for (int i = 0; i < extraBones.Length; i++)
+                                if (extraBones[i] != null)
+                                    extraBones[i].localPosition = extraBasePos[i];
                         if (bag != null) bag.gameObject.SetActive(false);
                         break;
                     }
