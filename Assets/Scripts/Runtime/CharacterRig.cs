@@ -15,7 +15,14 @@ namespace DummySurfer
     {
         public Transform body, head, armL, armR, legL, legR, torso, tail, board, jet, flameL, flameR, bag;
         public Transform kneeL, kneeR, elbL, elbR, handR;
+        public Transform handL;                     // v7: left hand (Mixamo mapping)
+        public Transform footL, footR;              // v7: ankle bones (Mixamo mapping)
         public string kind = "boy";
+
+        // ---- v7 Mixamo skeleton state (real uploaded FBX) ----
+        Animation gestureAnim;                      // plays the user's uploaded "Whatever Gesture" clip in menu idle
+        Transform[] extraBones;                     // every mixamorig bone (zeroed between poses)
+        Vector3[] extraBasePos;                     // rest local positions to restore after clip playback
 
         Transform[] blinkers;          // eye groups (blink by scaling Y)
         Vector3[] blinkBase;
@@ -39,42 +46,47 @@ namespace DummySurfer
             var rig = root.AddComponent<CharacterRig>();
             rig.kind = "boy";
 
-            // ---- skeletal pivots — MUST mirror HumanRig.RestPos (bone order + world positions) ----
+            // ---- skeletal pivots — REAL Mixamo skeleton (user's uploaded FBX) fitted to HumanRig.RestPos ----
             rig.body = Pivot(root.transform, "body", Vector3.zero);
-            rig.torso = Pivot(rig.body, "torso", new Vector3(0f, 1.02f, 0f));
-            rig.head = Pivot(rig.torso, "head", new Vector3(0f, 0.54f, 0f)); // world rest (0, 1.56, 0)
-
-            var armT = new Transform[2]; var elbT = new Transform[2]; var handT = new Transform[2];
-            var legT = new Transform[2]; var kneeT = new Transform[2]; var footT = new Transform[2];
-            for (int s = 0; s < 2; s++)
+            if (!BuildMixamoSkeleton(rig))
             {
-                float sx = s == 0 ? -1f : 1f;
-                string side = s == 0 ? "L" : "R";
+                // fallback: plain pivots with the identical rest table (HumanRig.RestPos-compatible)
+                rig.torso = Pivot(rig.body, "torso", new Vector3(0f, 1.02f, 0f));
+                rig.head = Pivot(rig.torso, "head", new Vector3(0f, 0.54f, 0f)); // world rest (0, 1.56, 0)
 
-                var arm = Pivot(rig.body, "arm" + side, new Vector3(sx * 0.205f, 1.445f, 0f));
-                var elb = Pivot(arm, "elbow" + side, new Vector3(sx * 0.010f, -0.300f, 0f));
-                var hand = Pivot(elb, "hand" + side, new Vector3(sx * 0.007f, -0.215f, 0f));
-                armT[s] = arm; elbT[s] = elb; handT[s] = hand;
+                var armT = new Transform[2]; var elbT = new Transform[2]; var handT = new Transform[2];
+                var legT = new Transform[2]; var kneeT = new Transform[2]; var footT = new Transform[2];
+                for (int s = 0; s < 2; s++)
+                {
+                    float sx = s == 0 ? -1f : 1f;
+                    string side = s == 0 ? "L" : "R";
 
-                var leg = Pivot(rig.body, "leg" + side, new Vector3(sx * 0.105f, 0.960f, 0f));
-                var knee = Pivot(leg, "knee" + side, new Vector3(0f, -0.460f, 0f));
-                var foot = Pivot(knee, "foot" + side, new Vector3(0f, -0.425f, 0f));
-                legT[s] = leg; kneeT[s] = knee; footT[s] = foot;
+                    var arm = Pivot(rig.body, "arm" + side, new Vector3(sx * 0.205f, 1.445f, 0f));
+                    var elb = Pivot(arm, "elbow" + side, new Vector3(sx * 0.010f, -0.300f, 0f));
+                    var hand = Pivot(elb, "hand" + side, new Vector3(sx * 0.007f, -0.215f, 0f));
+                    armT[s] = arm; elbT[s] = elb; handT[s] = hand;
+
+                    var leg = Pivot(rig.body, "leg" + side, new Vector3(sx * 0.105f, 0.960f, 0f));
+                    var knee = Pivot(leg, "knee" + side, new Vector3(0f, -0.460f, 0f));
+                    var foot = Pivot(knee, "foot" + side, new Vector3(0f, -0.425f, 0f));
+                    legT[s] = leg; kneeT[s] = knee; footT[s] = foot;
+                }
+                rig.armL = armT[0]; rig.armR = armT[1];
+                rig.elbL = elbT[0]; rig.elbR = elbT[1];
+                rig.legL = legT[0]; rig.legR = legT[1];
+                rig.kneeL = kneeT[0]; rig.kneeR = kneeT[1];
+                rig.footL = footT[0]; rig.footR = footT[1];
+                rig.handL = handT[0]; rig.handR = handT[1];
             }
-            rig.armL = armT[0]; rig.armR = armT[1];
-            rig.elbL = elbT[0]; rig.elbR = elbT[1];
-            rig.legL = legT[0]; rig.legR = legT[1];
-            rig.kneeL = kneeT[0]; rig.kneeR = kneeT[1];
-            rig.handR = handT[1];
 
             // ---- one continuous skinned body + static head (procedural realistic human) ----
             Transform[] bones =
             {
                 rig.body, rig.torso,
-                armT[0], elbT[0], handT[0],
-                armT[1], elbT[1], handT[1],
-                legT[0], kneeT[0], footT[0],
-                legT[1], kneeT[1], footT[1],
+                rig.armL, rig.elbL, rig.handL,
+                rig.armR, rig.elbR, rig.handR,
+                rig.legL, rig.kneeL, rig.footL,
+                rig.legR, rig.kneeR, rig.footR,
             };
             HumanRig.Build(bones, rig.head);
 
@@ -154,6 +166,161 @@ namespace DummySurfer
             rig.bag.gameObject.SetActive(false);
 
             return rig;
+        }
+
+        // ===================== v7: REAL MIXAMO SKELETON (user's uploaded FBX) =====================
+        static AnimationClip _gesture;
+
+        static AnimationClip GestureClip()
+        {
+            if (_gesture == null) _gesture = Resources.Load<AnimationClip>("Anim/Gesture");
+            return _gesture;
+        }
+
+        static Transform FindDeep(Transform root, string name)
+        {
+            if (root.name == name) return root;
+            for (int i = 0; i < root.childCount; i++)
+            {
+                var r = FindDeep(root.GetChild(i), name);
+                if (r != null) return r;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Instantiates the uploaded Mixamo skeleton (mixamorig bone tree, ~65 bones, plus the
+        /// user's "Whatever Gesture" take) and re-poses every bone onto the HumanRig.RestPos
+        /// table with identity rotations, so the existing skinned body binds 1:1 and the whole
+        /// proven pose engine keeps its exact angles. Arms/spine stay under Hips so the Mixamo
+        /// clip paths still resolve; legs are re-parented to the body root exactly like the old
+        /// rig (clip leg curves are intentionally ignored — gameplay legs are procedural).
+        /// </summary>
+        static bool BuildMixamoSkeleton(CharacterRig rig)
+        {
+            var prefab = Resources.Load<GameObject>("Models/Mixamo/MixamoGesture");
+            if (prefab == null) return false;
+
+            var inst = Object.Instantiate(prefab);
+            inst.name = "mixamo";
+            inst.SetParent(rig.body, false);
+            inst.localPosition = Vector3.zero;
+            inst.localRotation = Quaternion.identity;
+            inst.localScale = Vector3.one;
+
+            if (FindDeep(inst, "mixamorig:Hips") == null) { Object.Destroy(inst); return false; }
+
+            var all = inst.GetComponentsInChildren<Transform>(true);   // captured BEFORE reparenting (legs included)
+
+            // legs out from under Hips → body root (old hierarchy behaviour)
+            var upLegL = FindDeep(inst, "mixamorig:LeftUpLeg");
+            var upLegR = FindDeep(inst, "mixamorig:RightUpLeg");
+            if (upLegL != null) upLegL.SetParent(rig.body, false);
+            if (upLegR != null) upLegR.SetParent(rig.body, false);
+
+            // clean rest frame: identity rotations + unit scale on every node (Mixamo T-pose)
+            for (int i = 0; i < all.Length; i++)
+            {
+                all[i].localRotation = Quaternion.identity;
+                all[i].localScale = Vector3.one;
+            }
+
+            // ---- body-space targets, parent-first (mirrors HumanRig.RestPos + old hierarchy) ----
+            var map = new List<KeyValuePair<Transform, Vector3>>();
+            void Add(string n, Vector3 w)
+            {
+                var t = FindDeep(rig.body, n);
+                if (t != null) map.Add(new KeyValuePair<Transform, Vector3>(t, w));
+            }
+            Add("mixamorig:Hips", new Vector3(0f, 1.02f, 0f));                    // torso slot
+            Add("mixamorig:Spine", new Vector3(0f, 1.12f, 0f));
+            Add("mixamorig:Spine1", new Vector3(0f, 1.22f, 0f));
+            Add("mixamorig:Spine2", new Vector3(0f, 1.34f, 0f));
+            Add("mixamorig:Neck", new Vector3(0f, 1.50f, 0f));
+            Add("mixamorig:Head", new Vector3(0f, 1.56f, 0f));                    // exact old head pivot
+            Add("mixamorig:HeadTop_End", new Vector3(0f, 1.66f, 0f));
+            Add("mixamorig:LeftShoulder", new Vector3(-0.13f, 1.44f, 0f));
+            Add("mixamorig:LeftArm", new Vector3(-0.205f, 1.445f, 0f));           // armL slot
+            Add("mixamorig:LeftForeArm", new Vector3(-0.215f, 1.145f, 0f));       // elbL slot
+            Add("mixamorig:LeftHand", new Vector3(-0.222f, 0.930f, 0f));          // handL slot
+            Add("mixamorig:RightShoulder", new Vector3(0.13f, 1.44f, 0f));
+            Add("mixamorig:RightArm", new Vector3(0.205f, 1.445f, 0f));           // armR slot
+            Add("mixamorig:RightForeArm", new Vector3(0.215f, 1.145f, 0f));       // elbR slot
+            Add("mixamorig:RightHand", new Vector3(0.222f, 0.930f, 0f));          // handR slot
+            var handLW = new Vector3(-0.222f, 0.910f, 0f);
+            var handRW = new Vector3(0.222f, 0.910f, 0f);
+            string[] fSides = { "Left", "Right" };
+            string[] fNames = { "Index", "Middle", "Pinky", "Ring", "Thumb" };
+            for (int fS = 0; fS < 2; fS++)
+                for (int fN = 0; fN < fNames.Length; fN++)
+                    for (int fI = 1; fI <= 4; fI++)
+                        Add("mixamorig:" + fSides[fS] + "Hand" + fNames[fN] + fI,
+                            fS == 0 ? handLW : handRW);
+            Add("mixamorig:Hipsd", new Vector3(0f, 1.02f, 0f));
+            Add("mixamorig:LeftUpLeg", new Vector3(-0.105f, 0.960f, 0f));         // legL slot (under body root)
+            Add("mixamorig:LeftLeg", new Vector3(-0.105f, 0.500f, 0f));           // kneeL slot
+            Add("mixamorig:LeftFoot", new Vector3(-0.105f, 0.075f, 0f));          // footL slot
+            Add("mixamorig:LeftToeBase", new Vector3(-0.105f, 0.000f, 0.12f));
+            Add("mixamorig:LeftToe_End", new Vector3(-0.105f, 0.000f, 0.17f));
+            Add("mixamorig:RightUpLeg", new Vector3(0.105f, 0.960f, 0f));         // legR slot
+            Add("mixamorig:RightLeg", new Vector3(0.105f, 0.500f, 0f));           // kneeR slot
+            Add("mixamorig:RightFoot", new Vector3(0.105f, 0.075f, 0f));          // footR slot
+            Add("mixamorig:RightToeBase", new Vector3(0.105f, 0.000f, 0.12f));
+            Add("mixamorig:RightToe_End", new Vector3(0.105f, 0.000f, 0.17f));
+
+            // apply parent-first: world-space placement is immune to any unexpected wrapper scale
+            for (int i = 0; i < map.Count; i++)
+                map[i].Key.position = rig.body.TransformPoint(map[i].Value);
+            for (int i = 0; i < all.Length; i++)                                  // leftovers → collapse
+                if (all[i] != inst && map.FindIndex(m => m.Key == all[i]) < 0)
+                    all[i].localPosition = Vector3.zero;
+
+            // rig field mapping (old slots)
+            rig.torso = FindDeep(rig.body, "mixamorig:Hips");
+            rig.head = FindDeep(rig.body, "mixamorig:Head");
+            rig.armL = FindDeep(rig.body, "mixamorig:LeftArm");
+            rig.elbL = FindDeep(rig.body, "mixamorig:LeftForeArm");
+            rig.handL = FindDeep(rig.body, "mixamorig:LeftHand");
+            rig.armR = FindDeep(rig.body, "mixamorig:RightArm");
+            rig.elbR = FindDeep(rig.body, "mixamorig:RightForeArm");
+            rig.handR = FindDeep(rig.body, "mixamorig:RightHand");
+            rig.legL = FindDeep(rig.body, "mixamorig:LeftUpLeg");
+            rig.kneeL = FindDeep(rig.body, "mixamorig:LeftLeg");
+            rig.footL = FindDeep(rig.body, "mixamorig:LeftFoot");
+            rig.legR = FindDeep(rig.body, "mixamorig:RightUpLeg");
+            rig.kneeR = FindDeep(rig.body, "mixamorig:RightLeg");
+            rig.footR = FindDeep(rig.body, "mixamorig:RightFoot");
+            if (rig.torso == null || rig.head == null || rig.armL == null || rig.legL == null)
+            {
+                Object.Destroy(inst);
+                return false;
+            }
+
+            // bone-reset bookkeeping (ZeroPose restores these between poses / after clip)
+            var eb = new List<Transform>();
+            var ep = new List<Vector3>();
+            for (int i = 0; i < all.Length; i++)
+            {
+                if (all[i] == inst) continue;
+                eb.Add(all[i]);
+                ep.Add(all[i].localPosition);
+            }
+            rig.extraBones = eb.ToArray();
+            rig.extraBasePos = ep.ToArray();
+
+            // legacy Animation on the instantiated skeleton — plays the user's clip in menu idle
+            var oldAn = inst.GetComponent<Animator>();
+            if (oldAn != null) Object.Destroy(oldAn);   // Animation and Animator cannot coexist
+            var anim = inst.AddComponent<Animation>();
+            anim.playAutomatically = false;
+            var gc = GestureClip();
+            if (gc != null)
+            {
+                gc.wrapMode = WrapMode.Loop;
+                anim.AddClip(gc, "gesture");
+            }
+            rig.gestureAnim = anim;
+            return true;
         }
 
         // ================================================== INSPECTOR (guard)
@@ -344,6 +511,13 @@ namespace DummySurfer
         {
             body.localScale = Vector3.one;
             body.localRotation = Quaternion.identity;
+            if (extraBones != null)                     // v7: full mixamorig reset (incl. clip leftovers)
+                for (int i = 0; i < extraBones.Length; i++)
+                {
+                    if (extraBones[i] == null) continue;
+                    extraBones[i].localRotation = Quaternion.identity;
+                    extraBones[i].localPosition = extraBasePos[i];
+                }
             if (legL != null) legL.localRotation = Quaternion.identity;
             if (legR != null) legR.localRotation = Quaternion.identity;
             if (kneeL != null) kneeL.localRotation = Quaternion.identity;
@@ -379,6 +553,12 @@ namespace DummySurfer
         {
             if (body == null) return;
             float s = Mathf.Clamp01(speedF);
+            if (mode != "idle" && gestureAnim != null)                  // v7: park the Mixamo clip
+            {
+                var gst = gestureAnim["gesture"];
+                if (gst != null) gst.enabled = false;
+                gestureAnim.Stop();
+            }
             ZeroPose();
             Blink(t);
 
@@ -396,6 +576,20 @@ namespace DummySurfer
             {
                 case "idle":
                 {
+                    // v7: the user's REAL uploaded Mixamo clip — sampled deterministically at t
+                    // (AnimationState.time + Sample works in CI batchmode AND live gameplay;
+                    // arms wave, hips bob, fingers wiggle; legs stay planted — procedural).
+                    var gst = gestureAnim != null ? gestureAnim["gesture"] : null;
+                    if (gst != null)
+                    {
+                        gst.enabled = true;
+                        gst.weight = 1f;
+                        gst.speed = 1f;
+                        gst.time = Mathf.Repeat(t, gestureAnim.GetClip("gesture").length);
+                        gestureAnim.Sample();
+                        if (bag != null) bag.gameObject.SetActive(false);
+                        break;
+                    }
                     float b = Mathf.Sin(t * 2.1f);
                     body.localPosition = new Vector3(0f, b * 0.012f, 0f);
                     armL.localRotation = Quaternion.Euler(2f, 0f, 10f + b * 3f);
