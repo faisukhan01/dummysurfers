@@ -201,7 +201,8 @@ namespace DummySurfer
             var prefab = Resources.Load<GameObject>("Models/Mixamo/MixamoGesture");
             if (prefab == null) return false;
 
-            var inst = Object.Instantiate(prefab);
+            var instGO = Object.Instantiate(prefab);
+            var inst = instGO.transform;
             inst.name = "mixamo";
             inst.SetParent(rig.body, false);
             inst.localPosition = Vector3.zero;
@@ -309,9 +310,9 @@ namespace DummySurfer
             rig.extraBasePos = ep.ToArray();
 
             // legacy Animation on the instantiated skeleton — plays the user's clip in menu idle
-            var oldAn = inst.GetComponent<Animator>();
+            var oldAn = instGO.GetComponent<Animator>();
             if (oldAn != null) Object.Destroy(oldAn);   // Animation and Animator cannot coexist
-            var anim = inst.AddComponent<Animation>();
+            var anim = instGO.AddComponent<Animation>();
             anim.playAutomatically = false;
             var gc = GestureClip();
             if (gc != null)
