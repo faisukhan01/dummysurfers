@@ -29,7 +29,8 @@ namespace DummySurfer
                     System.IO.Directory.CreateDirectory(OutDir);
                     AssetDatabase.Refresh();
                 }
-                if (System.IO.File.Exists(OutPath)) return;   // already exported
+                if (System.IO.File.Exists(OutPath))
+                    AssetDatabase.DeleteAsset(OutPath);   // always regenerate fresh (legacy flag baked in)
 
                 var clip = AssetDatabase.LoadAllAssetsAtPath(FbxPath)
                                      .OfType<AnimationClip>()
@@ -41,6 +42,7 @@ namespace DummySurfer
                 }
                 var clone = Object.Instantiate(clip);
                 clone.name = "Gesture";
+                clone.legacy = true;   // REQUIRED: legacy Animation component refuses non-legacy clips
                 AssetDatabase.CreateAsset(clone, OutPath);
                 AssetDatabase.SaveAssets();
                 Debug.Log("[MixamoClipExport] exported '" + clip.name + "' (" + clip.length.ToString("F2") + "s) -> " + OutPath);
